@@ -89,9 +89,7 @@ class LocationServiceController extends Controller
      */
     public function update(UpdateLocationServiceRequest $request, LocationServices $locationService) {
         try{
-        $locationService->update(
-            $request->validated()
-        );
+        $locationService->update($request->validated());
 
         return response()->json([
             'success' => true,

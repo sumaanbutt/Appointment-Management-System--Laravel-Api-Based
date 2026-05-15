@@ -13,7 +13,7 @@ class LocationServices extends Model
         'business_code',
         'location_code',
         'service_code',
-        'status',
+        'availability',
     ];
 
     protected static $codePrefix = 'LSR';

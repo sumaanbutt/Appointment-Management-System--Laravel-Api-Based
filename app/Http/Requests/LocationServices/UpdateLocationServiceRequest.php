@@ -27,12 +27,12 @@ class UpdateLocationServiceRequest extends FormRequest
                 'business_code' => ['sometimes', 'exists:businesses,code',],
                 'location_code' => ['sometimes', 'exists:business_locations,code',],
                 'service_code' => ['sometimes', 'exists:services,code',],
-                'status' => ['sometimes',
-                    Rule::in([
-                        'ACTIVE',
-                        'INACTIVE',
-                    ]),
-                ],
+                'availability' => ['required',
+                Rule::in([
+                    'AVAILABLE',
+                    'NOT_AVAILABLE',
+                ]),
+            ],
             ];
     }
 }
