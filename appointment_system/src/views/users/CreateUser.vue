@@ -53,7 +53,7 @@
 
         <div class="field">
           <label>Status *</label>
-          <select v-model="form.status" required>
+          <select v-model="form.is_active" required>
             <option value="">Select status</option>
             <option v-for="status in ['active', 'inactive']" :key="status" :value="status">
               {{ status }}
@@ -90,7 +90,7 @@ const form = reactive({
   password: '',
   user_type: '',
   business_code: '',
-  status: '',
+  is_active: '',
 })
 const businesses = ref([])
 const loading = ref(false)
@@ -98,7 +98,7 @@ const error = ref('')
 
 onMounted(async () => {
   try {
-    const res = await api.get('/businesses')
+    const res = await api.get('/businesses/get-business')
     businesses.value = res.data.data || []
   } catch (_) {}
 })
@@ -109,7 +109,7 @@ async function submit() {
   try {
     const payload = { ...form }
     if (!payload.business_code) delete payload.business_code
-    await api.post('/users', payload)
+    await api.post('/users/create-user', payload)
     router.push('/users')
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create user'

@@ -5,7 +5,7 @@ import api from '@/services/api'
 export const ROLES = {
     ADMIN: 'SUPER_ADMIN',
     BUSINESS_OWNER: 'BUSINESS_OWNER',
-    OPERATIONAL_STAFF: 'OPERATION_STAFF',
+    OPERATION_STAFF: 'OPERATION_STAFF',
     SERVICE_STAFF: 'SERVICE_STAFF',
     CLIENT: 'CLIENT',
 }
@@ -13,7 +13,7 @@ export const ROLES = {
 export const ROLE_HOME = {
     [ROLES.ADMIN]: '/admin/dashboard',
     [ROLES.BUSINESS_OWNER]: '/owner/dashboard',
-    [ROLES.OPERATIONAL_STAFF]: '/ops/dashboard',
+    [ROLES.OPERATION_STAFF]: '/ops/dashboard',
     [ROLES.SERVICE_STAFF]: '/staff/dashboard',
     [ROLES.CLIENT]: '/client/dashboard',
 }
@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const isAdmin = computed(() => userRole.value === ROLES.ADMIN)
     const isBusinessOwner = computed(() => userRole.value === ROLES.BUSINESS_OWNER)
-    const isOperationalStaff = computed(() => userRole.value === ROLES.OPERATIONAL_STAFF)
+    const isOperationalStaff = computed(() => userRole.value === ROLES.OPERATION_STAFF)
     const isServiceStaff = computed(() => userRole.value === ROLES.SERVICE_STAFF)
     const isClient = computed(() => userRole.value === ROLES.CLIENT)
 

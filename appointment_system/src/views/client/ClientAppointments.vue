@@ -33,13 +33,13 @@
         <div class="field">
           <label>Business</label>
 
-          <select v-model="form.business_code">
+          <select v-model="form.businessId">
             <option value="">Select Business</option>
 
             <option
                 v-for="business in businesses"
-                :key="business.code"
-                :value="business.code"
+                :key="business.id"
+                :value="business.id"
             >
               {{ business.name }}
             </option>
@@ -51,13 +51,13 @@
         <div class="field">
           <label>Location</label>
 
-          <select v-model="form.location_code">
+          <select v-model="form.locationId">
             <option value="">Select Location</option>
 
             <option
                 v-for="location in filteredLocations"
-                :key="location.code"
-                :value="location.code"
+                :key="location.id"
+                :value="location.id"
             >
               {{ location.name }}
             </option>
@@ -69,13 +69,13 @@
         <div class="field">
           <label>Service</label>
 
-          <select v-model="form.service_code">
+          <select v-model="form.serviceId">
             <option value="">Select Service</option>
 
             <option
                 v-for="service in filteredServices"
-                :key="service.code"
-                :value="service.code"
+                :key="service.id"
+                :value="service.id"
             >
               {{ service.name }}
               - ${{ service.price }}
@@ -90,7 +90,7 @@
 
           <input
               type="date"
-              v-model="form.appointment_date"
+              v-model="form.date"
           />
         </div>
 
@@ -100,7 +100,7 @@
 
           <input
               type="time"
-              v-model="form.appointment_time"
+              v-model="form.time"
           />
         </div>
 
@@ -149,15 +149,23 @@
 
         <tbody>
 
-        <tr v-for="appointment in appointments" :key="appointment.code">
+        <tr
+            v-for="appointment in appointments"
+            :key="appointment.id"
+        >
 
-          <td>{{ appointment.business_code }}</td>
-          <td>{{ appointment.service_code }}</td>
-          <td>{{ appointment.appointment_date }}</td>
-          <td>{{ appointment.appointment_time }}</td>
+          <td>{{ appointment.business }}</td>
+
+          <td>{{ appointment.service }}</td>
+
+          <td>{{ appointment.date }}</td>
+
+          <td>{{ appointment.time }}</td>
 
           <td>
-              <span :class="['badge', appointment.status]">
+              <span
+                  :class="['badge', appointment.status]"
+              >
                 {{ appointment.status }}
               </span>
           </td>
@@ -174,75 +182,135 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, onMounted} from 'vue'
-import api from '@/services/api'
+import {
+  computed,
+  reactive,
+  ref
+} from 'vue'
 
-const businesses = ref([])
-const locations = ref([])
-const services = ref([])
-const appointments = ref([])
+/* BUSINESSES */
+const businesses = ref([
+  {
+    id: 1,
+    name: 'City Clinic'
+  },
+  {
+    id: 2,
+    name: 'Health Care Center'
+  }
+])
+
+/* LOCATIONS */
+const locations = ref([
+  {
+    id: 1,
+    businessId: 1,
+    name: 'Johar Town'
+  },
+  {
+    id: 2,
+    businessId: 1,
+    name: 'DHA Lahore'
+  },
+  {
+    id: 3,
+    businessId: 2,
+    name: 'Clifton Karachi'
+  }
+])
+
+/* SERVICES */
+const services = ref([
+  {
+    id: 1,
+    businessId: 1,
+    name: 'Consultation',
+    price: 50
+  },
+  {
+    id: 2,
+    businessId: 1,
+    name: 'Dental Checkup',
+    price: 80
+  },
+  {
+    id: 3,
+    businessId: 2,
+    name: 'Therapy',
+    price: 100
+  }
+])
+
+/* APPOINTMENTS */
+const appointments = ref([
+  {
+    id: 1,
+    business: 'City Clinic',
+    service: 'Consultation',
+    date: '2026-05-20',
+    time: '10:00',
+    status: 'pending'
+  }
+])
 
 /* FORM */
 const form = reactive({
-    business_code:'',
-    location_code:'',
-    service_code:'',
-    appointment_date:'',
-    appointment_time:'',
-    notes:''
-  })
-
-onMounted(async()=>{
-  try{
-    const [bizRes, locRes, srvRes, apptRes] = await Promise.all([
-        api.get('/businesses'),
-        api.get('/business-locations'),
-        api.get('/services'),
-        api.get('/appointments')
-    ])
-
-    businesses.value = bizRes.data.data.data || []
-    locations.value = locRes.data.data.data || []
-    services.value = srvRes.data.data.data || []
-    appointments.value = apptRes.data.data.data || []
-  }
-
-  catch(err){
-    console.error(err)
-  }
+  businessId: '',
+  locationId: '',
+  serviceId: '',
+  date: '',
+  time: '',
+  notes: ''
 })
 
 /* FILTERED LOCATIONS */
 const filteredLocations = computed(() => {
   return locations.value.filter(
-      l => l.business_code === form.business_code
+      l => l.businessId === form.businessId
   )
 })
 
 /* FILTERED SERVICES */
 const filteredServices = computed(() => {
   return services.value.filter(
-      s => s.business_code === form.business_code
+      s => s.businessId === form.businessId
   )
 })
 
 /* SUBMIT */
-async function submitAppointment(){
-  try{
-    await api.post('/appointments', form)
-    const res = await api.get('/appointments')
+function submitAppointment() {
 
-    appointments.value = res.data.data.data || []
-    form.business_code=''
-    form.location_code=''
-    form.service_code=''
-    form.appointment_date=''
-    form.appointment_time=''
-    form.notes=''
-  }
-  catch(err){
-    console.error(err)
-  }
+  const business =
+      businesses.value.find(
+          b => b.id === form.businessId
+      )
+
+  const service =
+      services.value.find(
+          s => s.id === form.serviceId
+      )
+
+  appointments.value.push({
+    id: Date.now(),
+    business: business?.name,
+    service: service?.name,
+    date: form.date,
+    time: form.time,
+    status: 'pending'
+  })
+
+  console.log('Appointment Requested:', form)
+
+  // API READY
+  // await axios.post('/appointments', form)
+
+  /* RESET */
+  form.businessId = ''
+  form.locationId = ''
+  form.serviceId = ''
+  form.date = ''
+  form.time = ''
+  form.notes = ''
 }
 </script>
 

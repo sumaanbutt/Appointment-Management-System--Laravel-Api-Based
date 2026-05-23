@@ -127,13 +127,24 @@ const stats = ref({
   locations: 0,
 })
 
+function getCount(res){
+
+  return (
+      res?.data?.data?.data?.length
+      ||
+      res?.data?.data?.length
+      ||
+      res?.data?.length
+      ||
+      0
+  )
+
+}
+
 onMounted(async () => {
   try {
     const [orgs, bizs, clients, appts, users, svcs, invs, locs] = await Promise.allSettled([
-      console.log(
-          'BUSINESSES API:',
-          bizs
-      ),
+
       api.get('/organizations'),
       api.get('/businesses'),
       api.get('/clients'),
@@ -141,17 +152,21 @@ onMounted(async () => {
       api.get('/users'),
       api.get('/services'),
       api.get('/invoices'),
-      api.get('/locations'),
+      api.get('/business-locations'),
     ])
+    console.log(
+        'INVOICES:',
+        invs.value.data
+    )
 
-    stats.value.organizations = orgs.status === 'fulfilled' ? (orgs.value.data.data?.length ?? 0) : 0
-    stats.value.businesses = bizs.status === 'fulfilled' ? (bizs.value.data.data.data?.length ?? 0) : 0
-    stats.value.clients = clients.status === 'fulfilled' ? (clients.value.data.data?.length ?? 0) : 0
-    stats.value.appointments = appts.status === 'fulfilled' ? (appts.value.data.data?.length ?? 0) : 0
-    stats.value.users = users.status === 'fulfilled' ? (users.value.data.data?.length ?? 0) : 0
-    stats.value.services = svcs.status === 'fulfilled' ? (svcs.value.data.data?.length ?? 0) : 0
-    stats.value.invoices = invs.status === 'fulfilled' ? (invs.value.data.data?.length ?? 0) : 0
-    stats.value.locations = locs.status === 'fulfilled' ? (locs.value.data.data?.length ?? 0) : 0
+    stats.value.organizations = orgs.status === 'fulfilled' ? getCount(orgs.value) : 0
+    stats.value.businesses = bizs.status === 'fulfilled' ? getCount(bizs.value) : 0
+    stats.value.clients = clients.status === 'fulfilled' ? getCount(clients.value) : 0
+    stats.value.appointments = appts.status === 'fulfilled' ? getCount(appts.value) : 0
+    stats.value.users = users.status === 'fulfilled' ? getCount(users.value) : 0
+    stats.value.services = svcs.status === 'fulfilled' ? getCount(svcs.value) : 0
+    stats.value.invoices = invs.status === 'fulfilled' ? (invs.value.data.invoices?.data?.length || invs.value.data.invoices?.length || 0) : 0
+    stats.value.locations = locs.status === 'fulfilled' ? getCount(locs.value) : 0
 
     if (appts.status === 'fulfilled') {
       recentAppointments.value = (appts.value.data.data.data || []).slice(0, 5)

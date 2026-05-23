@@ -2,47 +2,25 @@
 
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.store.ts'
 
-const props = defineProps({
-
-  user:{
-    type:Object,
-    required:true
-  }
-
-})
+const props = defineProps({user:{type:Object, required:true}})
 
 const router = useRouter()
-
-const notificationsEnabled =
-    ref(true)
+const authStore = useAuthStore()
+const notificationsEnabled = ref(true)
 
 function goToProfile(){
-
-  router.push({
-
-    name:'ProfileSettings'
-
-  })
-
+  router.push({ name:'/settings' })
 }
 
 function goToAccountSettings(){
-
-  router.push({
-
-    name:'AccountSettings'
-
-  })
-
+  router.push({ name:'/settings' })
 }
 
-function logout(){
-
-  localStorage.clear()
-
+async function logout(){
+  await authStore.logout()
   router.push('/login')
-
 }
 
 </script>
@@ -50,99 +28,42 @@ function logout(){
 <template>
 
   <div class="profile-dropdown">
-
     <div class="profile-header">
-
       <div class="dropdown-avatar">
-
-        <img
-            v-if="user.profileImage"
-            :src="user.profileImage"
-            class="dropdown-img"
-            alt="profile"
-        >
-
-        <i
-            v-else
-            class="bi bi-person-circle"
-        ></i>
-
+        <img v-if="user.profileImage" :src="user.profileImage" class="dropdown-img" alt="profile">
+        <i v-else class="bi bi-person-circle"></i>
       </div>
 
       <div>
-
-        <h4>
-          {{ user.name }}
-        </h4>
-
-        <span>
-          {{ user.role }}
-        </span>
-
+        <h4>{{ user.name }}</h4>
+        <span>{{ user.role }}</span>
       </div>
-
     </div>
 
-    <div
-        class="dropdown-item"
-        @click="goToProfile"
-    >
-
+    <div class="dropdown-item" @click="goToProfile">
       <i class="bi bi-person"></i>
 
-      <span>
-        Profile Settings
-      </span>
-
+      <span>Profile Settings</span>
     </div>
 
-    <div
-        class="dropdown-item"
-        @click="goToAccountSettings"
-    >
-
+    <div class="dropdown-item" @click="goToAccountSettings">
       <i class="bi bi-sliders"></i>
-
-      <span>
-        Account Settings
-      </span>
-
+      <span>Account Settings</span>
     </div>
 
     <div class="dropdown-item">
-
       <i class="bi bi-bell"></i>
-
-      <span>
-        Notifications
-      </span>
+      <span>Notifications</span>
 
       <label class="switch">
-
-        <input
-            type="checkbox"
-            v-model="notificationsEnabled"
-        >
-
+        <input type="checkbox" v-model="notificationsEnabled">
         <span class="slider"></span>
-
       </label>
-
     </div>
 
-    <div
-        class="dropdown-item logout"
-        @click="logout"
-    >
-
-      <i
-          class="bi bi-box-arrow-right"
-      ></i>
-
-      <span>
-        Logout
-      </span>
-
+    <div class="dropdown-item logout" @click="logout">
+      <i class="bi bi-box-arrow-right"></i>
+      <span>Logout</span>
     </div>
 
   </div>

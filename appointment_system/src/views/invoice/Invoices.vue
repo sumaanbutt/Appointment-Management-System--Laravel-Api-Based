@@ -102,7 +102,7 @@ async function fetchInvoices() {
     const params = {}
     if (bizFilter.value) params.business_code = bizFilter.value
     if (statusFilter.value) params.status = statusFilter.value
-    const res = await api.get('/invoices', { params })
+    const res = await api.get('/invoices/get-invoice', { params })
     invoices.value = res.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load invoices'
@@ -119,7 +119,7 @@ function openDetails(inv) {
 async function updateStatus(inv, status) {
   saving.value = true
   try {
-    await api.patch(`/invoices/status${inv.code}`, { status })
+    await api.patch(`/invoices/update-invoice-status${inv.id}`, { status })
     showDetails.value = false
     await fetchInvoices()
   } catch (err) {
@@ -129,13 +129,14 @@ async function updateStatus(inv, status) {
   }
 }
 
+
 function formatDate(d) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString()
 }
 
 onMounted(async () => {
-  const [_, bizRes] = await Promise.allSettled([fetchInvoices(), api.get('/businesses')])
+  const [_, bizRes] = await Promise.allSettled([fetchInvoices(), api.get('/businesses/get-business')])
   if (bizRes.status === 'fulfilled') businesses.value = bizRes.value.data.data || []
 })
 </script>

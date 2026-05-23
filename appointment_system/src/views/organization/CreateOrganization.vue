@@ -3,7 +3,7 @@
 
     <div class="page-header">
       <h2>New Organization</h2>
-      <router-link to="/organizations" class="back-link">← Back</router-link>
+      <router-link to="/admin/organizations" class="back-link">← Back</router-link>
     </div>
 
     <div class="card">
@@ -16,7 +16,12 @@
 
         <div class="field">
           <label>Description</label>
-          <textarea v-model="form.description" placeholder="Enter description"/>
+
+          <textarea
+              v-model="form.description"
+              placeholder="Enter organization description"
+              rows="4"
+          ></textarea>
         </div>
 
         <div class="field">
@@ -51,7 +56,7 @@ import api from '@/services/api'
 
 const router = useRouter()
 
-const form = reactive({ name: '', description:'', status: ''})
+const form = reactive({ name: '' ,description:'' ,status: ''})
 const loading = ref(false)
 const error = ref('')
 
@@ -60,7 +65,7 @@ async function submit() {
   error.value = ''
   try {
     await api.post('/organizations', form)
-    router.push('/organizations')
+    router.push('/admin/organizations')
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create organization'
   } finally {
@@ -92,19 +97,14 @@ async function submit() {
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 13px; font-weight: 600; color: #374151; }
-.field input, .field select, .field textarea{
+.field input, .field select, .field textarea {
   padding: 9px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 14px;
   outline: none;
 }
-.field input:focus, .field select:focus { border-color: #6366f1; }
-
-.field textarea{
-  min-height:100px;
-  resize:vertical;
-}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #6366f1; }
 
 .error-msg { color: #ef4444; font-size: 13px; margin: 0; }
 

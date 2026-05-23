@@ -25,9 +25,8 @@
         </div>
 
         <div class="field">
-          <label>Description</label>
-
-          <textarea v-model="form.description" placeholder="Enter description"/>
+          <label>Address *</label>
+          <input type="text" v-model="form.address" placeholder="Enter address" required />
         </div>
 
         <div class="field">
@@ -46,7 +45,7 @@
           <label>Status *</label>
           <select v-model="form.status" required>
             <option value="">Select status</option>
-            <option v-for="status in ['ACTIVE', 'INACTIVE']" :key="status" :value="status">
+            <option v-for="status in ['active', 'inactive']" :key="status" :value="status">
               {{ status }}
             </option>
           </select>
@@ -56,7 +55,7 @@
           <label>Organization *</label>
           <select v-model="form.organization_code" required>
             <option value="">Select organization</option>
-            <option v-for="org in organizations" :key="org.code" :value="org.code">
+            <option v-for="org in organizations" :key="org.organization_code" :value="org.organization_code">
               {{ org.name }}
             </option>
           </select>
@@ -83,7 +82,7 @@ import { useRouter } from 'vue-router'
 import api from '@/services/api'
 
 const router = useRouter();
-const form = reactive({ organization_code:'', name:'',  email:'', phone:'', description:'', timezone:'', status:'ACTIVE'})
+const form = reactive({ name: '', organization_code: '', email: '', timezone: '', status: '', phone: '' })
 const timezones = [
   'Asia/Karachi',
   'Asia/Dubai',
@@ -98,7 +97,7 @@ const error = ref('')
 
 onMounted(async () => {
   try {
-    const res = await api.get('/organizations')
+    const res = await api.get('/organizations/get-organization')
     organizations.value = res.data.data || []
   } catch (_) {}
 })
@@ -107,7 +106,7 @@ async function submit() {
   loading.value = true
   error.value = ''
   try {
-    await api.post('/businesses', form)
+    await api.post('/businesses/create-business', form)
     router.push('/businesses')
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create business'
@@ -139,16 +138,12 @@ async function submit() {
 .form { display: flex; flex-direction: column; gap: 16px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 13px; font-weight: 600; color: #374151; }
-.field input, .field select, .field textarea{
+.field input, .field select {
   padding: 9px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 14px;
   outline: none;
-}
-.field textarea{
-  min-height:100px;
-  resize:vertical;
 }
 .field input:focus, .field select:focus { border-color: #6366f1; }
 

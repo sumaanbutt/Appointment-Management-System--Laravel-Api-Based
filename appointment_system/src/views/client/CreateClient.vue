@@ -10,67 +10,57 @@
       <form class="form" @submit.prevent="submit">
 
         <div class="field">
+          <label>Full Name *</label>
+          <input v-model="form.name" placeholder="Enter full name" required />
+        </div>
+
+        <div class="field">
+          <label>Email *</label>
+          <input v-model="form.email" type="email" placeholder="Enter email" required />
+        </div>
+
+        <div class="field">
+          <label>Phone</label>
+          <input v-model="form.phone" placeholder="Enter phone number" />
+        </div>
+
+        <div class="field">
+          <label>Password *</label>
+          <input v-model="form.password" type="password" placeholder="Enter password" required />
+        </div>
+
+        <div class="field">
+          <label>User Type *</label>
+          <select v-model="form.user_type" required>
+            <option value="">Select type</option>
+            <option value="client">Client</option>
+          </select>
+        </div>
+
+        <div class="field">
           <label>Business</label>
-
           <select v-model="form.business_code">
-            <option value="">
-              Select Business
-            </option>
-
+            <option value="">Select Business</option>
             <option v-for="biz in businesses" :key="biz.business_code" :value="biz.business_code">
               {{ biz.name }}
             </option>
-
-          </select>
-        </div>
-
-        <!-- ADD THIS -->
-
-        <div class="field">
-          <label>User *</label>
-          <select v-model="form.user_code" required>
-            <option value="">
-              Select User
-            </option>
-
-            <option v-for="user in users" :key="user.code" :value="user.code">
-              {{ user.name }} — {{ user.email }}
-            </option>
-
           </select>
         </div>
 
         <div class="field">
-          <label>Address</label>
-          <input v-model="form.address" placeholder="Enter address"/>
+          <label>Status *</label>
+          <select v-model="form.is_active" required>
+            <option value="">Select status</option>
+            <option v-for="status in ['active', 'inactive']" :key="status" :value="status">
+              {{ status }}
+            </option>
+          </select>
         </div>
 
-        <!-- ADD THESE -->
-
-        <div class="field">
-          <label>City</label>
-          <input v-model="form.city" placeholder="Enter city"/>
-        </div>
-
-        <div class="field">
-          <label>State</label>
-          <input v-model="form.state" placeholder="Enter state"/>
-        </div>
-
-        <div class="field">
-          <label>Country</label>
-          <input v-model="form.country" placeholder="Enter country"/>
-        </div>
-
-        <p v-if="error" class="error-msg">
-          {{ error }}
-        </p>
+        <p v-if="error" class="error-msg">{{ error }}</p>
 
         <div class="form-actions">
-          <router-link to="/clients" class="cancel-btn">
-            Cancel
-          </router-link>
-
+          <router-link to="/clients" class="cancel-btn">Cancel</router-link>
           <button type="submit" class="submit-btn" :disabled="loading">
             {{ loading ? 'Creating...' : 'Create Client' }}
           </button>
@@ -90,30 +80,23 @@ import api from '@/services/api'
 const router = useRouter()
 
 const form = reactive({
-  user_code: '',
+  name: '',
+  email: '',
+  phone: '',
+  password: '',
+  user_type: '',
   business_code: '',
-  address: '',
-  city: '',
-  state: '',
-  country : '',
+  is_active: 'active',
 })
 const businesses = ref([])
-const users = ref([])
 const loading = ref(false)
 const error = ref('')
 
-onMounted(async()=>{
-
-  try{
-    const [bizRes, usersRes] = await Promise.all([
-        api.get('/businesses'),
-        api.get('/users')
-    ])
-
-    businesses.value = bizRes.data.data.data || []
-    users.value = usersRes.data.data.data || []
-  }
-  catch(_){}
+onMounted(async () => {
+  try {
+    const res = await api.get('/businesses/get-business')
+    businesses.value = res.data.data || []
+  } catch (_) {}
 })
 
 async function submit() {
@@ -123,7 +106,7 @@ async function submit() {
     const payload = { ...form, user_type: 'client' }
     if (!payload.business_code) delete payload.business_code
     if (!payload.phone) delete payload.phone
-    await api.post('/clients', payload)
+    await api.post('/clients/create-client', payload)
     router.push('/clients')
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create client'

@@ -5,7 +5,7 @@
     </div>
     <div class="topbar-right">
       <span class="user-name">{{ authStore.user?.name || authStore.user?.email || 'Admin' }}</span>
-      <span class="user-role">{{ authStore.user?.user_type || 'admin' }}</span>
+      <span class="user-role">{{ROLE_LABELS[authStore.user?.user_type] || authStore.user?.user_type || 'Guest' }}</span>
     </div>
   </header>
 </template>
@@ -18,51 +18,113 @@ import { useAuthStore } from '@/stores/auth.store'
 const route = useRoute()
 const authStore = useAuthStore()
 
+const ROLE_LABELS = {
+
+  SUPER_ADMIN:'Administrator',
+
+  BUSINESS_OWNER:'Business Owner',
+
+  OPERATION_STAFF:'Operational Staff',
+
+  SERVICE_STAFF:'Service Staff',
+
+  CLIENT:'Client'
+
+}
+
 const pageTitle = computed(() => {
-  const map = {
-    // Admin
-    '/admin/dashboard': 'Dashboard',
-    '/admin/organizations': 'Organizations',
-    '/admin/organizations/create': 'New Organization',
-    '/admin/businesses': 'Businesses',
-    '/admin/businesses/create': 'New Business',
-    '/admin/users': 'Users',
-    '/admin/users/create': 'New User',
-    '/admin/invoices': 'Invoices',
-    // Business Owner
-    '/owner/dashboard': 'Dashboard',
-    '/owner/users': 'Staff',
-    '/owner/users/create': 'New Staff',
-    '/owner/clients': 'Clients',
-    '/owner/clients/create': 'New Client',
-    '/owner/services': 'Services',
-    '/owner/services/create': 'New Service',
-    '/owner/locations': 'Locations',
-    '/owner/locations/create': 'New Location',
-    '/owner/location-services': 'Location Services',
-    '/owner/schedules': 'Schedules',
-    '/owner/charges': 'Charges',
-    '/owner/user-abilities': 'Staff Abilities',
-    '/owner/staff-availability': 'Staff Availability',
-    '/owner/appointments': 'Appointments',
-    '/owner/invoices': 'Invoices',
-    // Operational Staff
-    '/ops/dashboard': 'Dashboard',
-    '/ops/appointments': 'Appointments',
-    '/ops/availability': 'Check Availability',
-    '/ops/schedules': 'Schedules',
-    // Service Staff
-    '/staff/dashboard': 'Dashboard',
-    '/staff/my-schedule': 'My Schedule',
-    '/staff/my-appointments': 'My Appointments',
-    // Client
-    '/client/dashboard': 'Home',
-    '/client/services': 'Browse Services',
-    '/client/book': 'Book Appointment',
-    '/client/appointments': 'My Appointments',
-  }
-  return map[route.path] || 'AMS Portal'
-})
+
+    const map = {
+
+      // ADMIN
+
+      '/admin/dashboard':'Dashboard',
+
+      '/admin/organizations':'Organizations',
+
+      '/admin/organizations/create':'New Organization',
+
+      '/admin/businesses':'Businesses',
+
+      '/admin/businesses/create':'New Business',
+
+      '/admin/users':'Users',
+
+      '/admin/users/create':'New User',
+
+      '/admin/invoices':'Invoices',
+
+
+      // BUSINESS OWNER
+
+      '/owner/dashboard':'Dashboard',
+
+      '/owner/users':'Staff',
+
+      '/owner/users/create':'New Staff',
+
+      '/owner/clients':'Clients',
+
+      '/owner/clients/create':'New Client',
+
+      '/owner/services':'Services',
+
+      '/owner/services/create':'New Service',
+
+      '/owner/locations':'Locations',
+
+      '/owner/locations/create':'New Location',
+
+      '/owner/location-services':'Location Services',
+
+      '/owner/schedules':'Schedules',
+
+      '/owner/charges':'Charges',
+
+      '/owner/user-abilities':'Staff Abilities',
+
+      '/owner/staff-availability':'Staff Availability',
+
+      '/owner/appointments':'Appointments',
+
+      '/owner/invoices':'Invoices',
+
+
+      // OPERATIONAL STAFF
+
+      '/ops/dashboard':'Dashboard',
+
+      '/ops/appointments':'Appointments',
+
+      '/ops/availability':'Availability',
+
+      '/ops/schedules':'Schedules',
+
+
+      // SERVICE STAFF
+
+      '/staff/dashboard':'Dashboard',
+
+      '/staff/my-schedule':'My Schedule',
+
+      '/staff/my-appointments':'My Appointments',
+
+
+      // CLIENT
+
+      '/client/dashboard':'Dashboard',
+
+      '/client/services':'Browse Services',
+
+      '/client/book':'Book Appointment',
+
+      '/client/appointments':'My Appointments',
+
+    }
+
+    return map[route.path] || 'AMS Portal'
+
+  })
 </script>
 
 <style scoped>

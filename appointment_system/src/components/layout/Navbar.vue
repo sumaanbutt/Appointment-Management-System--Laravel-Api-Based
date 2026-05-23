@@ -1,59 +1,41 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import {
-  ref,
-  onMounted,
-  onBeforeUnmount
-} from 'vue'
-
-import NotificationDropdown
-  from '@/components/notifications/NotificationDropdown.vue'
-
-import ProfileDropdown
-  from '@/components/layout/ProfileDropdown.vue'
+import { useAuthStore } from '@/stores/auth.store.ts'
+import {ref, onMounted, onBeforeUnmount} from 'vue'
+import NotificationDropdown from '@/components/notifications/NotificationDropdown.vue'
+import ProfileDropdown from '@/components/layout/ProfileDropdown.vue'
 
 const darkMode = ref(false)
-
 const unreadNotifications = ref(true)
-
 const showNotifications = ref(false)
-
 const showProfileDropdown = ref(false)
-
 const dropdownRef = ref()
+const router = useRouter()
+const authStore = useAuthStore()
 
 const user = ref({
-
-  name:'John Doe',
-
-  role:'Organization Admin',
-
+  get name(){
+    return (authStore.user?.name || authStore.user?.email || 'User')
+  },
+  get role(){
+    return (authStore.user?.user_type || 'Guest')
+  },
   profileImage:''
-
 })
 
-const router = useRouter()
-
 function toggleNotifications(){
-
   showNotifications.value =
       !showNotifications.value
-
   showProfileDropdown.value = false
-
 }
 
 function toggleProfile(){
-
   showProfileDropdown.value =
       !showProfileDropdown.value
-
   showNotifications.value = false
-
 }
 
 function goToSettings(){
-
   router.push('/settings')
 
 }
@@ -63,60 +45,33 @@ function handleOutsideClick(
 ){
 
   if(
-
       dropdownRef.value &&
-
       !dropdownRef.value.contains(
           event.target
       )
-
   ){
 
-    const sidebar =
-        document.querySelector(
-            '.sidebar'
-        )
-
-    if(
-
-        sidebar &&
-
-        sidebar.contains(
-            event.target as Node
-        )
-
+    const sidebar = document.querySelector('.sidebar')
+    if(sidebar && sidebar.contains(event.target as Node)
     ){
       return
     }
-
     showNotifications.value = false
-
     showProfileDropdown.value = false
-
   }
-
 }
 
 function toggleDarkMode(){
-
   darkMode.value = !darkMode.value
-
-  document.body.classList.toggle(
-      'dark-mode'
-  )
+  document.body.classList.toggle('dark-mode')
 
   localStorage.setItem(
-
       'darkMode',
-
       darkMode.value.toString()
-
   )
-
 }
 
 onMounted(()=>{
-
   document.addEventListener(
       'click',
       handleOutsideClick
@@ -128,27 +83,18 @@ onMounted(()=>{
       )
 
   if(savedMode === 'true'){
-
     darkMode.value = true
-
     document.body.classList.add(
         'dark-mode'
     )
-
   }
-
 })
 
 onBeforeUnmount(()=>{
-
   document.removeEventListener(
-
       'click',
-
       handleOutsideClick
-
   )
-
 })
 
 </script>

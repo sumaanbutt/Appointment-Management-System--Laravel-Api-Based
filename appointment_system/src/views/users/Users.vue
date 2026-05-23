@@ -27,19 +27,19 @@
         </tr>
         </thead>
         <tbody>
-        <tr v-for="user in users" :key="user.code">
+        <tr v-for="user in users" :key="user.user_code">
           <td>{{ user.name }}</td>
           <td>{{ user.email }}</td>
           <td>{{ user.user_type }}</td>
-          <td><code>{{ user.code }}</code></td>
-          <td><span :class="['badge',user.status?.toLowerCase()]">
-
-            {{ user.status }}
-          </span>
+          <td><code>{{ user.user_code }}</code></td>
+          <td>
+              <span :class="['badge', user.is_active === 'active' ? 'active' : 'inactive']">
+                {{ user.is_active === 'active' ? 'Active' : 'Inactive' }}
+              </span>
           </td>
           <td>
             <button class="edit-btn" @click="openEdit(user)">Edit</button>
-            <button class="delete-btn" @click="openDelete(user)">Delete</button>
+            <button class="delete-btn" @click="openDelete(user)">Deactivate</button>
           </td>
         </tr>
         <tr v-if="users.length === 0">
@@ -50,57 +50,35 @@
     </div>
 
     <!-- EDIT MODAL -->
-    <div v-if="showEditModal" class="user-modal-overlay">
-      <div class="user-modal">
+    <div v-if="showEditModal" class="modal-overlay">
+      <div class="modal">
         <div class="modal-header">
           <h3>Edit User</h3>
           <button class="close" @click="showEditModal = false">✕</button>
         </div>
         <form class="form" @submit.prevent="updateUser">
-          <input v-model="editForm.name" placeholder="Full Name" required/>
-          <input v-model="editForm.email" type="email" placeholder="Email" required/>
-          <input v-model="editForm.phone" placeholder="Phone"/>
-
-          <select v-model="editForm.organization_code">
-            <option value="">Select Organization</option>
-            <option v-for="org in organizations" :key="org.code" :value="org.code">{{ org.name }}</option>
+          <input v-model="editForm.name" placeholder="Full Name" required />
+          <input v-model="editForm.email" type="email" placeholder="Email" required />
+          <select v-model="editForm.is_active">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
-
-          <select v-model="editForm.business_code">
-            <option value="">Select Business</option>
-            <option v-for="biz in businesses" :key="biz.code" :value="biz.code">{{ biz.name }}</option>
-          </select>
-
-          <select v-model="editForm.user_type">
-            <option value="BUSINESS_OWNER">BUSINESS_OWNER</option>
-            <option value="OPERATION_STAFF">OPERATION_STAFF</option>
-            <option value="SERVICE_STAFF">SERVICE_STAFF</option>
-            <option value="CLIENT">CLIENT</option>
-          </select>
-
-          <select v-model="editForm.status">
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-          </select>
-
           <p v-if="formError" class="error-msg">{{ formError }}</p>
-
           <button type="submit" class="save-btn" :disabled="saving">
             {{ saving ? 'Saving...' : 'Save Changes' }}
           </button>
-
         </form>
       </div>
     </div>
 
     <!-- DELETE MODAL -->
-    <div v-if="showDeleteModal" class="user-modal-overlay">
-      <div class="user-modal delete-modal">
+    <div v-if="showDeleteModal" class="modal-overlay">
+      <div class="modal delete-modal">
         <h3>Deactivate User</h3>
         <p>Are you sure you want to deactivate <strong>{{ selected?.name }}</strong>?</p>
         <div class="actions">
           <button class="cancel-btn" @click="showDeleteModal = false">Cancel</button>
-          <button class="delete-confirm-btn" @click="deleteUser" :disabled="saving">
+          <button class="delete-confirm-btn" @click="deactivateUser" :disabled="saving">
             {{ saving ? 'Processing...' : 'Deactivate' }}
           </button>
         </div>
@@ -115,8 +93,6 @@ import { ref, reactive, onMounted } from 'vue'
 import api from '@/services/api'
 
 const users = ref([])
-const organizations = ref([])
-const businesses = ref([])
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
@@ -126,48 +102,28 @@ const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const selected = ref(null)
 
-const editForm = reactive({ organization_code:'', business_code:'', name:'', email:'', phone:'', user_type:'', status:'ACTIVE'})
+const editForm = reactive({ name: '', email: '', is_active: 'active' })
 
-async function fetchUsers(){
-
+async function fetchUsers() {
   loading.value = true
   error.value = ''
-  try{
-    const [
-      usersRes, orgRes, bizRes] = await Promise.all([
-      api.get('/users'),
-      api.get('/organizations'),
-      api.get('/businesses')
-    ])
-
-    users.value = usersRes.data.data.data || []
-    organizations.value = orgRes.data.data || []
-    businesses.value = bizRes.data.data.data || []
-  }
-
-  catch(err){
+  try {
+    const res = await api.get('/users/get-users')
+    users.value = res.data.data || []
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load users'
+  } finally {
+    loading.value = false
   }
-
-  finally{
-    loading.value=false
-  }
-
 }
 
-function openEdit(user){
-  selected.value=user
-  editForm.organization_code = user.organization_code || ''
-  editForm.business_code = user.business_code || ''
-  editForm.name = user.name || ''
-  editForm.email = user.email || ''
-  editForm.phone = user.phone || ''
-  editForm.user_type = user.user_type || ''
-  editForm.status = user.status || 'ACTIVE'
-
-  formError.value=''
-  showEditModal.value=true
-
+function openEdit(user) {
+  selected.value = user
+  editForm.name = user.name
+  editForm.email = user.email
+  editForm.is_active = user.is_active
+  formError.value = ''
+  showEditModal.value = true
 }
 
 function openDelete(user) {
@@ -179,7 +135,7 @@ async function updateUser() {
   saving.value = true
   formError.value = ''
   try {
-    await api.put(`/users/${selected.value.code}`, editForm)
+    await api.put(`/users/update-user${selected.value.user_code}`, editForm)
     showEditModal.value = false
     await fetchUsers()
   } catch (err) {
@@ -188,19 +144,32 @@ async function updateUser() {
     saving.value = false
   }
 }
-
-async function deleteUser() {
+// deactivate user
+async function deactivateUser() {
   saving.value = true
   try {
-    await api.delete(`/users/${selected.value.code}`)
+    await api.patch(`/users/update-user-status${selected.value.user_code}`, { is_active: 'inactive' })
     showDeleteModal.value = false
     await fetchUsers()
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to deactivate user'
+    error.value = err.response?.data?.message || 'Deactivation failed'
   } finally {
     saving.value = false
   }
 }
+
+// async function deleteUser() {
+//   saving.value = true
+//   try {
+//     await api.delete(`/users/delete-user${selected.value.user_code}`)
+//     showDeleteModal.value = false
+//     await fetchUsers()
+//   } catch (err) {
+//     error.value = err.response?.data?.message || 'Failed to deactivate user'
+//   } finally {
+//     saving.value = false
+//   }
+// }
 
 onMounted(fetchUsers)
 </script>
@@ -278,25 +247,6 @@ onMounted(fetchUsers)
   width: 420px;
   max-width: 90%;
 }
-
-.user-modal-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:99999;
-}
-
-.user-modal{
-  background:white;
-  padding:24px;
-  border-radius:12px;
-  width:520px;
-  max-width:95vw;
-}
-
 .modal-header {
   display: flex;
   align-items: center;

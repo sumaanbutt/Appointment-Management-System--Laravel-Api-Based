@@ -45,7 +45,7 @@
           <td><code>{{ appt.appointment_code }}</code></td>
           <td>{{ appt.client_name || appt.client_code || '—' }}</td>
           <td>{{ appt.service_name || appt.service_code || '—' }}</td>
-          <td>{{ appt.appointment_date }}</td>
+          <td>{{ appt.appointment_start_date }}</td>
           <td>{{ appt.start_time }}</td>
           <td><span :class="['badge', appt.status]">{{ appt.status }}</span></td>
           <td>
@@ -73,7 +73,7 @@
           <div><strong>Code:</strong> {{ selected.appointment_code }}</div>
           <div><strong>Client:</strong> {{ selected.client_name || selected.client_code }}</div>
           <div><strong>Service:</strong> {{ selected.service_name || selected.service_code }}</div>
-          <div><strong>Date:</strong> {{ selected.appointment_date }}</div>
+          <div><strong>Date:</strong> {{ selected.appointment_start_date }}</div>
           <div><strong>Start:</strong> {{ selected.start_time }}</div>
           <div><strong>End:</strong> {{ selected.end_time }}</div>
           <div><strong>Status:</strong> <span :class="['badge', selected.status]">{{ selected.status }}</span></div>
@@ -118,270 +118,92 @@
 </template>
 
 <script setup>
+import { computed, reactive, ref, onMounted } from 'vue'
+import api from '@/services/api'
 
-import {
+const appointments = ref([])
+const loading = ref(true)
+const saving = ref(false)
+const error = ref('')
+const rescheduleError = ref('')
 
-  computed,
+const search = ref('')
+const statusFilter = ref('')
 
-  reactive,
+const showDetails = ref(false)
+const showReschedule = ref(false)
+const selected = ref(null)
 
-  ref,
+const rescheduleForm = reactive({
+  appointment_date: '',
+  start_time: '',
+  end_time: '',
+  reason: '',
+})
 
-  onMounted
-
-}
-
-  from 'vue'
-
-import api
-  from '@/services/api'
-
-const appointments =
-    ref([])
-
-const loading =
-    ref(true)
-
-const saving =
-    ref(false)
-
-const error =
-    ref('')
-
-const rescheduleError =
-    ref('')
-
-const search =
-    ref('')
-
-const statusFilter =
-    ref('')
-
-const showDetails =
-    ref(false)
-
-const showReschedule =
-    ref(false)
-
-const selected =
-    ref(null)
-
-const rescheduleForm =
-    reactive({
-
-      appointment_date:'',
-
-      start_time:'',
-
-      end_time:'',
-
-      reason:''
-
-    })
-
-async function fetchAppointments(){
-
+async function fetchAppointments() {
   loading.value = true
-
   error.value = ''
-
-  try{
-
-    const res =
-        await api.get(
-            '/appointments'
-        )
-
-    appointments.value =
-        res.data || []
-
+  try {
+    const res = await api.get('/appointments')
+    appointments.value = res.data.data || []
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to load appointments'
+  } finally {
+    loading.value = false
   }
-
-  catch(err){
-
-    error.value =
-
-        err.response?.data?.message
-
-        ||
-
-        'Failed to load appointments'
-
-  }
-
-  finally{
-
-    loading.value =
-        false
-
-  }
-
 }
 
-const filteredAppointments =
-    computed(()=>{
+const filteredAppointments = computed(() => {
+  return appointments.value.filter(a => {
+    const s = search.value.toLowerCase()
+    const matchSearch = !s ||
+        (a.appointment_code || '').toLowerCase().includes(s) ||
+        (a.client_name || '').toLowerCase().includes(s)
+    const matchStatus = !statusFilter.value || a.status === statusFilter.value
+    return matchSearch && matchStatus
+  })
+})
 
-      return appointments.value.filter(
-
-          a=>{
-
-            const s =
-                search.value
-                    .toLowerCase()
-
-            const matchSearch =
-
-                !s ||
-
-                (a.appointment_code||'')
-                    .toLowerCase()
-                    .includes(s)
-
-                ||
-
-                (a.client_name||'')
-                    .toLowerCase()
-                    .includes(s)
-
-            const matchStatus =
-
-                !statusFilter.value
-
-                ||
-
-                a.status
-                ===
-                statusFilter.value
-
-            return (
-                matchSearch
-                &&
-                matchStatus
-            )
-
-          }
-
-      )
-
-    })
-
-function openDetails(appt){
-
-  selected.value =
-      appt
-
-  showDetails.value =
-      true
-
+function openDetails(appt) {
+  selected.value = appt
+  showDetails.value = true
 }
 
-function openReschedule(appt){
-
-  selected.value =
-      appt
-
-  rescheduleForm.appointment_date =
-      appt.appointment_date || ''
-
-  rescheduleForm.start_time =
-      appt.start_time || ''
-
-  rescheduleForm.end_time =
-      appt.end_time || ''
-
-  rescheduleForm.reason =
-      ''
-
-  rescheduleError.value =
-      ''
-
-  showReschedule.value =
-      true
-
-}
-
-async function changeStatus(
-    appt,
-    status
-){
-
-  try{
-
-    await api.patch(
-
-        `/appointments/${appt.appointment_code}/status`,
-
-        { status }
-
-    )
-
-    appt.status =
-        status
-
-  }
-
-  catch(err){
-
-    error.value =
-
-        err.response?.data?.message
-
-        ||
-
-        'Status update failed'
-
-  }
-
-}
-
-async function submitReschedule(){
-
-  saving.value = true
-
+function openReschedule(appt) {
+  selected.value = appt
+  rescheduleForm.appointment_date = appt.appointment_start_date || ''
+  rescheduleForm.start_time = appt.start_time || ''
+  rescheduleForm.end_time = appt.end_time || ''
+  rescheduleForm.reason = ''
   rescheduleError.value = ''
-
-  try{
-
-    await api.post(
-
-        `/appointments/${selected.value.appointment_code}/reschedule`,
-
-        rescheduleForm
-
-    )
-
-    showReschedule.value =
-        false
-
-    await fetchAppointments()
-
-  }
-
-  catch(err){
-
-    rescheduleError.value =
-
-        err.response?.data?.message
-
-        ||
-
-        'Reschedule failed'
-
-  }
-
-  finally{
-
-    saving.value =
-        false
-
-  }
-
+  showReschedule.value = true
 }
 
-onMounted(
-    fetchAppointments
-)
+async function changeStatus(appt, status) {
+  try {
+    await api.patch(`/appointments/${appt.appointment_code}/status`, { status })
+    appt.status = status
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Status update failed'
+  }
+}
 
+async function submitReschedule() {
+  saving.value = true
+  rescheduleError.value = ''
+  try {
+    await api.post(`/appointments/${selected.value.appointment_code}/reschedule`, rescheduleForm)
+    showReschedule.value = false
+    await fetchAppointments()
+  } catch (err) {
+    rescheduleError.value = err.response?.data?.message || 'Reschedule failed'
+  } finally {
+    saving.value = false
+  }
+}
+
+onMounted(fetchAppointments)
 </script>
 
 <style scoped>

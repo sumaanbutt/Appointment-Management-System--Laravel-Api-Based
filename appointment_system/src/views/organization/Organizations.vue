@@ -25,9 +25,9 @@
         </tr>
         </thead>
         <tbody>
-        <tr v-for="org in organizations" :key="org.code">
+        <tr v-for="org in organizations" :key="org.organization_code">
           <td>{{ org.name }}</td>
-          <td><code>{{ org.code }}</code></td>
+          <td><code>{{ org.organization_code }}</code></td>
           <td>
             <span :class="['badge', org.status]">{{ org.status }}</span>
           </td>
@@ -44,81 +44,34 @@
     </div>
 
     <!-- EDIT MODAL -->
-    <div v-if="showEditModal" class="org-modal-overlay">
-
-      <div class="org-modal">
-
+    <div v-if="showEditModal" class="modal-overlay">
+      <div class="modal">
         <div class="modal-header">
           <h3>Edit Organization</h3>
-          <button
-              class="close"
-              @click="showEditModal = false"
-          >
-            ✕
-          </button>
+          <button class="close" @click="showEditModal = false">✕</button>
         </div>
-
-        <form
-            class="form"
-            @submit.prevent="updateOrg"
-        >
-
-          <input
-              v-model="editForm.name"
-              placeholder="Organization Name"
-              required
-          />
-
-          <div class="field">
-            <label>Description</label>
-
-            <textarea
-                v-model="editForm.description"
-                placeholder="Enter description"
-            ></textarea>
-          </div>
-
-          <select
-              v-model="editForm.status"
-          >
-            <option value="active">
-              Active
-            </option>
-
-            <option value="inactive">
-              Inactive
-            </option>
+        <form class="form" @submit.prevent="updateOrg">
+          <input v-model="editForm.name" placeholder="Organization Name" required />
+          <select v-model="editForm.status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
-
-          <p
-              v-if="formError"
-              class="error-msg"
-          >
-            {{ formError }}
-          </p>
-
-          <button
-              type="submit"
-              class="save-btn"
-              :disabled="saving"
-          >
+          <p v-if="formError" class="error-msg">{{ formError }}</p>
+          <button type="submit" class="save-btn" :disabled="saving">
             {{ saving ? 'Saving...' : 'Save Changes' }}
           </button>
-
         </form>
-
       </div>
-
     </div>
 
     <!-- DELETE MODAL -->
-    <div v-if="showDeleteModal" class="org-modal-overlay">
-      <div class="org-modal delete-modal">
+    <div v-if="showDeleteModal" class="modal-overlay">
+      <div class="modal delete-modal">
         <h3>Delete Organization</h3>
         <p>Are you sure you want to delete <strong>{{ selected?.name }}</strong>?</p>
         <div class="actions">
           <button class="cancel-btn" @click="showDeleteModal = false">Cancel</button>
-          <button class="delete-confirm-btn" @click="deleteOrg" :disabled="saving">
+          <button class="delete-confirm-btn" @click="deactivateOrg" :disabled="saving">
             {{ saving ? 'Deleting...' : 'Deactivate' }}
           </button>
         </div>
@@ -142,13 +95,13 @@ const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const selected = ref(null)
 
-const editForm = reactive({ name: '', description: '', status: 'active' })
+const editForm = reactive({ name: '', status: 'active' })
 
 async function fetchOrgs() {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/organizations')
+    const res = await api.get('/organizations/get-organization')
     organizations.value = res.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load organizations'
@@ -158,27 +111,14 @@ async function fetchOrgs() {
 }
 
 function openEdit(org) {
-  console.log(
-      'EDIT CLICKED',
-      org
-  )
   selected.value = org
   editForm.name = org.name
-  editForm.description = org.description || ''
-  editForm.status = org.status || 'active'
+  editForm.status = org.status
   formError.value = ''
   showEditModal.value = true
-  console.log(
-      'MODAL STATE:',
-      showEditModal.value
-  )
 }
 
 function openDelete(org) {
-  console.log(
-      'DELETE CLICKED',
-      org
-  )
   selected.value = org
   showDeleteModal.value = true
 }
@@ -187,7 +127,7 @@ async function updateOrg() {
   saving.value = true
   formError.value = ''
   try {
-    await api.put(`/organizations/${selected.value.code}`, editForm)
+    await api.put(`/organizations/update-organization${selected.value.organization_code}`, editForm)
     showEditModal.value = false
     await fetchOrgs()
   } catch (err) {
@@ -197,10 +137,10 @@ async function updateOrg() {
   }
 }
 
-async function deleteOrg() {
+async function deactivateOrg() {
   saving.value = true
   try {
-    await api.patch(`/organizations/${selected.value.code}/status`, { status: 'inactive' })
+    await api.patch(`/organizations/update-organization-status${selected.value.organization_code}`, { status: 'inactive' })
     showDeleteModal.value = false
     await fetchOrgs()
   } catch (err) {
@@ -275,52 +215,18 @@ onMounted(fetchOrgs)
 .loading, .empty { text-align: center; color: #94a3b8; padding: 20px; font-size: 14px; }
 .error-msg { color: #ef4444; font-size: 13px; margin: 0; }
 
-.org-modal-overlay {
-
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:99999;
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
 }
-
-.org-modal {
-  background:white;
-  border-radius:10px;
-  padding:24px;
-  width:420px;
-  max-width:90%;
-  position:relative;
-  z-index:100000;
-}
-.org-modal textarea{
-  width:100%;
-  min-height:100px;
-  padding:10px 12px;
-  border:1px solid #d1d5db;
-  border-radius:8px;
-  font-size:14px;
-  resize:vertical;
-  outline:none;
-  box-sizing:border-box;
-}
-.org-modal input,
-.org-modal select{
-
-  width:100%;
-
-  padding:10px 12px;
-
-  border:1px solid #d1d5db;
-
-  border-radius:8px;
-
-  font-size:14px;
-
-  box-sizing:border-box;
-
+.modal {
+  background: white;
+  border-radius: 10px;
+  padding: 24px;
+  width: 420px;
+  max-width: 90%;
 }
 .modal-header {
   display: flex;
@@ -332,12 +238,6 @@ onMounted(fetchOrgs)
 .close { background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b; }
 
 .form { display: flex; flex-direction: column; gap: 12px; }
-
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
 .form input, .form select {
   padding: 9px 12px;
   border: 1px solid #e2e8f0;

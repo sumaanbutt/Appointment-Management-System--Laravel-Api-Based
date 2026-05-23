@@ -15,6 +15,7 @@
       <input v-model="search" placeholder="Search by name or email..." />
     </div>
 
+
     <!-- TABLE CARD -->
     <div class="card">
       <div v-if="loading" class="loading">Loading...</div>
@@ -26,15 +27,15 @@
           <th>Full Name</th>
           <th>Email</th>
           <th>Phone</th>
-          <th>Code</th>
+          <th>User Code</th>
           <th width="140">Actions</th>
         </tr>
         </thead>
         <tbody>
         <tr v-for="client in filteredClients" :key="client.user_code">
-          <td>{{ client.user?.name || '—' }}</td>
-          <td>{{ client.user?.email || '—' }}</td>
-          <td>{{ client.user?.phone || '—' }}</td>
+          <td>{{ client.name }}</td>
+          <td>{{ client.email }}</td>
+          <td>{{ client.phone || '—' }}</td>
           <td><code>{{ client.user_code }}</code></td>
           <td>
             <button class="edit-btn" @click="openEdit(client)">Edit</button>
@@ -71,7 +72,7 @@
     <div v-if="showDeleteModal" class="modal-overlay">
       <div class="modal delete-modal">
         <h3>Delete Client</h3>
-        <p>Are you sure you want to delete <strong>{{ selected?.user?.name }}</strong>?</p>
+        <p>Are you sure you want to delete <strong>{{ selected?.name }}</strong>?</p>
         <div class="actions">
           <button class="cancel-btn" @click="showDeleteModal = false">Cancel</button>
           <button class="delete-confirm-btn" @click="deleteClient" :disabled="saving">
@@ -80,8 +81,8 @@
         </div>
       </div>
     </div>
-
   </div>
+
 </template>
 
 <script setup>
@@ -110,29 +111,24 @@ const filteredClients = computed(() => {
   )
 })
 
-async function fetchClients(){
+async function fetchClients() {
   loading.value = true
   error.value = ''
-
-  try{
-    const res = await api.get('/clients')
-    clients.value = res.data.data.data || []
-  }
-
-  catch(err){
+  try {
+    const res = await api.get('/clients/get-client')
+    clients.value = res.data.data || []
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load clients'
-  }
-
-  finally{
+  } finally {
     loading.value = false
   }
 }
 
 function openEdit(client) {
   selected.value = client
-  editForm.name = client.user?.name || ''
-  editForm.email = client.user?.email || ''
-  editForm.phone = client.user?.phone || ''
+  editForm.name = client.name
+  editForm.email = client.email
+  editForm.phone = client.phone || ''
   formError.value = ''
   showEditModal.value = true
 }
@@ -146,7 +142,7 @@ async function updateClient() {
   saving.value = true
   formError.value = ''
   try {
-    await api.put(`/clients/${selected.value.user_code}`, editForm)
+    await api.put(`/clients/update-client/${selected.value.user_code}`, editForm)
     showEditModal.value = false
     await fetchClients()
   } catch (err) {
@@ -159,7 +155,7 @@ async function updateClient() {
 async function deleteClient() {
   saving.value = true
   try {
-    await api.delete(`/clients/${selected.value.user_code}`)
+    await api.delete(`/clients/delete-client/${selected.value.user_code}`)
     showDeleteModal.value = false
     await fetchClients()
   } catch (err) {

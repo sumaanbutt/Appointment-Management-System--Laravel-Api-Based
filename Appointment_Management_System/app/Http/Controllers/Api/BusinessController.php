@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Business\CreateBusinessRequest;
 use App\Http\Requests\Business\UpdateBusinessRequest;
 use App\Models\Business;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -33,35 +36,51 @@ class BusinessController extends Controller
 
     public function store(CreateBusinessRequest $request)
     {
-        $data = $request->validated();
         try {
+                $business = Business::create([
+                    'organization_code' => $request->organization_code,
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'description' => $request->description,
+                    'timezone'=> $request->timezone,
+                    'status' => $request->status,
+            ]);
 
-            $business = Business::create([
-            'organization_code' => $request->organization_code,
-            //'owner_code' => $request->owner_code,
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'description' => $request->description,
-            'timezone'=> $request->timezone,
-            'status' => $request->status,
-        ]);
+
+            User::create([
+                'code' => 'USR'.rand(100000,999999),
+                'organization_code' => $business->organization_code,
+                'business_code' => $business->code,
+                'name' => $business->name.' Owner',
+                'email' =>
+                    strtolower(str_replace(
+                            ' ',
+                            '',
+                            $business->name
+                        )
+                    ).'@owner.com',
+
+                'password' => Hash::make('password123'),
+                'user_type' => 'BUSINESS_OWNER',
+                'status' => 'ACTIVE',
+            ]);
+
+
             return response()->json([
-                'success' => true,
-                'message' => 'Business created successfully',
-                'data' => $business
-            ], 201);
-
-        } catch (\Exception $e) {
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Business creation failed',
-                'error' => $e->getMessage()
-            ], 500);
+                'success'=>true,
+                'message'=> 'Business + Owner created successfully',
+                'data'=>$business
+            ],201);
         }
 
-        //return response()->json($business);
+        catch(\Exception $e){
+            return response()->json([
+                'success'=>false,
+                'message'=>'Business creation failed',
+                'error'=>$e->getMessage()
+            ],401);
+        }
     }
 
     public function show(Business $business)
