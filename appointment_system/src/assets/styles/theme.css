@@ -1,0 +1,98 @@
+/* DARK THEME */
+
+body.dark-mode{
+
+    background:#111827;
+}
+
+/* APP LAYOUT */
+
+body.dark-mode #app{
+
+    background:#111827;
+}
+
+/* PAGE BACKGROUNDS */
+
+body.dark-mode .notifications-page{
+
+    background:#111827;
+}
+
+/* NAVBAR */
+
+body.dark-mode .custom-navbar{
+
+    background:#1f2937;
+
+    border-color:#374151;
+}
+
+/* SEARCH */
+
+body.dark-mode .search-input{
+
+    background:#111827;
+
+    color:#ffffff;
+
+    border-color:#374151;
+}
+
+/* BUTTONS */
+
+body.dark-mode .nav-icon-btn{
+
+    background:#374151;
+}
+
+body.dark-mode .nav-icon-btn i{
+
+    color:white;
+}
+
+/* CONTAINERS */
+
+body.dark-mode .filters-card,
+
+body.dark-mode .notification-container,
+
+body.dark-mode .notification-card,
+
+body.dark-mode .profile-dropdown{
+
+    background:#1f2937;
+
+    border-color:#374151;
+}
+
+/* INPUTS */
+
+body.dark-mode input,
+
+body.dark-mode textarea,
+
+body.dark-mode select{
+
+    background:#111827;
+
+    border-color:#374151;
+
+    color:#ffffff;
+}
+
+:root {
+    --sidebar-bg: #1e293b;
+    --sidebar-hover: #334155;
+    --primary: #6366f1;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #94a3b8;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+}
