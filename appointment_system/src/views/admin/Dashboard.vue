@@ -1,5 +1,11 @@
 <template>
+
   <div class="dashboard">
+
+    <div>
+      <h1>Admin Dashboard</h1>
+      <p>Welcome Super Admin</p>
+    </div>
 
     <!-- STAT CARDS -->
     <div class="stats-grid">
@@ -90,13 +96,13 @@
         </tr>
         </thead>
         <tbody>
-        <tr v-for="appt in recentAppointments" :key="appt.appointment_code">
-          <td>{{ appt.appointment_code }}</td>
-          <td>{{ appt.client_name || '—' }}</td>
-          <td>{{ appt.service_name || '—' }}</td>
-          <td>{{ appt.appointment_date }}</td>
+        <tr v-for="appt in recentAppointments" :key="appt.code">
+          <td>{{ appt.code }}</td>
+          <td>{{ appt.client_code || '—' }}</td>
+          <td>{{ appt.service_code || '—' }}</td>
+          <td>{{ appt.appointment_start_date || '—' }}</td>
           <td>
-            <span :class="['badge', appt.status]">{{ appt.status }}</span>
+            <span :class="['badge',appt.status?.toLowerCase()]">{{ appt.status }}</span>
           </td>
         </tr>
         <tr v-if="recentAppointments.length === 0">
@@ -111,7 +117,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import api from '@/services/api'
+import api from '@/services/api.ts'
+
 
 const loading = ref(true)
 const recentAppointments = ref([])
@@ -129,51 +136,104 @@ const stats = ref({
 
 function getCount(res){
 
-  return (
-      res?.data?.data?.data?.length
-      ||
-      res?.data?.data?.length
-      ||
-      res?.data?.length
-      ||
-      0
-  )
+  const response =
+      res?.data
 
+  const data =
+      response?.data?.data
+      ??
+      response?.data
+      ??
+      []
+
+  if(Array.isArray(data))
+    return data.length
+
+  if(typeof data==='object')
+    return Number(
+        data.total
+        ??
+        data.count
+        ??
+        0
+    )
+
+  return 0
 }
 
 onMounted(async () => {
-  try {
-    const [orgs, bizs, clients, appts, users, svcs, invs, locs] = await Promise.allSettled([
 
-      api.get('/organizations'),
-      api.get('/businesses'),
-      api.get('/clients'),
-      api.get('/appointments'),
-      api.get('/users'),
-      api.get('/services'),
-      api.get('/invoices'),
-      api.get('/business-locations'),
-    ])
+  try {
+
+    const [orgs, bizs, clients, appts, users, svcs, invs, locs] =
+        await Promise.allSettled([
+
+          api.get('/organizations'),
+          api.get('/businesses'),
+          api.get('/clients'),
+          api.get('/appointments'),
+          api.get('/users'),
+          api.get('/services'),
+          api.get('/invoices'),
+          api.get('/business-locations'),
+
+        ])
+
+    console.log('APPOINTMENTS RESPONSE:', appts)
     console.log(
-        'INVOICES:',
-        invs.value.data
+        'FIRST APPOINTMENT:',
+        appts.value?.data?.data?.data?.[0]
     )
 
-    stats.value.organizations = orgs.status === 'fulfilled' ? getCount(orgs.value) : 0
-    stats.value.businesses = bizs.status === 'fulfilled' ? getCount(bizs.value) : 0
-    stats.value.clients = clients.status === 'fulfilled' ? getCount(clients.value) : 0
-    stats.value.appointments = appts.status === 'fulfilled' ? getCount(appts.value) : 0
-    stats.value.users = users.status === 'fulfilled' ? getCount(users.value) : 0
-    stats.value.services = svcs.status === 'fulfilled' ? getCount(svcs.value) : 0
-    stats.value.invoices = invs.status === 'fulfilled' ? (invs.value.data.invoices?.data?.length || invs.value.data.invoices?.length || 0) : 0
-    stats.value.locations = locs.status === 'fulfilled' ? getCount(locs.value) : 0
+    stats.value.organizations =
+        orgs.status === 'fulfilled' ? getCount(orgs.value) : 0
+
+    stats.value.businesses =
+        bizs.status === 'fulfilled' ? getCount(bizs.value) : 0
+
+    stats.value.clients =
+        clients.status === 'fulfilled' ? getCount(clients.value) : 0
+
+    stats.value.appointments =
+        appts.status === 'fulfilled' ? getCount(appts.value) : 0
+
+    stats.value.users =
+        users.status === 'fulfilled' ? getCount(users.value) : 0
+
+    stats.value.services =
+        svcs.status === 'fulfilled' ? getCount(svcs.value) : 0
+
+    stats.value.invoices =
+        invs.status === 'fulfilled'
+            ? (invs.value.data.invoices?.data?.length ||
+                invs.value.data.invoices?.length ||
+                0)
+            : 0
+
+    stats.value.locations =
+        locs.status === 'fulfilled' ? getCount(locs.value) : 0
+
 
     if (appts.status === 'fulfilled') {
-      recentAppointments.value = (appts.value.data.data.data || []).slice(0, 5)
+
+      const appointmentsData =
+          appts.value?.data?.data?.data ??
+          appts.value?.data?.data ??
+          appts.value?.data?.appointments ??
+          []
+
+      recentAppointments.value =
+          Array.isArray(appointmentsData)
+              ? appointmentsData.slice(0,5)
+              : []
     }
+
   } finally {
+
     loading.value = false
+
   }
+
 })
 </script>
 
@@ -294,6 +354,9 @@ onMounted(async () => {
 .badge.rejected   { background: #fee2e2; color: #dc2626; }
 .badge.rescheduled { background: #dbeafe; color: #2563eb; }
 .badge.completed  { background: #f0fdf4; color: #15803d; }
+.badge.cancelled { background: #e5e7eb; color: #374151; }
+.badge.in_progress { background: #dbeafe; color: #2563eb; }
+
 
 .loading, .empty {
   text-align: center;

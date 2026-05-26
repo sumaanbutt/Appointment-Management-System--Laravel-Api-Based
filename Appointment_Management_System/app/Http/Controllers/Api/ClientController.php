@@ -8,6 +8,8 @@ use App\Http\Requests\Client\UpdateClientRequest;
 use App\Models\Client;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class ClientController extends Controller
 {
@@ -31,43 +33,52 @@ class ClientController extends Controller
     }
     }
 
-    public function store(CreateClientRequest $request, Client $client)
+    public function store(CreateClientRequest $request)
     {
+        // All validated fields are handled inside the FormRequest
         $data = $request->validated();
 
-        try{
-            $user = User::where(
-                'code',
-                $request->user_code
-            )->firstOrFail();
+        try {
+            return DB::transaction(function () use ($request) {
+                // 1. Create the system user record first
+                $user = User::create([
+                    'code' => 'USR' . rand(100000, 999999),
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'password' => Hash::make($request->password),
+                    'user_type' => 'CLIENT',
+                    'status' => strtoupper($request->status ?? 'ACTIVE'),
+                ]);
 
-            $user->update([
-                'user_type' => 'CLIENT'
-            ]);
+                // 2. Map user code onto profile schema creation
+                $client = Client::create([
+                    'business_code' => $request->business_code,
+                    'user_code' => $user->code,
+                    'address' => $request->address,
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'country' => $request->country,
+                ]);
 
-            $client = Client::create([
-                'business_code' => $request->business_code,
-                'user_code' => $request->user_code,
-                'address' => $request->address,
-                'city' => $request->city,
-                'state' => $request->state,
-                'country' => $request->country,
-            ]);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Client and User account created successfully',
+                    'data' => $client->load('user'),
+                ], 201);
+            });
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Client created successfully',
-                'data' => $client,
-            ],200);
-
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create Client',
                 'error' => $e->getMessage(),
-            ],401);
+            ], 422);
         }
     }
+
+    // ... rest of the resource methods stay the same
+
 
     public function show(Client $client)
     {

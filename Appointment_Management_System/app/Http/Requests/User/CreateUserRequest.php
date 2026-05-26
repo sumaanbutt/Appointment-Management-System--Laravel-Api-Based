@@ -23,7 +23,7 @@ class CreateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'organization_code' => 'required|exists:organizations,code',
+            'organization_code' => 'sometimes|exists:organizations,code',
             'business_code' => ['nullable', 'exists:businesses,code',
                 /*function ($attribute, $value, $fail) {
                     if (
@@ -41,7 +41,7 @@ class CreateUserRequest extends FormRequest
             'email' => 'nullable|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|confirmed|min:8',
-            'user_type' => 'required|in:ADMIN,BUSINESS_OWNER,OPERATION_STAFF,SERVICE_STAFF,CLIENT',
+            'user_type' => 'required|in:SUPER_ADMIN,BUSINESS_OWNER,OPERATION_STAFF,SERVICE_STAFF,CLIENT',
             'status' => 'nullable|in:ACTIVE,INACTIVE',
         ];
     }

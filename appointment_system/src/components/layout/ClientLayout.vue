@@ -37,9 +37,7 @@
     </aside>
 
     <div class="main">
-      <header class="topbar">
-        <h3 class="page-title">{{ pageTitle }}</h3>
-      </header>
+      <Navbar />
       <div class="content">
         <router-view />
       </div>
@@ -51,6 +49,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import Navbar from '@/components/layout/Navbar.vue'
 
 const router = useRouter()
 const route = useRoute()

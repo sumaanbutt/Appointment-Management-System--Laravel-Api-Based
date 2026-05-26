@@ -11,11 +11,11 @@ const authStore = useAuthStore()
 const notificationsEnabled = ref(true)
 
 function goToProfile(){
-  router.push({ name:'/settings' })
+  router.push('/settings')
 }
 
 function goToAccountSettings(){
-  router.push({ name:'/settings' })
+  router.push('/settings')
 }
 
 async function logout(){

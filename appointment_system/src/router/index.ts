@@ -9,7 +9,8 @@ import LoginView from '@/views/auth/LoginView.vue'
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
 import SettingsView from '@/views/settings/SettingsView.vue'
 import NotificationsView from '@/views/notifications/NotificationsView.vue'
-import Dashboard from "@/views/business-owner/Dashboard.vue";
+import AdminDashboard from "@/views/admin/Dashboard.vue"
+
 
 // Declare TypeScript definitions for your custom meta properties
 declare module 'vue-router' {
@@ -32,7 +33,7 @@ const routes = [
         component: AdminLayout,
         meta: { requiresAuth: true, role: ROLES.ADMIN },
         children: [
-            { path: "dashboard", component: Dashboard },
+            { path: "dashboard", component: AdminDashboard },
             { path: "organizations", component: () => import("@/views/organization/Organizations.vue") },
             { path: "organizations/create", component: () => import("@/views/organization/CreateOrganization.vue") },
             { path: "businesses", component: () => import("@/views/business/Businesses.vue") },
@@ -52,6 +53,8 @@ const routes = [
             { path: "invoices", component: () => import("@/views/invoice/Invoices.vue") },
             { path: "users", component: () => import("@/views/users/Users.vue") },
             { path: "users/create", component: () => import("@/views/users/CreateUser.vue") },
+            { path: 'settings' , component: SettingsView },
+            { path: 'notifications', component: NotificationsView },
         ],
     },
 
@@ -76,6 +79,8 @@ const routes = [
             { path: "schedules", component: () => import("@/views/schedule/Schedules.vue") },
             { path: "charges", component: () => import("@/views/charge/charges.vue") },
             { path: "invoices", component: () => import("@/views/business-owner/Invoices.vue") },
+            { path: 'settings', component: SettingsView },
+            { path: 'notifications',component: NotificationsView },
         ],
     },
 
@@ -91,6 +96,8 @@ const routes = [
             { path: "schedules", component: () => import("@/views/operational-staff/Schedules.vue") },
             { path: "availability", component: () => import("@/views/operational-staff/Availability.vue") },
             { path: "clients", component: () => import("@/views/operational-staff/Clients.vue") },
+            { path: 'settings', component: SettingsView },
+            { path: 'notifications', component: NotificationsView },
         ],
     },
 
@@ -103,6 +110,8 @@ const routes = [
             { path: "dashboard", component: () => import("@/views/service-staff/Dashboard.vue") },
             { path: "schedule", component: () => import("@/views/service-staff/MySchedule.vue") },
             { path: "appointments", component: () => import("@/views/service-staff/MyAppointments.vue") },
+            { path: 'settings', component: SettingsView },
+            { path: 'notifications', component: NotificationsView },
         ],
     },
 
@@ -115,6 +124,8 @@ const routes = [
             { path: "dashboard", component: () => import("@/views/client/Dashboard.vue") },
             { path: "book", component: () => import("@/views/client/BookAppointment.vue") },
             { path: "appointments", component: () => import("@/views/client/MyAppointments.vue") },
+            { path: 'settings', component: SettingsView },
+            { path: 'notifications', component: NotificationsView },
         ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/login' }

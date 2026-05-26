@@ -64,9 +64,7 @@
     </aside>
 
     <div class="main">
-      <header class="topbar">
-        <h3 class="page-title">{{ pageTitle }}</h3>
-      </header>
+      <Navbar />
       <div class="content">
         <router-view />
       </div>
@@ -78,6 +76,7 @@
 import { reactive, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import Navbar from '@/components/layout/Navbar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -90,7 +89,7 @@ function toggle(key) { open[key] = !open[key] }
 const titleMap = {
   '/ops/dashboard': 'Dashboard',
   '/ops/appointments': 'Appointments',
-  '/ops/appointments/pending': 'Pending Appointments',
+  '/ops/pending': 'Pending Appointments',
   '/ops/schedules': 'Staff Schedules',
   '/ops/availability': 'Check Staff Availability',
   '/ops/clients': 'Clients',

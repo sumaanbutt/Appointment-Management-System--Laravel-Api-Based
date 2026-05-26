@@ -11,54 +11,49 @@
 
         <div class="field">
           <label>Full Name *</label>
-          <input v-model="form.name" placeholder="Enter full name" required />
+          <input v-model="form.name" placeholder="Enter full name" :class="{ 'field-input-error': errors.name }" @blur="validateField('name')" />
+          <p v-if="errors.name" class="field-error">{{ errors.name }}</p>
         </div>
 
         <div class="field">
           <label>Email</label>
-          <input v-model="form.email" type="email" placeholder="Enter email" />
+          <input v-model="form.email" type="email" placeholder="Enter email" :class="{ 'field-input-error': errors.email }" @blur="validateField('email')" />
+          <p v-if="errors.email" class="field-error">{{ errors.email }}</p>
         </div>
 
         <div class="field">
           <label>Phone *</label>
-          <input v-model="form.phone" type="text" placeholder="Enter phone number" required />
+          <input v-model="form.phone" type="text" placeholder="Enter phone number" :class="{ 'field-input-error': errors.phone }" @blur="validateField('phone')" />
+          <p v-if="errors.phone" class="field-error">{{ errors.phone }}</p>
         </div>
 
         <div class="field">
           <label>Password *</label>
-          <input v-model="form.password" type="password" placeholder="Enter password" required />
+          <input v-model="form.password" type="password" placeholder="Enter password" :class="{ 'field-input-error': errors.password }" @blur="validateField('password')" />
+          <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
         </div>
 
         <div class="field">
           <label>User Type *</label>
-          <select v-model="form.user_type" required>
+          <select v-model="form.user_type" :class="{ 'field-input-error': errors.user_type }" @change="validateField('user_type')">
             <option value="">Select type</option>
-<!--            <option value="admin">Admin</option>-->
-            <option value="business_owner">Business Owner</option>
-            <option value="operational_staff">Operational Staff</option>
-            <option value="service_staff">Service Staff</option>
-            <option value="client">Client</option>
+            <option v-if="!staffOnly && !isBusinessOwner" value="BUSINESS_OWNER">Business Owner</option>
+            <option value="OPERATION_STAFF">Operational Staff</option>
+            <option value="SERVICE_STAFF">Service Staff</option>
+            <option value="CLIENT">Client</option>
           </select>
+          <p v-if="errors.user_type" class="field-error">{{ errors.user_type }}</p>
         </div>
 
         <div class="field">
           <label>Business</label>
-          <select v-model="form.business_code">
+          <select v-model="form.business_code" :class="{ 'field-input-error': errors.business_code }" @change="validateField('business_code')">
             <option value="">Select Business</option>
-            <option v-for="biz in businesses" :key="biz.business_code" :value="biz.business_code">
+            <option v-for="biz in businesses" :key="biz.code" :value="biz.code">
               {{ biz.name }}
             </option>
           </select>
-        </div>
-
-        <div class="field">
-          <label>Status *</label>
-          <select v-model="form.is_active" required>
-            <option value="">Select status</option>
-            <option v-for="status in ['active', 'inactive']" :key="status" :value="status">
-              {{ status }}
-            </option>
-          </select>
+          <p v-if="errors.business_code" class="field-error">{{ errors.business_code }}</p>
         </div>
 
         <p v-if="error" class="error-msg">{{ error }}</p>
@@ -77,42 +72,85 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
+
+const staffOnly = computed(() => route.query.staffOnly === 'true')
+const isBusinessOwner = computed(() => authStore.role === 'BUSINESS_OWNER')
 
 const form = reactive({
-  name: '',
-  email: '',
-  phone: '',
-  password: '',
-  user_type: '',
-  business_code: '',
-  is_active: '',
+  name:'',
+  email:'',
+  phone:'',
+  password:'',
+  user_type:'',
+  business_code:'',
+  status:'ACTIVE'
 })
 const businesses = ref([])
 const loading = ref(false)
 const error = ref('')
+const errors = reactive({})
+
+function validateUserForm(form) {
+  const errors = {}
+
+  if (!form.name?.trim())
+    errors.name = 'Name is required'
+
+  if (!form.email?.trim())
+    errors.email = 'Email is required'
+
+  if (!form.phone?.trim())
+    errors.phone = 'Phone is required'
+
+  if (!form.password?.trim())
+    errors.password = 'Password is required'
+
+  if (!form.user_type)
+    errors.user_type = 'User type is required'
+
+  return errors
+}
+
+function validateField(field) {
+  const result = validateUserForm(form)
+  if (result[field]) { errors[field] = result[field] } else { delete errors[field] }
+}
 
 onMounted(async () => {
   try {
-    const res = await api.get('/businesses/get-business')
-    businesses.value = res.data.data || []
+    const res = await api.get('/businesses')
+    businesses.value = res.data.data.data || []
   } catch (_) {}
 })
 
 async function submit() {
+  const validationErrors = validateUserForm(form)
+  Object.keys(errors).forEach(k => delete errors[k])
+  Object.assign(errors, validationErrors)
+  if (Object.keys(errors).length > 0) return
+
   loading.value = true
   error.value = ''
   try {
     const payload = { ...form }
     if (!payload.business_code) delete payload.business_code
-    await api.post('/users/create-user', payload)
+    await api.post('/users', payload)
     router.push('/users')
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to create user'
+    error.value =
+        err.response?.data?.message
+        ||
+        err.response?.data?.error
+        ||
+        'User creation failed'
   } finally {
     loading.value = false
   }
@@ -143,6 +181,8 @@ async function submit() {
   outline: none;
 }
 .field input:focus, .field select:focus { border-color: #6366f1; }
+.field-input-error { border-color: #ef4444 !important; }
+.field-error { color: #ef4444; font-size: 12px; margin: 2px 0 0; }
 .error-msg { color: #ef4444; font-size: 13px; margin: 0; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; }
 .cancel-btn {

@@ -68,9 +68,24 @@ Route::middleware([
         AppointmentController::class
     );
 
+    Route::get(
+        'appointments/{appointment}/availability',
+        [AppointmentController::class,'availability']
+    );
+
+    Route::post(
+        'appointments/{appointment}/approve',
+        [AppointmentController::class,'approve']
+    );
+
     Route::patch(
         'appointments/{appointment}/status',
         [AppointmentController::class,'updateStatus']
+    );
+
+    Route::get(
+        'appointments/{appointment}/history',
+        [AppointmentController::class,'history']
     );
 
     Route::post(

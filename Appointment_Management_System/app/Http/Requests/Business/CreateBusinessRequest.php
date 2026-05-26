@@ -21,6 +21,7 @@ class CreateBusinessRequest extends FormRequest
             'email' => 'required|email|unique:businesses,email',
             'phone' => 'required|string|max:20',
             'description' => 'nullable|string',
+            'timezone' => 'nullable|string',
             'status' => 'required|in:ACTIVE,INACTIVE',
         ];
     }

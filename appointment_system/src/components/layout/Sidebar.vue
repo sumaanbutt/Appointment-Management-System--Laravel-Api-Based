@@ -11,7 +11,7 @@
     <nav class="menu">
 
       <!-- DASHBOARD -->
-      <router-link to="/dashboard" class="item">
+      <router-link to="/admin/dashboard" class="item">
         <i class="icon">📊</i>
         <span v-if="!collapsed">Dashboard</span>
       </router-link>
@@ -36,11 +36,11 @@
         </div>
 
         <div v-show="open.org && !collapsed" class="submenu">
-          <router-link to="/organizations" class="sub-item">
+          <router-link to="/admin/organizations" class="sub-item">
             All Organizations
           </router-link>
 
-          <router-link to="/organizations/create" class="sub-item">
+          <router-link to="/admin/organizations/create" class="sub-item">
             New Organization
           </router-link>
         </div>
@@ -66,11 +66,11 @@
         </div>
 
         <div v-show="open.biz && !collapsed" class="submenu">
-          <router-link to="/businesses" class="sub-item">
+          <router-link to="/admin/businesses" class="sub-item">
             All Businesses
           </router-link>
 
-          <router-link to="/businesses/create" class="sub-item">
+          <router-link to="/admin/businesses/create" class="sub-item">
             New Business
           </router-link>
         </div>
@@ -96,11 +96,11 @@
         </div>
 
         <div v-show="open.client && !collapsed" class="submenu">
-          <router-link to="/clients" class="sub-item">
+          <router-link to="/admin/clients" class="sub-item">
             All Clients
           </router-link>
 
-          <router-link to="/clients/create" class="sub-item">
+          <router-link to="/admin/clients/create" class="sub-item">
             New Client
           </router-link>
         </div>
@@ -126,11 +126,11 @@
         </div>
 
         <div v-show="open.app && !collapsed" class="submenu">
-          <router-link to="/appointments" class="sub-item">
+          <router-link to="/admin/appointments" class="sub-item">
             All Appointments
           </router-link>
 
-          <router-link to="/appointments/create" class="sub-item">
+          <router-link to="/admin/appointments/create" class="sub-item">
             New Appointment
           </router-link>
         </div>
@@ -156,11 +156,11 @@
         </div>
 
         <div v-show="open.svc && !collapsed" class="submenu">
-          <router-link to="/services" class="sub-item">
+          <router-link to="/admin/services" class="sub-item">
             All Services
           </router-link>
 
-          <router-link to="/services/create" class="sub-item">
+          <router-link to="/admin/services/create" class="sub-item">
             New Service
           </router-link>
         </div>
@@ -183,34 +183,34 @@
         </div>
 
         <div v-show="open.loc && !collapsed" class="submenu">
-          <router-link to="/locations" class="sub-item">
+          <router-link to="/admin/locations" class="sub-item">
             All Locations
           </router-link>
 
-          <router-link to="/locations/create" class="sub-item">
+          <router-link to="/admin/locations/create" class="sub-item">
             New Location
           </router-link>
 
-          <router-link to="/location-services" class="sub-item">
+          <router-link to="/admin/location-services" class="sub-item">
             Location Services
           </router-link>
         </div>
       </div>
 
       <!-- SCHEDULES -->
-      <router-link to="/schedules" class="item">
+      <router-link to="/admin/schedules" class="item">
         <i class="icon">🗓️</i>
         <span v-if="!collapsed">Schedules</span>
       </router-link>
 
       <!-- CHARGES -->
-      <router-link to="/charges" class="item">
+      <router-link to="/admin/charges" class="item">
         <i class="icon">💰</i>
         <span v-if="!collapsed">Charges</span>
       </router-link>
 
       <!-- INVOICES -->
-      <router-link to="/invoices" class="item">
+      <router-link to="/admin/invoices" class="item">
         <i class="icon">🧾</i>
         <span v-if="!collapsed">Invoices</span>
       </router-link>
@@ -235,11 +235,11 @@
         </div>
 
         <div v-show="open.usr && !collapsed" class="submenu">
-          <router-link to="/users" class="sub-item">
+          <router-link to="/admin/users" class="sub-item">
             All Users
           </router-link>
 
-          <router-link to="/users/create" class="sub-item">
+          <router-link to="/admin/users/create" class="sub-item">
             New User
           </router-link>
         </div>

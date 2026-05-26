@@ -37,7 +37,6 @@ function toggleProfile(){
 
 function goToSettings(){
   router.push('/settings')
-
 }
 
 function handleOutsideClick(

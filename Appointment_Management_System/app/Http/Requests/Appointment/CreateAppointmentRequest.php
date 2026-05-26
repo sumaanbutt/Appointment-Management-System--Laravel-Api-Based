@@ -23,25 +23,20 @@ class CreateAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
+
             'business_code' => 'required|exists:businesses,code',
-            'location_code' => 'required|exists:business_locations,code',
-            'client_code' => 'required|exists:clients,code',
+
+            'location_code' => 'nullable|exists:business_locations,code',
+
+            'client_code' => 'nullable|exists:clients,code',
+
             'service_code' => 'required|exists:services,code',
-            //'availability_slot_code' => 'nullable|exists:availability_slots,code',
+
             'appointment_start_date' => 'required|date',
             'appointment_end_date' => 'required|date',
+
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
-
-            'status' =>
-                'nullable|in:
-                    PENDING,
-                    APPROVED,
-                    IN_PROGRESS,
-                    COMPLETED,
-                    CANCELLED,
-                    REJECTED,
-                    RESCHEDULED',
 
             'notes' => 'nullable|string|max:5000',
         ];

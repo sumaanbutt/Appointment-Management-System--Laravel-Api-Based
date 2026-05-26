@@ -13,11 +13,11 @@
         <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Code</th><th>Status</th></tr></thead>
         <tbody>
           <tr v-for="client in filtered" :key="client.user_code">
-            <td>{{ client.name }}</td>
-            <td>{{ client.email }}</td>
-            <td>{{ client.phone || '—' }}</td>
-            <td><code>{{ client.user_code }}</code></td>
-            <td><span :class="['badge', client.is_active === 'active' ? 'active' : 'inactive']">{{ client.is_active === 'active' ? 'Active' : 'Inactive' }}</span></td>
+            <td>{{ client.user?.name || '—' }}</td>
+            <td>{{ client.user?.email || '—' }}</td>
+            <td>{{ client.user?.phone || '—' }}</td>
+            <td><code>{{ client.code || '—' }}</code></td>
+            <td><span :class="['badge',client.user?.status === 'ACTIVE'? 'active': 'inactive']">{{ client.user?.status || 'INACTIVE' }}</span></td>
           </tr>
           <tr v-if="filtered.length === 0"><td colspan="5" class="empty">No clients found</td></tr>
         </tbody>
@@ -38,17 +38,32 @@ const error = ref('')
 const searchQuery = ref('')
 
 const filtered = computed(() => {
-  const q = searchQuery.value.toLowerCase().trim()
+
+  const q =
+      searchQuery.value
+          .toLowerCase()
+          .trim()
 
   return clients.value.filter(client => {
-    const isClient = client.user_type === 'client'
 
-    const matchesSearch =
-        client.name?.toLowerCase().includes(q) ||
-        client.email?.toLowerCase().includes(q)
+    const name =
+        client.user?.name
+        || ''
 
-    return isClient && (!q || matchesSearch)
+    const email =
+        client.user?.email
+        || ''
+
+    return (
+        !q
+        ||
+        name.toLowerCase().includes(q)
+        ||
+        email.toLowerCase().includes(q)
+    )
+
   })
+
 })
 
 // const filtered = computed(() => {
@@ -58,16 +73,50 @@ const filtered = computed(() => {
 // })
 
 async function fetchClients() {
+
   loading.value = true
   error.value = ''
+
   try {
+    console.log('CLIENTS:', clients.value)
+    console.log('FIRST CLIENT:', clients.value[0])
+
     const biz = authStore.user?.business_code
-    const res = await api.get('/clients/get-client', { params: biz ? { business_code: biz } : {} })
-    clients.value = res.data.data || []
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load clients'
-  } finally {
+
+    const res = await api.get(
+        '/clients',
+        {
+          params: biz
+              ? { business_code: biz }
+              : {}
+        }
+    )
+
+    clients.value =
+        res.data?.data?.data
+        ??
+        res.data?.data
+        ??
+        []
+
+    console.log('CLIENTS:', clients.value)
+
+  }
+
+  catch (err) {
+
+    console.log(err.response?.data)
+
+    error.value =
+        err.response?.data?.message
+        ||
+        'Failed to load clients'
+  }
+
+  finally {
+
     loading.value = false
+
   }
 }
 

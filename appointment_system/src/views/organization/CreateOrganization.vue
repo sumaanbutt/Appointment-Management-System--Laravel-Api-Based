@@ -11,33 +11,19 @@
 
         <div class="field">
           <label>Organization Name *</label>
-          <input v-model="form.name" placeholder="Enter organization name" required />
+          <input v-model="form.name" placeholder="Enter organization name" :class="{ 'field-input-error': errors.name }" @blur="validateField('name')" />
+          <p v-if="errors.name" class="field-error">{{ errors.name }}</p>
         </div>
-
         <div class="field">
-          <label>Description</label>
-
-          <textarea
-              v-model="form.description"
-              placeholder="Enter organization description"
-              rows="4"
-          ></textarea>
-        </div>
-
-        <div class="field">
-          <label>Status *</label>
-          <select v-model="form.status" required>
-            <option value="">Select status</option>
-            <option v-for="status in ['active', 'inactive']" :key="status" :value="status">
-              {{ status }}
-            </option>
-          </select>
+          <label>Description *</label>
+          <textarea v-model="form.description" placeholder="Enter description" :class="{ 'field-input-error': errors.description }" @blur="validateField('description')"></textarea>
+          <p v-if="errors.description" class="field-error">{{ errors.description }}</p>
         </div>
 
         <p v-if="error" class="error-msg">{{ error }}</p>
 
         <div class="form-actions">
-          <router-link to="/organizations" class="cancel-btn">Cancel</router-link>
+          <router-link to="/admin/organizations" class="cancel-btn">Cancel</router-link>
           <button type="submit" class="submit-btn" :disabled="loading">
             {{ loading ? 'Creating...' : 'Create Organization' }}
           </button>
@@ -54,18 +40,40 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 
+
 const router = useRouter()
 
-const form = reactive({ name: '' ,description:'' ,status: ''})
 const loading = ref(false)
 const error = ref('')
+const errors = reactive({})
+const form = reactive({ name: '', description: '', status: 'active' }) // Added description
+
+function validateOrganizationForm(form) {
+  const errors = {}
+  if (!form.name?.trim()) {
+    errors.name = 'Organization name is required'
+  }
+  if (!form.description?.trim()) {
+    errors.description = 'Description is required' // Added validator check
+  }
+  return errors
+}
+function validateField(field) {
+  const result = validateOrganizationForm(form)
+  if (result[field]) { errors[field] = result[field] } else { delete errors[field] }
+}
 
 async function submit() {
+  const validationErrors = validateOrganizationForm(form)
+  Object.keys(errors).forEach(k => delete errors[k])
+  Object.assign(errors, validationErrors)
+  if (Object.keys(errors).length > 0) return
+
   loading.value = true
   error.value = ''
   try {
     await api.post('/organizations', form)
-    router.push('/admin/organizations')
+    router.push('/organizations')
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create organization'
   } finally {
@@ -97,14 +105,17 @@ async function submit() {
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 13px; font-weight: 600; color: #374151; }
-.field input, .field select, .field textarea {
+.field input, .field select , .field textarea{
   padding: 9px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 14px;
   outline: none;
 }
-.field input:focus, .field select:focus, .field textarea:focus { border-color: #6366f1; }
+.field input:focus, .field select:focus , .field textarea:focus { border-color: #6366f1; }
+
+.field-input-error { border-color: #ef4444 !important; }
+.field-error { color: #ef4444; font-size: 12px; margin: 2px 0 0; }
 
 .error-msg { color: #ef4444; font-size: 13px; margin: 0; }
 

@@ -48,7 +48,7 @@ class BusinessController extends Controller
             ]);
 
 
-            User::create([
+            $owner = User::create([
                 'code' => 'USR'.rand(100000,999999),
                 'organization_code' => $business->organization_code,
                 'business_code' => $business->code,
@@ -60,10 +60,17 @@ class BusinessController extends Controller
                             $business->name
                         )
                     ).'@owner.com',
-
+                'phone' => $business->phone,
                 'password' => Hash::make('password123'),
                 'user_type' => 'BUSINESS_OWNER',
                 'status' => 'ACTIVE',
+            ]);
+
+            $business->update([
+
+                'user_code' =>
+                    $owner->code
+
             ]);
 
 

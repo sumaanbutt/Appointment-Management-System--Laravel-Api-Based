@@ -23,15 +23,15 @@ class CreateServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'business_code' => 'required|exists:businesses,code',
-            'location_code' => 'required|exists:business_locations,code',
-            'service_name' => 'required|string|max:255',
+            'business_code' => 'nullable|exists:businesses,code',
+            'location_code' => 'nullable|exists:business_locations,code',
+            'service_name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'time_duration' => 'nullable|integer',
             'charges' => 'nullable|numeric',
             'cost' => 'nullable|numeric',
             'currency' => 'nullable|string|max:10',
-            'availability' => 'required|in:ONSITE,ONLINE,BOTH',
+            'availability' => 'nullable|in:ONSITE,ONLINE,BOTH',
             'duration_uom' => 'nullable|in:WEEK,DAY,HOUR,MINUTE',
         ];
     }

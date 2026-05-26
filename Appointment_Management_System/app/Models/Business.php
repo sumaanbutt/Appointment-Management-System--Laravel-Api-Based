@@ -11,6 +11,7 @@ class Business extends Model
     protected static $codePrefix = 'BUS';
     protected $fillable = [
         'organization_code',
+        'user_code',
         'name',
         'email',
         'phone',

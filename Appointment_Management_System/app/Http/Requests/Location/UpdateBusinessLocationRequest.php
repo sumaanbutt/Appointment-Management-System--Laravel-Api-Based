@@ -23,15 +23,15 @@ class UpdateBusinessLocationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'business_code' => 'required',
-            'location_name' => 'required',
-            'address' => 'required',
-            'apartment' => 'required',
-            'street' => 'required',
-            'city' => 'required',
-            'state' => 'required',
-            'postal_code' => 'required',
-            'country' => 'required',
+            'business_code' => 'sometimes',
+            'location_name' => 'sometimes',
+            'address' => 'sometimes',
+            'apartment' => 'sometimes',
+            'street' => 'sometimes',
+            'city' => 'sometimes',
+            'state' => 'sometimes',
+            'postal_code' => 'sometimes',
+            'country' => 'sometimes',
             'status' => 'sometimes|in:ACTIVE,INACTIVE',
         ];
     }

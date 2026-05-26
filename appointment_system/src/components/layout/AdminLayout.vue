@@ -2,7 +2,7 @@
   <div class="layout">
     <Sidebar />
     <div class="main">
-      <Topbar />
+      <Navbar />
       <div class="content">
         <router-view />
       </div>
@@ -12,7 +12,7 @@
 
 <script setup>
 import Sidebar from '@/components/layout/Sidebar.vue'
-import Topbar from '@/components/layout/Topbar.vue'
+import Navbar from '@/components/layout/Navbar.vue'
 </script>
 
 <style scoped>

@@ -12,12 +12,12 @@
           <span v-if="!collapsed">Dashboard</span>
         </router-link>
 
-        <router-link to="/staff/my-schedule" class="item">
+        <router-link to="/staff/schedule" class="item">
           <i class="icon">🗓️</i>
           <span v-if="!collapsed">My Schedule</span>
         </router-link>
 
-        <router-link to="/staff/my-appointments" class="item">
+        <router-link to="/staff/appointments" class="item">
           <i class="icon">📅</i>
           <span v-if="!collapsed">My Appointments</span>
         </router-link>
@@ -36,9 +36,7 @@
     </aside>
 
     <div class="main">
-      <header class="topbar">
-        <h3 class="page-title">{{ pageTitle }}</h3>
-      </header>
+      <Navbar />
       <div class="content">
         <router-view />
       </div>
@@ -50,6 +48,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import Navbar from '@/components/layout/Navbar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -58,8 +57,8 @@ const collapsed = ref(false)
 
 const titleMap = {
   '/staff/dashboard':'Dashboard',
-  '/staff/my-schedule':'My Schedule',
-  '/staff/my-appointments':'My Appointments',
+  '/staff/schedule':'My Schedule',
+  '/staff/appointments':'My Appointments',
 }
 const pageTitle = computed(() => titleMap[route.path] || 'Staff Portal')
 

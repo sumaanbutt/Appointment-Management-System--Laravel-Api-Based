@@ -7,7 +7,7 @@
       </div>
 
       <nav class="menu">
-        <router-link to="/business/dashboard" class="item">
+        <router-link to="/owner/dashboard" class="item">
           <i class="icon">📊</i>
           <span v-if="!collapsed">Dashboard</span>
         </router-link>
@@ -19,8 +19,8 @@
             <i v-if="!collapsed" class="arrow" :class="{ rotated: open.app }">›</i>
           </div>
           <div v-show="open.app && !collapsed" class="submenu">
-            <router-link to="/business/appointments" class="sub-item">All Requests</router-link>
-            <router-link to="/business/appointments/create" class="sub-item">New Request</router-link>
+            <router-link to="/owner/appointments" class="sub-item">All Requests</router-link>
+            <router-link to="/owner/appointments/create" class="sub-item">New Request</router-link>
           </div>
         </div>
 
@@ -32,8 +32,8 @@
             <i v-if="!collapsed" class="arrow" :class="{ rotated: open.svc }">›</i>
           </div>
           <div v-show="open.svc && !collapsed" class="submenu">
-            <router-link to="/business/services" class="sub-item">All Services</router-link>
-            <router-link to="/business/services/create" class="sub-item">New Service</router-link>
+            <router-link to="/owner/services" class="sub-item">All Services</router-link>
+            <router-link to="/owner/services/create" class="sub-item">New Service</router-link>
           </div>
         </div>
 
@@ -45,9 +45,9 @@
             <i v-if="!collapsed" class="arrow" :class="{ rotated: open.loc }">›</i>
           </div>
           <div v-show="open.loc && !collapsed" class="submenu">
-            <router-link to="/business/locations" class="sub-item">All Locations</router-link>
-            <router-link to="/business/locations/create" class="sub-item">New Location</router-link>
-            <router-link to="/business/location-services" class="sub-item">Location Services</router-link>
+            <router-link to="/owner/locations" class="sub-item">All Locations</router-link>
+            <router-link to="/owner/locations/create" class="sub-item">New Location</router-link>
+            <router-link to="/owner/location-services" class="sub-item">Location Services</router-link>
           </div>
         </div>
 
@@ -58,8 +58,21 @@
             <i v-if="!collapsed" class="arrow" :class="{ rotated: open.staff }">›</i>
           </div>
           <div v-show="open.staff && !collapsed" class="submenu">
-            <router-link to="/owner/users" class="sub-item">All Staff</router-link>
-            <router-link to="/owner/users/create" class="sub-item">Add Staff</router-link>
+
+            <router-link
+                to="/owner/staff"
+                class="sub-item"
+            >
+              All Staff
+            </router-link>
+
+            <router-link
+                to="/owner/staff/create"
+                class="sub-item"
+            >
+              Add Staff
+            </router-link>
+
           </div>
         </div>
 
@@ -70,23 +83,23 @@
             <i v-if="!collapsed" class="arrow" :class="{ rotated: open.client }">›</i>
           </div>
           <div v-show="open.client && !collapsed" class="submenu">
-            <router-link to="/business/clients" class="sub-item">All Clients</router-link>
-            <router-link to="/business/clients/create" class="sub-item">Add Client</router-link>
+            <router-link to="/owner/clients" class="sub-item">All Clients</router-link>
+            <router-link to="/owner/clients/create" class="sub-item">Add Client</router-link>
           </div>
         </div>
 
-        <router-link to="/business/schedules" class="item">
+        <router-link to="/owner/schedules" class="item">
           <i class="icon">🗓️</i>
           <span v-if="!collapsed">Schedules</span>
         </router-link>
 
 
-        <router-link to="/business/charges" class="item">
+        <router-link to="/owner/charges" class="item">
           <i class="icon">💰</i>
           <span v-if="!collapsed">Charges</span>
         </router-link>
 
-        <router-link to="/business/invoices" class="item">
+        <router-link to="/owner/invoices" class="item">
           <i class="icon">🧾</i>
           <span v-if="!collapsed">Invoices</span>
         </router-link>
@@ -105,9 +118,7 @@
     </aside>
 
     <div class="main">
-      <header class="topbar">
-        <h3 class="page-title">{{ pageTitle }}</h3>
-      </header>
+      <Navbar />
       <div class="content">
         <router-view />
       </div>
@@ -119,6 +130,7 @@
 import { reactive, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import Navbar from '@/components/layout/Navbar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -137,8 +149,8 @@ const titleMap = {
   '/owner/locations': 'Locations',
   '/owner/locations/create': 'New Location',
   '/owner/location-services': 'Location Services',
-  '/owner/staff': 'Staff',
-  '/owner/staff/create': 'Add Staff',
+  '/owner/users': 'Staff',
+  '/owner/users/create': 'Add Staff',
   '/owner/clients': 'Clients',
   '/owner/clients/create': 'Add Client',
   '/owner/schedules': 'Schedules',

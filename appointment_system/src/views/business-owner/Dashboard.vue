@@ -73,15 +73,15 @@
           <tr><th>Code</th><th>Date</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr>
         </thead>
         <tbody>
-          <tr v-for="appt in pendingAppointments" :key="appt.appointment_code">
-            <td><code>{{ appt.appointment_code }}</code></td>
+          <tr v-for="appt in pendingAppointments" :key="appt.code">
+            <td><code>{{ appt.code }}</code></td>
             <td>{{ appt.appointment_start_date }}</td>
             <td>{{ appt.start_time }}</td>
             <td>{{ appt.end_time }}</td>
-            <td><span :class="['badge', appt.status]">{{ appt.status }}</span></td>
+            <td><span :class="['badge', appt.status?.toLowerCase()]">{{ appt.status }}</span></td>
             <td>
-              <button class="approve-btn" @click="changeStatus(appt, 'approved')">Approve</button>
-              <button class="reject-btn" @click="changeStatus(appt, 'rejected')">Reject</button>
+              <button class="approve-btn" @click="changeStatus(appt, 'APPROVED')">Approve</button>
+              <button class="reject-btn" @click="changeStatus(appt, 'REJECTED')">Reject</button>
             </td>
           </tr>
           <tr v-if="pendingAppointments.length === 0">
@@ -105,11 +105,17 @@ const appointments = ref([])
 
 const stats = ref({ appointments: 0, pending: 0, approved: 0, clients: 0, services: 0, staff: 0, invoices: 0, locations: 0 })
 
-const pendingAppointments = computed(() => appointments.value.filter(a => a.status === 'pending').slice(0, 8))
+const pendingAppointments = computed(()=>{const data = Array.isArray(appointments.value) ? appointments.value : []
+  return data
+          .filter(
+              a=>a.status==='PENDING'
+          )
+          .slice(0,8)
+    })
 
 async function changeStatus(appt, status) {
   try {
-    await api.patch(`/appointments/${appt.appointment_code}/status`, { status })
+    await api.patch(`/appointments/${appt.code}/status`, { status })
     appt.status = status
   } catch (err) {
     console.error('Status update failed', err)
@@ -124,28 +130,35 @@ onMounted(async () => {
     api.get('/services', { params: biz ? { business_code: biz } : {} }),
     api.get('/users', { params: biz ? { business_code: biz } : {} }),
     api.get('/invoices', { params: biz ? { business_code: biz } : {} }),
-    api.get('/locations', { params: biz ? { business_code: biz } : {} }),
+    api.get('/business-locations', { params: biz ? { business_code: biz } : {} }),
   ])
 
   if (appts.status === 'fulfilled') {
-    appointments.value = appts.value.data.data || []
+    appointments.value = appts.value?.data?.data?.data || []
     stats.value.appointments = appointments.value.length
-    stats.value.pending = appointments.value.filter(a => a.status === 'pending').length
-    stats.value.approved = appointments.value.filter(a => a.status === 'approved').length
+    stats.value.pending = appointments.value.filter(a => a.status === 'PENDING').length
+    stats.value.approved = appointments.value.filter(a => a.status === 'APPROVED').length
   }
 
   stats.value.clients =
       clients.status === 'fulfilled'
-          ? (clients.value.data.data || []).filter(c => c.user_type === 'client').length : 0
-  stats.value.services = svcs.status === 'fulfilled' ? (svcs.value.data.data?.length ?? 0) : 0
-  stats.value.staff =
-      staff.status === 'fulfilled'
-          ? (staff.value.data.data || []).filter(
-              s => ['operational_staff', 'service_staff'].includes(s.user_type)
+          ? (
+              clients.value.data?.data?.data
+              ??
+              clients.value.data?.data
+              ??
+              []
           ).length
           : 0
-  stats.value.invoices = invs.status === 'fulfilled' ? (invs.value.data.data?.length ?? 0) : 0
-  stats.value.locations = locs.status === 'fulfilled' ? (locs.value.data.data?.length ?? 0) : 0
+  stats.value.services = svcs.status === 'fulfilled' ? (svcs.value.data.data?.data?.length ?? 0) : 0
+  stats.value.staff =
+      staff.status === 'fulfilled'
+          ? (staff.value.data.data.data || []).filter(
+              s => ['OPERATION_STAFF', 'SERVICE_STAFF'].includes(s.user_type)
+          ).length
+          : 0
+  stats.value.invoices = invs.status === 'fulfilled' ? (invs.value.data.data?.data?.length ?? 0) : 0
+  stats.value.locations = locs.status === 'fulfilled' ? (locs.value.data.data?.data?.length ?? 0) : 0
   loading.value = false
 })
 </script>

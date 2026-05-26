@@ -26,7 +26,7 @@ class UpdateUserRequest extends FormRequest
             'organization_code' => 'sometimes|exists:organizations,code',
             'business_code' => 'sometimes|exists:businesses,code',
             'name' => 'sometimes|string|max:255',
-            'email' => 'nullable|email|unique:users,email',
+            'email' => 'nullable|email',
             'phone' => 'nullable|string|max:20',
             'password' => 'sometimes|string|min:8',
             'user_type' => 'sometimes|in:ADMIN,BUSINESS_OWNER,OPERATION_STAFF,SERVICE_STAFF,CLIENT',
