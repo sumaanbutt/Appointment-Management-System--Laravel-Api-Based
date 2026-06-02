@@ -6,13 +6,13 @@
     <div class="d-flex gap-2">
       <select v-model="statusFilter" @change="fetchList" class="form-select" style="max-width:200px">
         <option value="">All Statuses</option>
-        <option value="pending">Pending</option>
-        <option value="approved">Approved</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
-        <option value="rejected">Rejected</option>
-        <option value="canceled">Canceled</option>
-        <option value="rescheduled">Rescheduled</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="REJECTED">Rejected</option>
+        <option value="CANCELLED">Canceled</option>
+        <option value="REJECTED">Rejected</option>
       </select>
     </div>
     <div class="card shadow-sm border-0">
@@ -24,21 +24,21 @@
             <tr><th class="ps-3">Code</th><th>Date</th><th>Start</th><th>End</th><th>Status</th><th class="pe-3" style="width:360px">Actions</th></tr>
           </thead>
           <tbody>
-            <tr v-for="appt in appointments" :key="appt.appointment_code">
-              <td class="ps-3"><code>{{ appt.appointment_code }}</code></td>
+            <tr v-for="appt in appointments" :key="appt.code">
+              <td class="ps-3"><code>{{ appt.code }}</code></td>
               <td>{{ appt.appointment_start_date?.split('T')[0] ?? '—' }}</td>
               <td>{{ appt.start_time ?? '—' }}</td>
               <td>{{ appt.end_time ?? '—' }}</td>
               <td><span :class="['ams-badge', appt.status]">{{ appt.status }}</span></td>
               <td class="pe-3">
                 <button class="btn btn-sm btn-outline-secondary me-1" @click="openDetails(appt)">View</button>
-                <button v-if="appt.status === 'pending'" class="btn btn-sm btn-success me-1" @click="openApprovalDialog(appt)">Approve</button>
-                <button v-if="appt.status === 'pending'" class="btn btn-sm btn-outline-danger me-1" @click="changeStatus(appt, 'rejected')">Reject</button>
-                <button v-if="appt.status === 'approved'" class="btn btn-sm btn-outline-info me-1" @click="changeStatus(appt, 'in_progress')">Start</button>
-                <button v-if="appt.status === 'in_progress'" class="btn btn-sm btn-success me-1" @click="changeStatus(appt, 'completed')">Complete</button>
-                <button v-if="['pending','approved','in_progress'].includes(appt.status)" class="btn btn-sm btn-outline-primary me-1" @click="openAssign(appt)">Assign</button>
-                <button v-if="['approved','in_progress'].includes(appt.status)" class="btn btn-sm btn-outline-warning me-1" @click="openReschedule(appt)">Reschedule</button>
-                <button v-if="['approved','pending'].includes(appt.status)" class="btn btn-sm btn-outline-secondary" @click="changeStatus(appt, 'canceled')">Cancel</button>
+                <button v-if="appt.status === 'PENDING'" class="btn btn-sm btn-success me-1" @click="openApprovalDialog(appt)">Approve</button>
+                <button v-if="appt.status === 'PENDING'" class="btn btn-sm btn-outline-danger me-1" @click="changeStatus(appt, 'REJECTED')">Reject</button>
+                <button v-if="appt.status === 'APPROVED'" class="btn btn-sm btn-outline-info me-1" @click="changeStatus(appt, 'IN_PROGRESS')">Start</button>
+                <button v-if="appt.status === 'IN_PROGRESS'" class="btn btn-sm btn-success me-1" @click="changeStatus(appt, 'COMPLETED')">Complete</button>
+                <button v-if="['PENDING','APPROVED','IN_PROGRESS'].includes(appt.status)" class="btn btn-sm btn-outline-primary me-1" @click="openAssign(appt)">Assign</button>
+                <button v-if="['APPROVED','IN_PROGRESS'].includes(appt.status)" class="btn btn-sm btn-outline-warning me-1" @click="openReschedule(appt)">Reschedule</button>
+                <button v-if="['APPROVED','PENDING'].includes(appt.status)" class="btn btn-sm btn-outline-secondary" @click="changeStatus(appt, 'CANCELLED')">Cancel</button>
               </td>
             </tr>
             <tr v-if="appointments.length === 0"><td colspan="6" class="text-center text-muted py-4">No appointments found</td></tr>
@@ -280,7 +280,7 @@ const appointmentHistory = ref([])
 
 const showReschedule = ref(false)
 const rescheduleAppt = ref(null)
-const rsForm = reactive({ appointment_start_date: '', appointment_end_date: '', start_time: '', end_time: '', reason: '' })
+const rsForm = reactive({ appointment_start_date: '', appointment_end_date: '', start_time: '', end_time: '', reasons: '' })
 const rsError = ref('')
 const rsSaving = ref(false)
 
@@ -320,8 +320,8 @@ async function openApprovalDialog(appt) {
   })
   availabilityLoading.value = true
   try {
-    const res = await api.get(`/appointments/${appt.appointment_code}/availability`)
-    availableStaff.value = res.data.data?.available_staff || []
+    const res = await api.get(`/appointments/${appt.code}/availability`)
+    availableStaff.value = res.data.data.data?.available_staff || []
   } catch (err) {
     availabilityError.value = err.response?.data?.message || 'Could not check availability'
   } finally {
@@ -340,7 +340,7 @@ async function submitApproveWithStaff() {
   approvalSaving.value = true
   approvalError.value = ''
   try {
-    await api.post(`/appointments/${selected.value.appointment_code}/approve`, { staff_code: approvalSelectedStaff.value })
+    await api.post(`/appointments/${selected.value.code}/approve`, { staff_code: approvalSelectedStaff.value })
     showApproval.value = false
     await fetchList()
   } catch (err) {
@@ -358,7 +358,7 @@ async function submitApprovalReschedule() {
   approvalSaving.value = true
   approvalError.value = ''
   try {
-    await api.post(`/appointments/${selected.value.appointment_code}/reschedule`, approvalRescheduleForm)
+    await api.post(`/appointments/${selected.value.code}/reschedule`, approvalRescheduleForm)
     showApproval.value = false
     await fetchList()
   } catch (err) {
@@ -374,7 +374,7 @@ async function openDetails(appt) {
   showDetails.value = true
   historyLoading.value = true
   try {
-    const res = await api.get(`/appointments/${appt.appointment_code}/history`)
+    const res = await api.get(`/appointments/${appt.code}/history`)
     appointmentHistory.value = res.data.data || []
   } catch (_) {
   } finally {
@@ -391,7 +391,7 @@ async function fetchList() {
     if (biz) params.business_code = biz
     if (statusFilter.value) params.status = statusFilter.value
     const res = await api.get('/appointments', { params })
-    appointments.value = res.data.data || []
+    appointments.value = res.data.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load'
   } finally {
@@ -401,7 +401,7 @@ async function fetchList() {
 
 async function changeStatus(appt, status) {
   try {
-    await api.patch(`/appointments/${appt.appointment_code}/status`, { status })
+    await api.patch(`/appointments/${appt.code}/status`, { status })
     await fetchList()
   } catch (err) {
     alert(err.response?.data?.message || 'Action failed')
@@ -443,8 +443,8 @@ async function openAssign(appt) {
   staffLoading.value = true
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/users/get-user', { params: { business_code: biz, user_type: 'service_staff' } })
-    staffList.value = res.data.data || []
+    const res = await api.get('/users', { params: { business_code: biz, user_type: 'SERVICE_STAFF' } })
+    staffList.value = res.data.data.data || []
   } catch (_) {
     staffList.value = []
   } finally {
@@ -464,8 +464,8 @@ async function assignStaff() {
   try {
     await api.post(`/appointments/${assignAppt.value.appointment_code}/participants`, {
       user_code: selectedStaff.value,
-      user_type: 'service_staff',
-      user_role: 'service_staff',
+      user_type: 'SERVICE_STAFF',
+      user_role: 'SERVICE_STAFF',
     })
     closeAssign()
   } catch (err) {

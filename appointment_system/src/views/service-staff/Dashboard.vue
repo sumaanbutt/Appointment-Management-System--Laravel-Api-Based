@@ -34,11 +34,22 @@
           <tr><th>Code</th><th>Start</th><th>End</th><th>Location</th><th>Status</th></tr>
         </thead>
         <tbody>
-          <tr v-for="appt in todayAppts" :key="appt.appointment_code">
-            <td><code>{{ appt.appointment_code }}</code></td>
+          <tr v-for="appt in todayAppts" :key="appt.code">
+            <td><code>{{ appt.code }}</code></td>
             <td>{{ appt.start_time ?? '—' }}</td>
             <td>{{ appt.end_time ?? '—' }}</td>
-            <td>{{ appt.location_code ?? '—' }}</td>
+            <td>{{
+                [
+                  appt.location?.apartment,
+                  appt.location?.street,
+                  appt.location?.address,
+                  appt.location?.city
+                ]
+                    .filter(Boolean)
+                    .join(', ')
+                || '—'
+              }}
+            </td>
             <td><span :class="['badge', appt.status]">{{ appt.status }}</span></td>
           </tr>
           <tr v-if="todayAppts.length === 0">
@@ -78,13 +89,13 @@ async function fetchAppointments() {
   try {
     const biz = authStore.user?.business_code
     const res = await api.get('/appointments', { params: biz ? { business_code: biz } : {} })
-    appointments.value = res.data.data || []
+    appointments.value = res.data.data.data || []
     const now = new Date()
     stats.today = appointments.value.filter(a => a.appointment_start_date?.startsWith(todayStr)).length
-    stats.completed = appointments.value.filter(a => a.status === 'completed').length
+    stats.completed = appointments.value.filter(a => a.status === 'COMPLETED').length
     stats.upcoming = appointments.value.filter(a => {
       if (!a.appointment_start_date) return false
-      return new Date(a.appointment_start_date) > now && a.status !== 'completed'
+      return new Date(a.appointment_start_date) > now && a.status !== 'COMPLETED'
     }).length
   } catch (_) {}
   finally { loading.value = false }

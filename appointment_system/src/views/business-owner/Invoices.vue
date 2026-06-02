@@ -7,9 +7,9 @@
       <select v-model="statusFilter" @change="fetchInvoices" class="form-select" style="max-width:200px">
         <option value="">All Statuses</option>
         <option value="draft">Draft</option>
-        <option value="sent">Sent</option>
+        <option value="issued">Issued</option>
         <option value="paid">Paid</option>
-        <option value="cancelled">Cancelled</option>
+        <option value="canceled">Cancelled</option>
       </select>
     </div>
     <div class="card shadow-sm border-0">
@@ -21,8 +21,8 @@
             <tr><th class="ps-3">ID</th><th>Total</th><th>Status</th><th>Created</th><th class="pe-3" style="width:100px">Actions</th></tr>
           </thead>
           <tbody>
-            <tr v-for="inv in invoices" :key="inv.id">
-              <td class="ps-3">#{{ inv.id }}</td>
+                <tr v-for="inv in invoices" :key="inv.code">
+              <td class="ps-3">{{ inv.code }}</td>
               <td>{{ inv.total ?? '—' }}</td>
               <td><span :class="['ams-badge', inv.status]">{{ inv.status }}</span></td>
               <td>{{ formatDate(inv.created_at) }}</td>
@@ -39,7 +39,7 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Invoice #{{ selected.id }}</h5>
+            <h5 class="modal-title">Invoice #{{ selected.code }}</h5>
             <button type="button" class="btn-close" @click="showViewModal = false"></button>
           </div>
           <div class="modal-body">

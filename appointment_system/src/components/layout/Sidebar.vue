@@ -247,13 +247,13 @@
 
     </nav>
 
-    <!-- LOGOUT -->
-    <div class="logout-section">
-      <button class="logout-btn" @click="handleLogout">
-        <i class="icon">🚪</i>
-        <span v-if="!collapsed">Logout</span>
-      </button>
-    </div>
+<!--    &lt;!&ndash; LOGOUT &ndash;&gt;-->
+<!--    <div class="logout-section">-->
+<!--      <button class="logout-btn" @click="handleLogout">-->
+<!--        <i class="icon">🚪</i>-->
+<!--        <span v-if="!collapsed">Logout</span>-->
+<!--      </button>-->
+<!--    </div>-->
   </aside>
 </template>
 

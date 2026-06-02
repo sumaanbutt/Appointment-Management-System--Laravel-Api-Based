@@ -19,7 +19,7 @@ class CreateInvoiceRequest extends FormRequest
             'appointment_code' => ['required', 'exists:appointments,code'],
             'subtotal' => ['required', 'numeric', 'min:0'],
             'total' => ['required', 'numeric', 'min:0'],
-            'status' => ['nullable', 'in:PENDING,PAID,FAILED,REFUNDED'],
+            'status' => ['nullable', 'in:draft,issued,paid,canceled'],
             'invoice_date' => ['required', 'date'],
         ];
     }

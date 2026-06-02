@@ -18,7 +18,7 @@
               <td><code>{{ svc.code }}</code></td>
               <td>{{ svc.description }}</td>
               <td>{{ svc.cost != null ? svc.cost : '—'}}</td>
-              <td><span :class="['ams-badge',svc.availability?.toLowerCase()]">{{ svc.availability }}</span></td>
+              <td><span :class="['badge',svc.status==='active'?'bg-success':'bg-secondary']">{{ svc.status }}</span></td>
               <td class="pe-3">
                 <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(svc)">Edit</button>
                 <button class="btn btn-sm btn-outline-danger" @click="openDelete(svc)">Delete</button>
@@ -40,14 +40,69 @@
           </div>
           <form @submit.prevent="updateService">
             <div class="modal-body">
-              <div class="mb-3"><label class="form-label fw-semibold">Service Name *</label><input v-model="editForm.name" class="form-control" required /></div>
-              <div class="mb-3"><label class="form-label fw-semibold">Duration</label><input v-model.number="editForm.duration_value" type="number" min="1" class="form-control" /></div>
-              <div class="mb-3"><label class="form-label fw-semibold">Price</label><input v-model.number="editForm.price" type="number" step="0.01" min="0" class="form-control" /></div>
+
               <div class="mb-3">
-                <label class="form-label fw-semibold">Status</label>
-                <select v-model="editForm.status" class="form-select"><option value="active">Active</option><option value="INACTIVE">Inactive</option></select>
+                <label class="form-label fw-semibold">
+                  Service Name *
+                </label>
+
+                <input
+                    v-model="editForm.service_name"
+                    class="form-control"
+                    required
+                />
               </div>
-              <p v-if="formError" class="text-danger small mb-0">{{ formError }}</p>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">
+                  Duration
+                </label>
+
+                <input
+                    v-model.number="editForm.time_duration"
+                    type="number"
+                    min="1"
+                    class="form-control"
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">
+                  Price
+                </label>
+
+                <input
+                    v-model.number="editForm.charges"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    class="form-control"
+                />
+              </div>
+
+              <div class="mb-3">
+
+                <label class="form-label fw-semibold">
+                  Status
+                </label>
+
+                <select
+                    v-model="editForm.status"
+                    class="form-select"
+                >
+
+                  <option value="active">
+                    Active
+                  </option>
+
+                  <option value="inactive">
+                    Inactive
+                  </option>
+
+                </select>
+
+              </div>
+
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" @click="showEditModal = false">Cancel</button>
@@ -96,8 +151,23 @@ const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const selected = ref(null)
 
-const createForm = reactive({ name: '', duration_minutes: '', price: '', description: '' })
-const editForm = reactive({ name: '', duration_minutes: '', price: '', status: 'active' })
+const createForm = reactive({
+  service_name:'',
+  description:'',
+  time_duration:'',
+  charges:'',
+  status:'active',
+  duration_uom:'',
+})
+
+const editForm = reactive({
+  service_name:'',
+  description:'',
+  time_duration:'',
+  charges:'',
+  status:'active',
+  duration_uom:'',
+})
 
 async function fetchServices() {
   loading.value = true
@@ -113,13 +183,17 @@ async function fetchServices() {
   }
 }
 
-function openEdit(svc) {
+function openEdit(svc){
+
   selected.value = svc
-  editForm.name = svc.name
-  editForm.duration_minutes = svc.duration_minutes
-  editForm.price = svc.price ?? ''
+
+  editForm.service_name = svc.service_name
+  editForm.description = svc.description
+  editForm.time_duration = svc.time_duration
+  editForm.charges = svc.charges
   editForm.status = svc.status
-  formError.value = ''
+  editForm.duration_uom = svc.duration_uom
+
   showEditModal.value = true
 }
 
@@ -148,7 +222,14 @@ async function updateService() {
   saving.value = true
   formError.value = ''
   try {
-    await api.put(`/services/${selected.value.code}`, editForm)
+    await api.put(
+        `/services/${selected.value.code}`,
+        {
+          ...editForm,
+          business_code:
+          authStore.user?.business_code
+        }
+    )
     showEditModal.value = false
     await fetchServices()
   } catch (err) {

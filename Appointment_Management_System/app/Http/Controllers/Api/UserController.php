@@ -52,6 +52,7 @@ class UserController extends Controller
                 'phone' => $request->phone,
                 'password' => Hash::make($request->password),
                 'user_type' => $request->user_type,
+                'employee_type' => $request->employee_type,
                 'status' => $request->status ?? 'ACTIVE',
             ]);
 

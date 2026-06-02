@@ -37,7 +37,35 @@
               <td>{{ charge.charge_value }}</td>
               <td>{{ charge.charge_uom }}</td>
               <td class="pe-3">
-                <button class="btn btn-sm btn-outline-danger" @click="openDelete(charge)">Delete</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button
+                          class="dropdown-item text-danger"
+                          @click="openDelete(charge)">
+
+                        <i class="bi bi-trash me-2"></i>
+                        Delete
+
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="charges.length === 0">
@@ -81,7 +109,7 @@
                 <label class="form-label fw-semibold">Business *</label>
                 <select v-model="createForm.business_code" :class="['form-select', createErrors.business_code ? 'is-invalid' : '']">
                   <option value="">Select business</option>
-                  <option v-for="biz in businesses" :key="biz.business_code" :value="biz.business_code">{{ biz.name }}</option>
+                  <option v-for="biz in businesses" :key="biz.code" :value="biz.code">{{ biz.name }}</option>
                 </select>
                 <div v-if="createErrors.business_code" class="invalid-feedback">{{ createErrors.business_code }}</div>
               </div>
@@ -94,8 +122,8 @@
                 <label class="form-label fw-semibold">Charge UOM *</label>
                 <select v-model="createForm.charge_uom" :class="['form-select', createErrors.charge_uom ? 'is-invalid' : '']">
                   <option value="">Select UOM</option>
-                  <option value="fixed">Fixed</option>
-                  <option value="percentage">Percentage</option>
+                  <option value="FIXED">Fixed</option>
+                  <option value="PERCENTAGE">Percentage</option>
                 </select>
                 <div v-if="createErrors.charge_uom" class="invalid-feedback">{{ createErrors.charge_uom }}</div>
               </div>
@@ -165,7 +193,7 @@ function openDelete(charge) {
 async function deleteCharge() {
   saving.value = true
   try {
-    await api.delete(`/charges/${selected.value.charge_code}`)
+    await api.delete(`/charges/${selected.value.code}`)
     showDeleteModal.value = false
     await fetchCharges()
   } catch (err) {
@@ -173,6 +201,33 @@ async function deleteCharge() {
   } finally {
     saving.value = false
   }
+}
+
+function validateChargeForm(data){
+
+  const errors = {}
+
+  if(!data.business_code)
+    errors.business_code =
+        'Business required'
+
+  if(!data.name)
+    errors.name =
+        'Name required'
+
+  if(!data.charge_uom)
+    errors.charge_uom =
+        'Charge UOM required'
+
+  if(
+      data.charge_value === ''
+      ||
+      data.charge_value == null
+  )
+    errors.charge_value =
+        'Value required'
+
+  return errors
 }
 
 async function createCharge() {
@@ -190,20 +245,49 @@ async function createCharge() {
     createForm.value = { business_code: isAdmin.value ? '' : (authStore.user?.business_code || ''), name: '', charge_uom: '', charge_value: '', description: '' }
     createErrors.value = {}
     await fetchCharges()
-  } catch (err) {
-    createError.value = err.response?.data?.message || 'Create failed'
-  } finally {
+  } catch(err){
+
+    console.log(
+        'FULL ERROR:',
+        err.response?.data
+    )
+
+    console.log(
+        'VALIDATION:',
+        err.response?.data?.errors
+    )
+
+    if(
+        err.response?.data?.errors
+    ){
+
+      createError.value =
+          Object.values(
+              err.response.data.errors
+          )
+              .flat()
+              .join('\n')
+
+    }else{
+
+      createError.value =
+          err.response?.data?.message
+          || 'Create failed'
+
+    }
+
+  }finally {
     saving.value = false
   }
 }
 
 onMounted(async () => {
   if (!isAdmin.value) {
-    createForm.value.business_code = authStore.user?.business_code || ''
+    createForm.value.business_code = bizFilter.value || authStore.user?.business_code || ''
     await fetchCharges()
     return
   }
-  const [_, bizRes] = await Promise.allSettled([fetchCharges(), api.get('/businesses/get-business')])
+  const [_, bizRes] = await Promise.allSettled([fetchCharges(), api.get('/businesses')])
   if (bizRes.status === 'fulfilled') businesses.value = bizRes.value.data.data || []
 })
 </script>

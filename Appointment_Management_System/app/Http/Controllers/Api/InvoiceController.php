@@ -39,7 +39,7 @@ class InvoiceController extends Controller
                 'appointment_code' => $request->appointment_code,
                 'subtotal' => $request->subtotal,
                 'total' => $request->total,
-                'status' => $request->status ?? 'PENDING',
+                'status' => $request->status ?? 'draft',
                 'invoice_date' => $request->invoice_date,
                 'updated_by_code' => auth()->user()->code,
             ]);

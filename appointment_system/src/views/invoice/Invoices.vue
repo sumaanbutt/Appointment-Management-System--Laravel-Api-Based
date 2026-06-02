@@ -45,8 +45,46 @@
               <td><span :class="['ams-badge', (inv.status || '').toLowerCase()]">{{ inv.status || '—' }}</span></td>
               <td>{{ formatDate(inv.created_at) }}</td>
               <td class="pe-3">
-                <button class="btn btn-sm btn-outline-secondary me-1" @click="openDetails(inv)">View</button>
-                <button v-if="inv.status === 'pending'" class="btn btn-sm btn-success" @click="updateStatus(inv, 'paid')">Mark Paid</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button
+                          class="dropdown-item"
+                          @click="openDetails(inv)">
+
+                        <i class="bi bi-eye me-2"></i>
+                        View
+
+                      </button>
+                    </li>
+
+                    <li v-if="inv.status === 'draft'">
+                      <button
+                          class="dropdown-item text-success"
+                          @click="updateStatus(inv,'paid')">
+
+                        <i class="bi bi-check-circle me-2"></i>
+                        Mark Paid
+
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="invoices.length === 0">
@@ -62,25 +100,25 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Invoice #{{ selected?.id }}</h5>
+            <h5 class="modal-title">Invoice {{ selected?.code }}</h5>
             <button type="button" class="btn-close" @click="showDetails = false"></button>
           </div>
           <div class="modal-body">
             <dl class="row mb-0">
               <dt class="col-5 text-muted">Appointment</dt>
-              <dd class="col-7">{{ selected?.code || '—' }}</dd>
+              <dd class="col-7">{{ selected?.appointment_code || '—' }}</dd>
               <dt class="col-5 text-muted">Total Amount</dt>
               <dd class="col-7">{{ selected?.total }}</dd>
               <dt class="col-5 text-muted">Status</dt>
-              <dd class="col-7"><span :class="['ams-badge', selected?.invoice_status]">{{ selected?.invoice_status }}</span></dd>
+              <dd class="col-7"><span :class="['ams-badge', selected?.status]">{{ selected?.status }}</span></dd>
               <dt class="col-5 text-muted">Created</dt>
               <dd class="col-7">{{ formatDate(selected?.created_at) }}</dd>
             </dl>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="showDetails = false">Close</button>
-            <button v-if="selected?.status === 'pending'" class="btn btn-success btn-sm" @click="updateStatus(selected, 'paid')" :disabled="saving">Mark Paid</button>
-            <button v-if="selected?.status === 'pending'" class="btn btn-danger btn-sm" @click="updateStatus(selected, 'cancelled')" :disabled="saving">Cancel</button>
+            <button v-if="selected?.status === 'draft'" class="btn btn-success btn-sm" @click="updateStatus(selected, 'paid')" :disabled="saving">Mark Paid</button>
+            <button v-if="selected?.status === 'draft'" class="btn btn-danger btn-sm" @click="updateStatus(selected, 'canceled')" :disabled="saving">Cancel</button>
           </div>
         </div>
       </div>
@@ -118,6 +156,11 @@ async function fetchInvoices() {
         res.data?.invoices?.data
         ?? []
 
+    console.log(
+        'INVOICE RESPONSE:',
+        res.data
+    )
+
   } catch(err){
 
     error.value =
@@ -129,6 +172,11 @@ async function fetchInvoices() {
     loading.value = false
 
   }
+}
+
+function openDetails(inv) {
+  selected.value = inv
+  showDetails.value = true
 }
 
 async function updateStatus(inv, status) {

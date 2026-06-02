@@ -157,7 +157,12 @@ onMounted(async () => {
               s => ['OPERATION_STAFF', 'SERVICE_STAFF'].includes(s.user_type)
           ).length
           : 0
-  stats.value.invoices = invs.status === 'fulfilled' ? (invs.value.data.data?.data?.length ?? 0) : 0
+  stats.value.invoices =
+      invs.status === 'fulfilled'
+          ? (invs.value.data.invoices?.data?.length ||
+              invs.value.data.invoices?.length ||
+              0)
+          : 0
   stats.value.locations = locs.status === 'fulfilled' ? (locs.value.data.data?.data?.length ?? 0) : 0
   loading.value = false
 })

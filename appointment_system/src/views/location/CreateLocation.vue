@@ -23,8 +23,8 @@
         <div class="field">
           <label>Type *</label>
           <select v-model="form.location_type" :class="{ 'field-input-error': errors.location_type }" @change="validateField('location_type')">
-            <option value="business">Business</option>
-            <option value="client">Client</option>
+            <option value="BUSINESS">Business</option>
+            <option value="CLIENT">Client</option>
           </select>
           <p v-if="errors.location_type" class="field-error">{{ errors.location_type }}</p>
         </div>
@@ -51,7 +51,7 @@
 
         <div class="field">
           <label>Province</label>
-          <input v-model="form.province" placeholder="Province / State" />
+          <input v-model="form.state" placeholder="Province / State" />
         </div>
 
         <div class="field">
@@ -88,14 +88,63 @@ import api from '@/services/api'
 const router = useRouter()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.role === 'admin')
-const backLink = computed(() => isAdmin.value ? '/locations' : '/business/locations')
+const backLink = computed(() => isAdmin.value ? '/business-locations' : '/business/locations')
 
-const form = reactive({ business_code: '', location_type: 'business', street: '', address: '', apartment: '', city: '',
-  province: '', postal_code: '', country: '', status: 'active' })
+const form = reactive({
+  business_code:'',
+  location_type:'BUSINESS',
+  address:'',
+  street:'',
+  apartment:'',
+  city:'',
+  state:'',
+  postal_code:'',
+  country:'',
+  status:'active'
+})
 const businesses = ref([])
 const loading = ref(false)
 const error = ref('')
 const errors = reactive({})
+
+function validateLocationForm(data){
+
+  const errors = {}
+
+  if(!data.business_code)
+    errors.business_code =
+        'Business is required'
+
+  if(!data.location_type)
+    errors.location_type =
+        'Location type is required'
+
+  if(!data.address)
+    errors.address =
+        'Address is required'
+
+  if(!data.street)
+    errors.street =
+        'Street is required'
+
+  if(!data.city)
+    errors.city =
+        'City is required'
+
+  if(!data.state)
+    errors.state =
+        'State is required'
+
+  if(!data.postal_code)
+    errors.postal_code =
+        'Postal code is required'
+
+  if(!data.country)
+    errors.country =
+        'Country is required'
+
+  return errors
+}
 
 function validateField(field) {
   const result = validateLocationForm(form)
@@ -108,30 +157,97 @@ onMounted(async () => {
     return
   }
   try {
-    const res = await api.get('/businesses/get-business')
+    const res = await api.get('/businesses')
     businesses.value = res.data.data || []
   } catch (_) {}
 })
 
 async function submit() {
-  const validationErrors = validateLocationForm(form)
-  Object.keys(errors).forEach(k => delete errors[k])
-  Object.assign(errors, validationErrors)
-  if (Object.keys(errors).length > 0) return
+
+  const validationErrors =
+      validateLocationForm(form)
+
+  Object.keys(errors)
+      .forEach(
+          k => delete errors[k]
+      )
+
+  Object.assign(
+      errors,
+      validationErrors
+  )
+
+  if(
+      Object.keys(errors)
+          .length > 0
+  ) return
 
   loading.value = true
   error.value = ''
+
   try {
-    const payload = { ...form }
-    Object.keys(payload).forEach(k => { if (!payload[k]) delete payload[k] })
-    payload.business_code = form.business_code
-    await api.post('/locations/create-location', payload)
-    router.push(backLink.value)
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to create location'
-  } finally {
-    loading.value = false
+
+    const payload = {
+      ...form
+    }
+
+    Object.keys(payload)
+        .forEach(k => {
+
+          if(!payload[k])
+            delete payload[k]
+
+        })
+
+    payload.business_code =
+        form.business_code
+
+    console.log(
+        'PAYLOAD:',
+        payload
+    )
+
+    const res =
+        await api.post(
+            '/business-locations',
+            payload
+        )
+
+    console.log(
+        'SUCCESS:',
+        res.data
+    )
+
+    console.log(
+        'REDIRECT:',
+        backLink.value
+    )
+
+    router.push(
+        backLink.value
+    )
+
   }
+
+  catch(err){
+
+    console.log(
+        err.response?.data
+    )
+
+    error.value =
+        err.response?.data?.message
+        ||
+        'Failed to create location'
+
+  }
+
+  finally{
+
+    loading.value = false
+
+  }
+
 }
 </script>
 

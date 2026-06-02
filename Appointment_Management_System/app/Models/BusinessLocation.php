@@ -11,18 +11,22 @@ class BusinessLocation extends Model
     use HasCode;
     protected static $codePrefix = 'BSL';
 
-protected $fillable =[
-    'business_code',
-    'location_name',
-    'address',
-    'apartment',
-    'street',
-    'city',
-    'state',
-    'postal_code',
-    'country',
-    'status'
-];
+    protected $fillable =[
+
+        'business_code',
+        'location_type',
+
+        'address',
+        'apartment',
+        'street',
+
+        'city',
+        'state',
+        'postal_code',
+        'country',
+
+        'status'
+    ];
 
     public function getRouteKeyName()
     {

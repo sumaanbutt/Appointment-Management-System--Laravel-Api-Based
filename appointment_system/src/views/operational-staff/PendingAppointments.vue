@@ -10,16 +10,18 @@
             <tr><th class="ps-3">Code</th><th>Date</th><th>Start</th><th>End</th><th>Location</th><th class="pe-3" style="width:240px">Actions</th></tr>
           </thead>
           <tbody>
-            <tr v-for="appt in appointments" :key="appt.appointment_code">
-              <td class="ps-3"><code>{{ appt.appointment_code }}</code></td>
+            <tr v-for="appt in appointments" :key="appt.code">
+              <td class="ps-3"><code>{{ appt.code }}</code></td>
               <td>{{ appt.appointment_start_date?.split('T')[0] ?? '—' }}</td>
               <td>{{ appt.start_time ?? '—' }}</td>
               <td>{{ appt.end_time ?? '—' }}</td>
-              <td>{{ appt.location_code ?? '—' }}</td>
+<!--              <td>{{ appt.location_code ?? '—' }}</td>-->
+              <td>{{ [appt.location.apartment, appt.location.street, appt.location.address, appt.location.city ] .filter(Boolean)
+                  .join(', ')|| '—' }}</td>
               <td class="pe-3">
                 <button class="btn btn-sm btn-outline-primary me-1" @click="openAssignModal(appt)">Assign Staff</button>
-                <button class="btn btn-sm btn-success me-1" @click="changeStatus(appt, 'approved')">Approve</button>
-                <button class="btn btn-sm btn-outline-danger" @click="changeStatus(appt, 'rejected')">Reject</button>
+                <button class="btn btn-sm btn-success me-1" @click="changeStatus(appt, 'APPROVED')">Approve</button>
+                <button class="btn btn-sm btn-outline-danger" @click="changeStatus(appt, 'REJECTED')">Reject</button>
               </td>
             </tr>
             <tr v-if="appointments.length === 0"><td colspan="6" class="text-center text-muted py-4">No pending requests</td></tr>
@@ -37,7 +39,7 @@
             <button type="button" class="btn-close" @click="closeAssignModal"></button>
           </div>
           <div class="modal-body">
-            <p class="text-muted small mb-3">Appointment: <code>{{ assignAppt.appointment_code }}</code></p>
+            <p class="text-muted small mb-3">Appointment: <code>{{ assignAppt.code }}</code></p>
             <div v-if="staffLoading" class="text-center text-muted py-3">Loading staff...</div>
             <div v-else-if="!staffList.length" class="text-center text-muted py-3">No service staff found in your business</div>
             <div v-else class="d-flex flex-column gap-2" style="max-height:240px;overflow-y:auto">
@@ -85,8 +87,8 @@ async function fetchList() {
   error.value = ''
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/appointments', { params: { ...(biz ? { business_code: biz } : {}), status: 'pending' } })
-    appointments.value = res.data.data || []
+    const res = await api.get('/appointments', { params: { ...(biz ? { business_code: biz } : {}), status: 'PENDING' } })
+    appointments.value = res.data.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load'
   } finally {
@@ -96,7 +98,7 @@ async function fetchList() {
 
 async function changeStatus(appt, status) {
   try {
-    await api.patch(`/appointments/${appt.appointment_code}/status`, { status })
+    await api.patch(`/appointments/${appt.code}/status`, { status })
     await fetchList()
   } catch (err) {
     alert(err.response?.data?.message || 'Action failed')
@@ -111,8 +113,8 @@ async function openAssignModal(appt) {
   staffLoading.value = true
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/users/get-user', { params: { business_code: biz, user_type: 'service_staff' } })
-    staffList.value = res.data.data || []
+    const res = await api.get('/users', { params: { business_code: biz, user_type: 'SERVICE_STAFF' } })
+    staffList.value = res.data.data.data || []
   } catch (_) {
     staffList.value = []
   } finally {
@@ -130,10 +132,10 @@ async function assignStaff() {
   assigning.value = true
   assignError.value = ''
   try {
-    await api.post(`/appointments/${assignAppt.value.appointment_code}/participants`, {
+    await api.post(`/appointments/${assignAppt.value.code}/participants`, {
       user_code: selectedStaff.value,
-      user_type: 'service_staff',
-      user_role: 'service_staff',
+      user_type: 'SERVICE_STAFF',
+      user_role: 'SERVICE_STAFF',
     })
     closeAssignModal()
   } catch (err) {

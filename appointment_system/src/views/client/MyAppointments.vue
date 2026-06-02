@@ -32,8 +32,8 @@
               <td>{{ appt.end_time ?? '—' }}</td>
               <td><span :class="['ams-badge', appt.status?.toLowerCase()]">{{ appt.status }}</span></td>
               <td class="pe-3">
-                <button v-if="appt.status === 'RESCHEDULED'" class="btn btn-sm btn-success me-1" @click="respondReschedule(appt, 'accepted')">Accept</button>
-                <button v-if="appt.status === 'RESCHEDULED'" class="btn btn-sm btn-outline-danger me-1" @click="respondReschedule(appt, 'rejected')">Reject</button>
+                <button v-if="appt.status === 'RESCHEDULED'" class="btn btn-sm btn-success me-1" @click="respondReschedule(appt, 'ACCEPTED')">Accept</button>
+                <button v-if="appt.status === 'RESCHEDULED'" class="btn btn-sm btn-outline-danger me-1" @click="respondReschedule(appt, 'REJECTED')">Reject</button>
                 <button v-if="appt.status === 'PENDING'" class="btn btn-sm btn-outline-secondary me-1" @click="cancelAppt(appt)">Cancel</button>
                 <button class="btn btn-sm btn-outline-primary" @click="openView(appt)">View</button>
               </td>
@@ -72,8 +72,8 @@
                 <dt class="col-5 text-muted">New End</dt><dd class="col-7">{{ selected.reschedule_offer.end_time ?? '—' }}</dd>
               </dl>
               <div class="d-flex gap-2">
-                <button class="btn btn-success btn-sm" @click="respondReschedule(selected, 'accepted'); showViewModal = false">Accept Offer</button>
-                <button class="btn btn-outline-danger btn-sm" @click="respondReschedule(selected, 'rejected'); showViewModal = false">Reject Offer</button>
+                <button class="btn btn-success btn-sm" @click="respondReschedule(selected, 'ACCEPTED'); showViewModal = false">Accept Offer</button>
+                <button class="btn btn-outline-danger btn-sm" @click="respondReschedule(selected, 'REJECTED'); showViewModal = false">Reject Offer</button>
               </div>
             </div>
 

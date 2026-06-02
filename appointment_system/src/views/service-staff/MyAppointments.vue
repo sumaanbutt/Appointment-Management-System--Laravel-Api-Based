@@ -4,12 +4,12 @@
     <div class="d-flex gap-2">
       <select v-model="statusFilter" @change="fetch" class="form-select" style="max-width:200px">
         <option value="">All Statuses</option>
-        <option value="pending">Pending</option>
-        <option value="approved">Approved</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
-        <option value="rejected">Rejected</option>
-        <option value="canceled">Canceled</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="REJECTED">Rejected</option>
+        <option value="CANCELLED">Canceled</option>
       </select>
     </div>
     <div class="card shadow-sm border-0">
@@ -21,12 +21,13 @@
             <tr><th class="ps-3">Code</th><th>Date</th><th>Start</th><th>End</th><th>Location</th><th class="pe-3">Status</th></tr>
           </thead>
           <tbody>
-            <tr v-for="appt in appointments" :key="appt.appointment_code">
-              <td class="ps-3"><code>{{ appt.appointment_code }}</code></td>
+            <tr v-for="appt in appointments" :key="appt.code">
+              <td class="ps-3"><code>{{ appt.code }}</code></td>
               <td>{{ appt.appointment_start_date?.split('T')[0] ?? '—' }}</td>
               <td>{{ appt.start_time ?? '—' }}</td>
               <td>{{ appt.end_time ?? '—' }}</td>
-              <td>{{ appt.location_code ?? '—' }}</td>
+              <td>{{ [appt.location.apartment, appt.location.street, appt.location.address, appt.location.city ] .filter(Boolean)
+                  .join(', ')|| '—' }}</td>
               <td class="pe-3"><span :class="['ams-badge', appt.status]">{{ appt.status }}</span></td>
             </tr>
             <tr v-if="appointments.length === 0"><td colspan="6" class="text-center text-muted py-4">No appointments found</td></tr>
@@ -53,9 +54,9 @@ async function fetch() {
     const params = {}
     if (statusFilter.value) params.status = statusFilter.value
     const res = await api.get('/appointments', { params })
-    appointments.value = res.data.data || []
+    appointments.value = res.data.data.data || []
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load'
+    error.value = err.response?.data?.message || 'Failed to load appointments'
   } finally {
     loading.value = false
   }

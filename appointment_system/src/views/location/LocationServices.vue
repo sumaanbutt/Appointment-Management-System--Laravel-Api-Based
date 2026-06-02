@@ -40,17 +40,69 @@
           <tbody>
             <tr v-for="item in mappings" :key="item.id">
               <td class="ps-3">{{ item.id }}</td>
-              <td><code>{{ item.business_code }}</code></td>
-              <td><code>{{ item.location_code }}</code></td>
-              <td><code>{{ item.service_code }}</code></td>
+              <td><code>{{ item.business?.name }}</code></td>
+              <td>
+                <code>
+                  {{
+                    [
+                      item.location?.apartment,
+                      item.location?.street,
+                      item.location?.address,
+                      item.location?.city
+                    ]
+                        .filter(Boolean)
+                        .join(', ')
+                    || '—'
+                  }}
+                </code>
+              </td>
+              <td><code>{{ item.service?.service_name }}</code></td>
               <td>
                 <span :class="['ams-badge', item.availability === 'AVAILABLE' ? 'ACTIVE' : 'INACTIVE']">
                   {{ item.availability }}
                 </span>
               </td>
               <td class="pe-3">
-                <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(item)">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" @click="openDelete(item)">Delete</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button
+                          class="dropdown-item"
+                          @click="openEdit(item)">
+
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit
+
+                      </button>
+                    </li>
+
+                    <li>
+                      <button
+                          class="dropdown-item text-danger"
+                          @click="openDelete(item)">
+
+                        <i class="bi bi-trash me-2"></i>
+                        Delete
+
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="mappings.length === 0">

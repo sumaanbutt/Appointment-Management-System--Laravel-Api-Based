@@ -14,7 +14,7 @@ class BusinessLocationController extends Controller
     public function index()
     {
         try{
-            $query = BusinessLocation::query();
+            $query = BusinessLocation::with('business');
             if(request()->business_code){
                 $query->where('business_code', request()->business_code);
             }
@@ -41,18 +41,19 @@ class BusinessLocationController extends Controller
     {
         $data = $request->validated();
         try{
-        $location = BusinessLocation::create([
-            'business_code' => $request->business_code,
-            'location_name' => $request->location_name,
-            'address' => $request->address,
-            'apartment' => $request->apartment,
-            'street' => $request->street,
-            'city' => $request->city,
-            'state' => $request->state,
-            'postal_code' => $request->postal_code,
-            'country' => $request->country,
-            'status' => $request->status,
-        ]);
+            $location =
+                BusinessLocation::create([
+                    'business_code' => $request->business_code,
+                    'location_type' => $request->location_type,
+                    'address' => $request->address,
+                    'apartment' => $request->apartment,
+                    'street' => $request->street,
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'postal_code' => $request->postal_code,
+                    'country' => $request->country,
+                    'status' => $request->status
+                ]);
 
         return response()->json([
             'success' => true,
@@ -126,7 +127,7 @@ class BusinessLocationController extends Controller
                 ],401);
             }*/
 
-            $businessLocation->update($request->all());
+            $businessLocation->update($request->validated());
 
             return response()->json([
                 'success' => true,

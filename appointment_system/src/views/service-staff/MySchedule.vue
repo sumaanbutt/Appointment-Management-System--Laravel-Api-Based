@@ -6,14 +6,15 @@
       <div v-else-if="error" class="error-msg">{{ error }}</div>
       <div v-else-if="schedules.length === 0" class="empty">No schedule assigned yet</div>
       <table v-else class="table">
-        <thead><tr><th>Working Days</th><th>Start Time</th><th>End Time</th><th>Location</th><th>Employee Type</th></tr></thead>
+        <thead><tr><th>Working Days</th><th>Start Time</th><th>End Time</th><th>Location</th></tr></thead>
         <tbody>
-          <tr v-for="s in schedules" :key="s.id">
-            <td>{{ s.working_days }}</td>
-            <td>{{ s.start_time }}</td>
-            <td>{{ s.end_time }}</td>
-            <td>{{ s.location_code || '—' }}</td>
-            <td>{{ s.employee_type || '—' }}</td>
+          <tr v-for="s in schedules" :key="s.code">
+            <td>{{ s.working_day }}</td>
+            <td>{{ s.shift_start_time }}</td>
+            <td>{{ s.shift_end_time }}</td>
+<!--            <td>{{ s.location_code || '—' }}</td>-->
+            <td>{{ [s.location.apartment, s.location.street, s.location.address, s.location.city ] .filter(Boolean)
+                .join(', ')|| '—' }}</td>
           </tr>
         </tbody>
       </table>
@@ -36,8 +37,8 @@ async function fetchSchedule() {
   error.value = ''
   try {
     const userCode = authStore.user?.user_code
-    const res = await api.get('/schedules/get-schedule', { params: userCode ? { user_code: userCode } : {} })
-    schedules.value = res.data.data || []
+    const res = await api.get('/user-shift-schedules', { params: userCode ? { user_code: userCode } : {} })
+    schedules.value = res.data.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load schedule'
   } finally {

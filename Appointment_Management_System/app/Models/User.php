@@ -30,6 +30,7 @@ class User extends Authenticatable implements JWTSubject
         'business_code',
         'phone',
         'user_type',
+        'employee_type',
         'status',
     ];
     protected static $codePrefix = 'USR';

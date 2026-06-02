@@ -51,16 +51,16 @@
         </div>
       </nav>
 
-      <div class="logout-section">
-        <div v-if="!collapsed" class="user-info">
-          <span class="user-name">{{ authStore.user?.name || authStore.user?.email }}</span>
-          <span class="user-role">{{ authStore.user?.user_type }}</span>
-        </div>
-        <button class="logout-btn" @click="handleLogout">
-          <i class="icon">🚪</i>
-          <span v-if="!collapsed">Logout</span>
-        </button>
-      </div>
+<!--      <div class="logout-section">-->
+<!--        <div v-if="!collapsed" class="user-info">-->
+<!--          <span class="user-name">{{ authStore.user?.name || authStore.user?.email }}</span>-->
+<!--          <span class="user-role">{{ authStore.user?.user_type }}</span>-->
+<!--        </div>-->
+<!--        <button class="logout-btn" @click="handleLogout">-->
+<!--          <i class="icon">🚪</i>-->
+<!--          <span v-if="!collapsed">Logout</span>-->
+<!--        </button>-->
+<!--      </div>-->
     </aside>
 
     <div class="main">

@@ -22,7 +22,9 @@ class AppointmentController extends Controller
     {
         try {
 
-            $query = Appointment::query();
+            $query = Appointment::with([
+                'business','location','client.user', 'service',
+            ]);
 
             if(request()->business_code){
 

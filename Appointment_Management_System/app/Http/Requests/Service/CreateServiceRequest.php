@@ -24,14 +24,13 @@ class CreateServiceRequest extends FormRequest
     {
         return [
             'business_code' => 'nullable|exists:businesses,code',
-            'location_code' => 'nullable|exists:business_locations,code',
             'service_name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'time_duration' => 'nullable|integer',
             'charges' => 'nullable|numeric',
             'cost' => 'nullable|numeric',
             'currency' => 'nullable|string|max:10',
-            'availability' => 'nullable|in:ONSITE,ONLINE,BOTH',
+            'status' => 'nullable|in:active,inactive',
             'duration_uom' => 'nullable|in:WEEK,DAY,HOUR,MINUTE',
         ];
     }

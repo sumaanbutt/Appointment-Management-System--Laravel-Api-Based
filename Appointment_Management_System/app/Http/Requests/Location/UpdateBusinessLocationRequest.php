@@ -32,7 +32,7 @@ class UpdateBusinessLocationRequest extends FormRequest
             'state' => 'sometimes',
             'postal_code' => 'sometimes',
             'country' => 'sometimes',
-            'status' => 'sometimes|in:ACTIVE,INACTIVE',
+            'status' => 'sometimes|in:active,inactive',
         ];
     }
 }

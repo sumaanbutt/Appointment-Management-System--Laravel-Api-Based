@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="ams-page">
 
     <div class="d-flex align-items-center justify-content-between">
@@ -6,13 +6,13 @@
         <h2 class="mb-0">Schedules</h2>
         <p class="text-muted small mb-0">Manage staff schedules</p>
       </div>
-      <button class="btn btn-ams" @click="showCreateModal = true">+ New Schedule</button>
+      <button class="btn btn-ams" @click="openCreateModal()">+ New Schedule</button>
     </div>
 
     <div v-if="isAdmin" class="d-flex gap-2">
       <select v-model="bizFilter" @change="fetchSchedules" class="form-select" style="max-width:240px">
         <option value="">All Businesses</option>
-        <option v-for="biz in businesses" :key="biz.business_code" :value="biz.business_code">{{ biz.name }}</option>
+        <option v-for="biz in businesses" :key="biz.code" :value="biz.code">{{ biz.name }}</option>
       </select>
     </div>
 
@@ -22,38 +22,75 @@
         <div v-else-if="error" class="alert alert-danger m-3 py-2">{{ error }}</div>
         <table v-else class="table table-hover ams-table mb-0">
           <thead class="table-light">
-            <tr>
-              <th class="ps-3">ID</th>
-              <th>Staff</th>
-              <th>Day</th>
-              <th>Start Time</th>
-              <th>End Time</th>
-              <th>Status</th>
-              <th class="pe-3" style="width:120px">Actions</th>
-            </tr>
+          <tr>
+            <th class="ps-3">ID</th>
+            <th>Staff Name</th>
+            <th>Day</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Status</th>
+            <th class="pe-3" style="width:120px">Actions</th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="schedule in schedules" :key="schedule.code">
-              <td class="ps-3">{{ schedule.code }}</td>
-              <td>{{ schedule.user_name || schedule.user_code || '—' }}</td>
-              <td class="text-capitalize">{{ schedule.working_day }}</td>
-              <td>{{ schedule.status === 'INACTIVE' ? '—' : formatTime(schedule.shift_start_time) }}</td>
-              <td>{{ schedule.status === 'INACTIVE' ? '—' : formatTime(schedule.shift_end_time) }}</td>
-              <td><span :class="['badge', schedule.status === 'active' ? 'bg-success' : 'bg-secondary']">{{ schedule.status === 'active' ? 'Working' : 'Off Day' }}</span></td>
-              <td class="pe-3">
-                <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(schedule)">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" @click="openDelete(schedule)">Delete</button>
-              </td>
-            </tr>
-            <tr v-if="schedules.length === 0">
-              <td colspan="7" class="text-center text-muted py-4">No schedules found</td>
-            </tr>
+          <tr v-for="schedule in schedules" :key="schedule.code">
+            <td class="ps-3">{{ schedule.code }}</td>
+            <td>{{ schedule.user?.name || schedule.user_code || '—' }}</td>
+            <td class="text-capitalize">{{ schedule.working_day }}</td>
+            <td>{{ schedule.status === 'INACTIVE' ? '—' : formatTime(schedule.shift_start_time) }}</td>
+            <td>{{ schedule.status === 'INACTIVE' ? '—' : formatTime(schedule.shift_end_time) }}</td>
+            <td><span :class="['badge', schedule.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary']">{{ schedule.status === 'ACTIVE' ? 'Working' : 'Off Day' }}</span></td>
+            <td class="pe-3">
+
+              <div class="dropdown">
+
+                <button
+                    class="btn btn-sm btn-outline-secondary"
+                    type="button"
+                    data-bs-toggle="dropdown">
+
+                  <i class="bi bi-three-dots-vertical"></i>
+
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end">
+
+                  <li>
+                    <button
+                        class="dropdown-item"
+                        @click="openEditModal(schedule)">
+
+                      <i class="bi bi-pencil me-2"></i>
+                      Edit
+
+                    </button>
+                  </li>
+
+                  <li>
+                    <button
+                        class="dropdown-item text-danger"
+                        @click="deleteSchedule(schedule.code)">
+
+                      <i class="bi bi-trash me-2"></i>
+                      Delete
+
+                    </button>
+                  </li>
+
+                </ul>
+
+              </div>
+
+            </td>
+          </tr>
+          <tr v-if="schedules.length === 0">
+            <td colspan="7" class="text-center text-muted py-4">No schedules found</td>
+          </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- EDIT MODAL -->
     <div v-if="showEditModal" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -61,7 +98,7 @@
             <h5 class="modal-title">Edit Schedule</h5>
             <button type="button" class="btn-close" @click="showEditModal = false"></button>
           </div>
-          <form @submit.prevent="updateSchedule">
+          <form @submit.prevent="submitSingleUpdateSchedule">
             <div class="modal-body">
               <div class="mb-3">
                 <label class="form-label fw-semibold">Working Day *</label>
@@ -69,44 +106,35 @@
                   <option v-for="d in DAY_KEYS" :key="d" :value="d">{{ DAY_LABELS[d] }}</option>
                 </select>
               </div>
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Employee Type *</label>
-                <select v-model="editForm.employee_type" class="form-select" required>
-                  <option value="PERMANENT">Permanent</option>
-                  <option value="VISITING">Visiting</option>
-                  <option value="REMOTE">Remote</option>
-                </select>
-              </div>
+
               <div class="mb-3">
                 <label class="form-label fw-semibold">Location</label>
-                <select v-model="editForm.code" class="form-select">
+                <select v-model="editForm.location_code" class="form-select">
                   <option value="">No specific location</option>
                   <option v-for="loc in locationsList" :key="loc.code" :value="loc.code">
-                    {{ loc.address || loc.location_type || loc.code }}
+                    {{ loc.address + " " + loc.street + " " + loc.city }}
                   </option>
                 </select>
               </div>
               <div class="row g-3">
                 <div class="col-6">
                   <label class="form-label fw-semibold">Start Time *</label>
-                  <input type="time" v-model="editForm.shift_start_time" class="form-control" :required="editForm.status === 'active'" :disabled="editForm.status === 'inactive'" />
-                  <small class="text-muted">{{ formatTime(editForm.shift_start_time) }}</small>
+                  <input type="time" v-model="editForm.shift_start_time" class="form-control" :required="editForm.status === 'ACTIVE'" :disabled="editForm.status === 'INACTIVE'" />
                 </div>
                 <div class="col-6">
                   <label class="form-label fw-semibold">End Time *</label>
-                  <input type="time" v-model="editForm.shift_end_time" class="form-control" :required="editForm.status === 'active'" :disabled="editForm.status === 'inactive'" />
-                  <small class="text-muted">{{ formatTime(editForm.shift_end_time) }}</small>
+                  <input type="time" v-model="editForm.shift_end_time" class="form-control" :required="editForm.status === 'ACTIVE'" :disabled="editForm.status === 'INACTIVE'" />
                 </div>
               </div>
               <div class="mt-3">
                 <label class="form-label fw-semibold">Day Status</label>
                 <div class="d-flex gap-3">
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" v-model="editForm.status" value="active" id="statusActive" />
+                    <input class="form-check-input" type="radio" v-model="editForm.status" value="ACTIVE" id="statusActive" />
                     <label class="form-check-label" for="statusActive">Working Day</label>
                   </div>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" v-model="editForm.status" value="inactive" id="statusInactive" />
+                    <input class="form-check-input" type="radio" v-model="editForm.status" value="INACTIVE" id="statusInactive" />
                     <label class="form-check-label" for="statusInactive">Off Day</label>
                   </div>
                 </div>
@@ -117,7 +145,7 @@
               <button type="button" class="btn btn-outline-danger btn-sm" @click="markAsOffDay" :disabled="saving">Mark as Off Day</button>
               <div class="d-flex gap-2">
                 <button type="button" class="btn btn-secondary" @click="showEditModal = false">Cancel</button>
-                <button type="submit" class="btn btn-ams" :disabled="saving">{{ saving ? 'Saving...' : 'Save Changes' }}</button>
+                <button type="submit" class="btn btn-ams" :disabled="submitting">{{ submitting ? 'Saving...' : 'Save Changes' }}</button>
               </div>
             </div>
           </form>
@@ -125,7 +153,6 @@
       </div>
     </div>
 
-    <!-- DELETE CONFIRM MODAL -->
     <div v-if="showDeleteModal" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
       <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
@@ -144,7 +171,6 @@
       </div>
     </div>
 
-    <!-- CREATE MODAL -->
     <div v-if="showCreateModal" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
       <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="max-height:90vh">
         <div class="modal-content">
@@ -152,19 +178,19 @@
             <h5 class="modal-title">New Weekly Schedule</h5>
             <button type="button" class="btn-close" @click="showCreateModal = false"></button>
           </div>
-          <form @submit.prevent="createSchedule">
+          <form @submit.prevent="submitWeeklyBulkSchedule">
             <div class="modal-body" style="overflow-y:auto; max-height:calc(90vh - 120px)">
 
-              <!-- Business (admin only) -->
+<!--              -->
               <div v-if="isAdmin" class="mb-3">
                 <label class="form-label fw-semibold">Business *</label>
-                <select v-model="createForm.business_code" class="form-select" required @change="onBusinessChange">
+                <select v-model="createForm.business_code" class="form-select" required>
                   <option value="">Select business</option>
                   <option v-for="biz in businesses" :key="biz.code" :value="biz.code">{{ biz.name }}</option>
                 </select>
               </div>
 
-              <!-- Staff dropdown -->
+<!--               Staff dropdown-->
               <div class="mb-3">
                 <label class="form-label fw-semibold">Staff Member *</label>
                 <select v-model="createForm.user_code" class="form-select" required :disabled="staffList.length === 0">
@@ -173,29 +199,18 @@
                 </select>
               </div>
 
-              <!-- Employee type -->
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Employee Type *</label>
-                <select v-model="createForm.employee_type" class="form-select" required>
-                  <option value="">Select type</option>
-                  <option value="PERMANENT">Permanent</option>
-                  <option value="VISITING">Visiting</option>
-                  <option value="REMOTE">Remote</option>
-                </select>
-              </div>
 
-              <!-- Location -->
               <div class="mb-4">
                 <label class="form-label fw-semibold">Location</label>
                 <select v-model="createForm.location_code" class="form-select">
                   <option value="">No specific location</option>
                   <option v-for="loc in locationsList" :key="loc.code" :value="loc.code">
-                    {{ loc.address || loc.location_type || loc.code }}
+                    {{ loc.address + " " + loc.street + " " + loc.city }}
                   </option>
                 </select>
               </div>
 
-              <!-- Weekly schedule grid -->
+
               <div class="week-grid-wrap">
                 <div class="week-grid">
                   <div class="week-grid-header">
@@ -207,18 +222,18 @@
                   <div v-for="day in weekDays" :key="day.key" class="week-grid-row" :class="{ 'row-disabled': day.is_off }">
                     <span class="day-label">{{ day.label }}</span>
                     <input
-                      type="time"
-                      v-model="day.shift_start_time"
-                      class="form-control form-control-sm"
-                      :disabled="day.is_off"
-                      :required="!day.is_off"
+                        type="time"
+                        v-model="day.shift_start_time"
+                        class="form-control form-control-sm"
+                        :disabled="day.is_off"
+                        :required="!day.is_off"
                     />
                     <input
-                      type="time"
-                      v-model="day.shift_end_time"
-                      class="form-control form-control-sm"
-                      :disabled="day.is_off"
-                      :required="!day.is_off"
+                        type="time"
+                        v-model="day.shift_end_time"
+                        class="form-control form-control-sm"
+                        :disabled="day.is_off"
+                        :required="!day.is_off"
                     />
                     <div class="text-center">
                       <input type="checkbox" v-model="day.is_off" class="form-check-input" />
@@ -231,7 +246,7 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" @click="showCreateModal = false">Cancel</button>
-              <button type="submit" class="btn btn-ams" :disabled="saving">{{ saving ? 'Creating...' : 'Create Schedule' }}</button>
+              <button type="submit" class="btn btn-ams" :disabled="submitting">{{ submitting ? 'Creating...' : 'Create Schedule' }}</button>
             </div>
           </form>
         </div>
@@ -242,249 +257,225 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
 
+// Central State Declarations
 const authStore = useAuthStore()
-const isAdmin = computed(() => authStore.role === 'SUPER_ADMIN')
 const schedules = ref([])
-const businesses = ref([])
 const staffList = ref([])
 const locationsList = ref([])
-const loading = ref(true)
-const saving = ref(false)
-const error = ref('')
-const createError = ref('')
-const bizFilter = ref('')
 
-const showDeleteModal = ref(false)
-const showEditModal = ref(false)
 const showCreateModal = ref(false)
-const selected = ref(null)
+const showEditModal = ref(false)
+const submitting = ref(false)
 
-const editForm = ref({ working_day: '', employee_type: '', location_code: '', shift_start_time: '', shift_end_time: '', status: 'active' })
-const editError = ref('')
+const targetEditingCode = ref(null)
+const editForm = ref({ working_day: '', location_code: '', shift_start_time: '', shift_end_time: '', status: 'ACTIVE' })
+const createForm = ref({ user_code: '', location_code: '' })
 
-function formatTime(t) {
-  if (!t) return '—'
-  const [h, m] = t.split(':').map(Number)
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const hour = h % 12 || 12
-  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
+// Ensure your array coordinates match your backend FormRequest validation cases perfectly
+const DAY_KEYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+const DAY_LABELS = { MONDAY: 'Monday', TUESDAY: 'Tuesday', WEDNESDAY: 'Wednesday', THURSDAY: 'Thursday', FRIDAY: 'Friday', SATURDAY: 'Saturday', SUNDAY: 'Sunday' }
+
+function getFreshWeekGrid() {
+  return DAY_KEYS.map(dayKey => ({
+    key: dayKey,
+    label: DAY_LABELS[dayKey],
+    shift_start_time: '09:00',
+    shift_end_time: '17:00',
+    is_off: false
+  }))
 }
 
-function openEdit(schedule) {
-  selected.value = schedule
-  editForm.value = {
-    working_day: schedule.working_day,
-    employee_type: schedule.employee_type || '',
-    location_code: schedule.location_code || '',
-    shift_start_time: (schedule.shift_start_time || '').slice(0, 5),
-    shift_end_time: (schedule.shift_end_time || '').slice(0, 5),
-    status: schedule.status || 'ACTIVE',
+
+const weekDays = ref(getFreshWeekGrid())
+
+// Lifecycle Hooks & Context Initialization
+onMounted(async () => {
+  const bizCode = authStore.user?.business_code || ''
+  await Promise.all([
+    fetchSchedulesData(),
+    fetchStaffListing(bizCode),
+    fetchLocationsListing(bizCode)
+  ])
+})
+
+// Time Parsing Helper Methods
+function formatTime(timeString) {
+  if (!timeString) return '?'
+  const [hours, minutes] = timeString.split(':').map(Number)
+  const marker = hours >= 12 ? 'PM' : 'AM'
+  const formattedHours = hours % 12 || 12
+  return `${formattedHours}:${String(minutes).padStart(2, '0')} ${marker}`
+}
+
+function ensureHMinFormat(timeString) {
+  if (!timeString) return null
+  return timeString.substring(0, 5) // Guarantees 'HH:mm' format matching 'date_format:H:i'
+}
+
+// API Communication Actions
+async function fetchSchedulesData() {
+  try {
+    const response = await api.get('/user-shift-schedules')
+    schedules.value = response.data.data?.data || response.data.data || []
+  } catch (err) {
+    console.error('Failed to resolve database operational shift profiles context.', err)
   }
-  editError.value = ''
+}
+
+async function fetchStaffListing(businessCode) {
+  if (!businessCode) return
+  try {
+    const response = await api.get('/users', { params: { business_code: businessCode } })
+    const collectedUsers = response.data.data?.data || response.data.data || []
+
+    staffList.value = collectedUsers.filter(user =>
+        ['OPERATION_STAFF', 'SERVICE_STAFF'].includes(user.user_type)
+    )
+  } catch (err) {
+    console.error('Failed to resolve enterprise team listings maps.', err)
+  }
+}
+
+async function fetchLocationsListing(businessCode) {
+  if (!businessCode) return
+  try {
+    const response = await api.get('/business-locations', { params: { business_code: businessCode } })
+    locationsList.value = response.data.data?.data || response.data.data || []
+  } catch (err) {
+    console.error('Failed to fetch corporate location parameters.', err)
+  }
+}
+
+// Modal Handlers
+function openCreateModal() {
+  createForm.value = { user_code: '', location_code: '' }
+  weekDays.value = getFreshWeekGrid()
+  showCreateModal.value = true
+}
+
+function openEditModal(scheduleRow) {
+  targetEditingCode.value = scheduleRow.code
+  editForm.value = {
+    working_day: scheduleRow.working_day ? scheduleRow.working_day.toUpperCase() : 'MONDAY',
+    location_code: scheduleRow.location_code || '',
+    shift_start_time: scheduleRow.shift_start_time ? scheduleRow.shift_start_time.substring(0, 5) : '09:00',
+    shift_end_time: scheduleRow.shift_end_time ? scheduleRow.shift_end_time.substring(0, 5) : '17:00',
+    status: scheduleRow.status ? scheduleRow.status.toUpperCase() : 'ACTIVE'
+  }
   showEditModal.value = true
 }
 
-async function updateSchedule() {
-  saving.value = true
-  editError.value = ''
-  try {
-    const payload = { ...editForm.value }
-    payload.shift_start_time = (payload.shift_start_time || '').slice(0, 5)
-    payload.shift_end_time = (payload.shift_end_time || '').slice(0, 5)
-    if (!payload.location_code) delete payload.location_code
-    await api.put(`/user-shift-schedules/${selected.value.code}`, payload)
-    showEditModal.value = false
-    await refreshSchedules()
-  } catch (err) {
-    editError.value = err.response?.data?.message || 'Update failed'
-  } finally {
-    saving.value = false
-  }
-}
+async function submitWeeklyBulkSchedule() {
+  if (!createForm.value.user_code) return
+  submitting.value = true
 
-async function refreshSchedules() {
-  try {
-    const params = bizFilter.value ? { business_code: bizFilter.value } : {}
-    const res = await api.get('/user-shift-schedules', { params })
-    schedules.value = res.data.data.data || []
-  } catch (_) {}
-}
+  const parentBusinessCode = authStore.user?.business_code
 
-async function markAsOffDay() {
-  saving.value = true
-  editError.value = ''
-  try {
-    await api.delete(`/user-shift-schedules/${selected.value.id}`)
-    showEditModal.value = false
-    await refreshSchedules()
-  } catch (err) {
-    editError.value = err.response?.data?.message || 'Failed to mark as off day'
-  } finally {
-    saving.value = false
-  }
-}
-
-const DAY_KEYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
-const DAY_LABELS = { monday:'Monday', tuesday:'Tuesday', wednesday:'Wednesday', thursday:'Thursday', friday:'Friday', saturday:'Saturday', sunday:'Sunday' }
-
-function freshWeekDays() {
-  return DAY_KEYS.map(k => ({ key: k, label: DAY_LABELS[k], shift_start_time: '09:00', shift_end_time: '17:00', is_off: false }))
-}
-
-const createForm = ref({ business_code: '', user_code: '', employee_type: '', location_code: '' })
-const weekDays = ref(freshWeekDays())
-
-async function fetchStaff(business_code) {
-  staffList.value = []
-  if (!business_code) return
-  try {
-    const res = await api.get('/users', { params: { business_code } })
-    const all = res.data.data || []
-    staffList.value = all.filter(u => u.user_type === 'OPERATION_STAFF' || u.user_type === 'SERVICE_STAFF')
-  } catch (_) {}
-}
-
-async function fetchLocations(business_code) {
-  locationsList.value = []
-  if (!business_code) return
-  try {
-    const res = await api.get('/business-locations', { params: { business_code } })
-    locationsList.value = res.data.data.data || []
-  } catch (_) {}
-}
-
-async function onBusinessChange() {
-  createForm.value.user_code = ''
-  createForm.value.location_code = ''
-  await Promise.all([fetchStaff(createForm.value.business_code), fetchLocations(createForm.value.business_code)])
-}
-
-async function fetchSchedules() {
-  loading.value = true
-  error.value = ''
-  try {
-    const params = bizFilter.value ? { business_code: bizFilter.value } : {}
-    const res = await api.get('/user-shift-schedules', { params })
-    schedules.value = res.data.data.data || []
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load schedules'
-  } finally {
-    loading.value = false
-  }
-}
-
-function openDelete(schedule) {
-  selected.value = schedule
-  showDeleteModal.value = true
-}
-
-async function deleteSchedule() {
-  saving.value = true
-  try {
-    await api.delete(`/user-shift-schedules/${selected.value.code}`)
-    showDeleteModal.value = false
-    await fetchSchedules()
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Delete failed'
-  } finally {
-    saving.value = false
-  }
-}
-
-async function createSchedule() {
-  createError.value = ''
-  const business_code = isAdmin.value ? createForm.value.business_code : (authStore.user?.business_code || '')
-  const entries = weekDays.value.map(d => ({
-    business_code,
+  const matrixPayload = weekDays.value.map(day => ({
+    business_code: parentBusinessCode,
     user_code: createForm.value.user_code,
-    working_days: d.key,
-    employee_type: createForm.value.employee_type,
-    location_code: createForm.value.location_code || undefined,
-    shift_start_time: d.shift_start_time,
-    shift_end_time: d.shift_end_time,
-    status: d.is_off ? 'INACTIVE' : 'ACTIVE',
+    working_days: day.key.toUpperCase(), // Sends matching case string 'MONDAY' to FormRequest validation
+    location_code: createForm.value.location_code || null,
+    shift_start_time: day.is_off ? null : ensureHMinFormat(day.shift_start_time),
+    shift_end_time: day.is_off ? null : ensureHMinFormat(day.shift_end_time),
+    status: day.is_off ? 'INACTIVE' : 'ACTIVE'
   }))
 
-  saving.value = true
   try {
-    await api.post('/schedules/bulk-create-schedule', entries)
+    await api.post('/user-shift-schedules', matrixPayload)
     showCreateModal.value = false
-    createForm.value = { business_code: '', user_code: '', employee_type: '', location_code: '' }
-    weekDays.value = freshWeekDays()
-    staffList.value = []
-    locationsList.value = []
-    await fetchSchedules()
+    await fetchSchedulesData()
   } catch (err) {
-    createError.value = err.response?.data?.message || 'Create failed'
+
+    console.log(
+        'FULL BACKEND ERROR:',
+        err.response?.data
+    )
+
+    alert(
+        JSON.stringify(
+            err.response?.data,
+            null,
+            2
+        )
+    )
+
   } finally {
-    saving.value = false
+    submitting.value = false
   }
 }
 
-onMounted(async () => {
-  if (!isAdmin.value) {
-    const bizCode = authStore.user?.business_code || ''
-    createForm.value.business_code = bizCode
-    await Promise.all([fetchSchedules(), fetchStaff(bizCode), fetchLocations(bizCode)])
-    return
+async function submitSingleUpdateSchedule() {
+  try {
+    const payload = {
+      working_day: editForm.value.working_day.toUpperCase(),
+      location_code: editForm.value.location_code || null,
+      status: editForm.value.status,
+      shift_start_time: editForm.value.status === 'INACTIVE' ? null : ensureHMinFormat(editForm.value.shift_start_time),
+      shift_end_time: editForm.value.status === 'INACTIVE' ? null : ensureHMinFormat(editForm.value.shift_end_time)
+    }
+
+    await api.put(`/user-shift-schedules/${targetEditingCode.value}`, payload)
+    showEditModal.value = false
+    await fetchSchedulesData()
+  } catch (err) {
+    alert(err.response?.data?.message || 'Error committing singular record changes properties.')
   }
-  const [_, bizRes] = await Promise.allSettled([fetchSchedules(), api.get('/businesses')])
-  if (bizRes.status === 'fulfilled') businesses.value = bizRes.value.data.data.data || []
-})
+}
+
+async function deleteSchedule(scheduleCode) {
+  if (!confirm('Are you sure you want to drop this individual shift line?')) return
+  try {
+    await api.delete(`/user-shift-schedules/${scheduleCode}`)
+    await fetchSchedulesData()
+  } catch (err) {
+    alert('Error clearing selected index shift structural rows references.')
+  }
+}
 </script>
 
 <style scoped>
-.week-grid-wrap {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
+.week-grid-wrap{
+  overflow-x:auto;
 }
 
-.week-grid {
-  width: 100%;
+.week-grid{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
 }
 
 .week-grid-header,
-.week-grid-row {
-  display: grid;
-  grid-template-columns: 110px 1fr 1fr 80px;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+.week-grid-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 100px;
+  gap:12px;
+  align-items:center;
 }
 
-.week-grid-header {
-  background: #f8fafc;
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid #e2e8f0;
+.week-grid-header{
+  font-weight:600;
+  color:#6b7280;
+  padding-bottom:10px;
+  border-bottom:1px solid #e5e7eb;
 }
 
-.week-grid-row {
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.15s;
+.week-grid-row{
+  padding:10px 0;
+  border-bottom:1px solid #f1f5f9;
 }
 
-.week-grid-row:last-child {
-  border-bottom: none;
+.day-label{
+  font-weight:600;
 }
 
-.week-grid-row.row-disabled {
-  background: #f8fafc;
-  opacity: 0.55;
+.row-disabled{
+  opacity:.6;
 }
-
-.day-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-}
+.fs-7 { font-size: 0.785rem; }
+.fw-mono { font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 </style>
-

@@ -34,6 +34,11 @@
         </div>
 
         <div class="field">
+          <label>Confirm Password *</label>
+          <input v-model="form.password_confirmation" type="password" placeholder="Confirm password"/>
+        </div>
+
+        <div class="field">
           <label>User Type *</label>
           <select v-model="form.user_type" :class="{ 'field-input-error': errors.user_type }" @change="validateField('user_type')">
             <option value="">Select type</option>
@@ -89,6 +94,7 @@ const form = reactive({
   email:'',
   phone:'',
   password:'',
+  password_confirmation:'',
   user_type:'',
   business_code:'',
   status:'ACTIVE'

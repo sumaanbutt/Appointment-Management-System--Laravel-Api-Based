@@ -10,14 +10,13 @@ class Service extends Model
 
 protected $fillable =
     ['business_code',
-    'location_code',
     'service_name',
     'description',
     'time_duration',
     'charges',
     'cost',
     'currency',
-    'availability',
+    'status',
     'duration_uom',];
 
     use HasCode;

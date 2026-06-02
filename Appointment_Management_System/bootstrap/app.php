@@ -127,7 +127,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized. Token missing or invalid.'
+                    'message' => 'Session expired. Please log in again.'
                 ], 401);
             }
 

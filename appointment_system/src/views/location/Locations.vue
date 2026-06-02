@@ -39,8 +39,46 @@
               <td>{{ loc.address || loc.street || '—' }}</td>
               <td><span :class="['ams-badge', loc.status]">{{ loc.status }}</span></td>
               <td class="pe-3">
-                <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(loc)">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" @click="openDelete(loc)">Delete</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button
+                          class="dropdown-item"
+                          @click="openEdit(loc)">
+
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit
+
+                      </button>
+                    </li>
+
+                    <li>
+                      <button
+                          class="dropdown-item text-danger"
+                          @click="openDelete(loc)">
+
+                        <i class="bi bi-trash me-2"></i>
+                        Delete
+
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="locations.length === 0">
@@ -97,8 +135,8 @@
               <div class="mt-3">
                 <label class="form-label fw-semibold">Status</label>
                 <select v-model="editForm.status" class="form-select">
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
+                  <option value="active">active</option>
+                  <option value="inactive">Inactive</option>
                 </select>
               </div>
               <p v-if="formError" class="text-danger small mt-2 mb-0">{{ formError }}</p>
@@ -174,7 +212,7 @@ function openEdit(loc) {
   editForm.province = loc.province || ''
   editForm.postal_code = loc.postal_code || ''
   editForm.country = loc.country || ''
-  editForm.status = loc.status || 'ACTIVE'
+  editForm.status = loc.status || 'active'
   formError.value = ''
   showEditModal.value = true
 }

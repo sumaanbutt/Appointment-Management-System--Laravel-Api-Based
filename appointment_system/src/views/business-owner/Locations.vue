@@ -14,7 +14,7 @@
           </thead>
           <tbody>
             <tr v-for="loc in locations" :key="loc.code">
-              <td class="ps-3">{{ loc.code }}</td>
+              <td class="ps-3">{{ loc.business?.name }}</td>
               <td><code>{{ loc.code }}</code></td>
               <td>{{ loc.location_type || '—' }}</td>
               <td>{{ loc.address + ' ' + loc.street + ' ' + loc.city }}</td>

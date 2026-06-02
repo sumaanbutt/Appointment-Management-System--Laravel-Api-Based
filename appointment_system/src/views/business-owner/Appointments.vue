@@ -38,17 +38,92 @@
               <td>{{ appt.appointment_start_date }}</td>
               <td>{{ appt.start_time }}</td>
               <td>{{ appt.end_time }}</td>
-              <td>{{ appt.location_code || '—' }}</td>
+              <td>{{ [appt.location.apartment, appt.location.street, appt.location.address, appt.location.city ] .filter(Boolean)
+                  .join(', ')|| '—' }}</td>
               <td><span :class="['ams-badge', appt.status?.toLowerCase()]">{{ appt.status }}</span></td>
               <td class="pe-3">
-                <button class="btn btn-sm btn-outline-secondary me-1" @click="openDetails(appt)">View</button>
-                <button v-if="appt.status === 'PENDING'" class="btn btn-sm btn-success me-1" @click="openApprovalDialog(appt)">Approve</button>
-                <button v-if="appt.status === 'APPROVED'" class="btn btn-sm btn-outline-info me-1" @click="changeStatus(appt, 'IN_PROGRESS')">Start</button>
-                <button v-if="appt.status === 'IN_PROGRESS'" class="btn btn-sm btn-success me-1" @click="changeStatus(appt, 'COMPLETED')">Complete</button>
-                <button v-if="['PENDING','APPROVED','IN_PROGRESS'].includes(appt.status)" class="btn btn-sm btn-outline-primary me-1" @click="openAssign(appt)">Assign</button>
-                <button v-if="['PENDING','APPROVED'].includes(appt.status)" class="btn btn-sm btn-outline-primary me-1" @click="openReschedule(appt)">Reschedule</button>
-                <button v-if="['PENDING','APPROVED'].includes(appt.status)" class="btn btn-sm btn-outline-danger me-1" @click="changeStatus(appt, 'REJECTED')">Reject</button>
-                <button v-if="['PENDING','APPROVED'].includes(appt.status)" class="btn btn-sm btn-secondary" @click="changeStatus(appt, 'CANCELLED')">Cancel</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button class="dropdown-item"
+                              @click="openDetails(appt)">
+                        <i class="bi bi-eye me-2"></i>
+                        View
+                      </button>
+                    </li>
+
+                    <li v-if="appt.status === 'PENDING'">
+                      <button class="dropdown-item text-success"
+                              @click="openApprovalDialog(appt)">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Approve
+                      </button>
+                    </li>
+
+                    <li v-if="appt.status === 'APPROVED'">
+                      <button class="dropdown-item text-info"
+                              @click="changeStatus(appt,'IN_PROGRESS')">
+                        <i class="bi bi-play-circle me-2"></i>
+                        Start
+                      </button>
+                    </li>
+
+                    <li v-if="appt.status === 'IN_PROGRESS'">
+                      <button class="dropdown-item text-success"
+                              @click="changeStatus(appt,'COMPLETED')">
+                        <i class="bi bi-check2-all me-2"></i>
+                        Complete
+                      </button>
+                    </li>
+
+                    <li v-if="['PENDING','APPROVED','IN_PROGRESS'].includes(appt.status)">
+                      <button class="dropdown-item"
+                              @click="openAssign(appt)">
+                        <i class="bi bi-person-plus me-2"></i>
+                        Assign
+                      </button>
+                    </li>
+
+                    <li v-if="['PENDING','APPROVED'].includes(appt.status)">
+                      <button class="dropdown-item"
+                              @click="openReschedule(appt)">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Reschedule
+                      </button>
+                    </li>
+
+                    <li v-if="['PENDING','APPROVED'].includes(appt.status)">
+                      <button class="dropdown-item text-danger"
+                              @click="changeStatus(appt,'REJECTED')">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Reject
+                      </button>
+                    </li>
+
+                    <li v-if="['PENDING','APPROVED'].includes(appt.status)">
+                      <button class="dropdown-item text-secondary"
+                              @click="changeStatus(appt,'CANCELLED')">
+                        <i class="bi bi-slash-circle me-2"></i>
+                        Cancel
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="filteredAppointments.length === 0">
@@ -69,7 +144,7 @@
           </div>
           <div class="modal-body" v-if="selected">
             <dl class="row mb-3">
-              <dt class="col-5 text-muted">Code</dt><dd class="col-7"><code>{{ selected.appointment_code }}</code></dd>
+              <dt class="col-5 text-muted">Code</dt><dd class="col-7"><code>{{ selected.code }}</code></dd>
               <dt class="col-5 text-muted">Business</dt><dd class="col-7">{{ selected.business_code }}</dd>
               <dt class="col-5 text-muted">Date</dt><dd class="col-7">{{ selected.appointment_start_date }}</dd>
               <dt class="col-5 text-muted">Start Time</dt><dd class="col-7">{{ selected.start_time }}</dd>

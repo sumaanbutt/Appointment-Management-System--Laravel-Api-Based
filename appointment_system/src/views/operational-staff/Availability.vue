@@ -3,7 +3,17 @@
     <div class="header"><h2>Check Staff Availability</h2></div>
     <div class="card">
       <form class="form" @submit.prevent="checkAvailability">
-        <div class="field"><label>Location Code *</label><input v-model="form.locationCode" placeholder="Location code" required /></div>
+        <div class="field">
+          <label>Location *</label>
+          <select v-model="form.location_code" class="field-select" required>
+            <option value="">Select Location</option>
+            <option v-for="loc in locations" :key="loc.code" :value="loc.code">
+              {{ loc.address }}
+              {{ loc.street }}
+              {{ loc.city }}
+            </option>
+          </select>
+        </div>
         <div class="field"><label>Date *</label><input v-model="form.date" type="date" required /></div>
         <div class="field"><label>Start Time *</label><input v-model="form.startTime" type="time" required /></div>
         <div class="field"><label>End Time *</label><input v-model="form.endTime" type="time" required /></div>
@@ -17,7 +27,7 @@
       <table v-else class="table">
         <thead><tr><th>Staff Code</th><th>Employee Type</th><th>Working Days</th><th>Start Time</th><th>End Time</th></tr></thead>
         <tbody>
-          <tr v-for="s in available" :key="s.id">
+          <tr v-for="s in available" :key="s.code">
             <td><code>{{ s.user_code }}</code></td>
             <td>{{ s.employee_type || '—' }}</td>
             <td>{{ s.working_days }}</td>
@@ -34,9 +44,11 @@
 import { ref, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import { onMounted } from 'vue'
 
 const authStore = useAuthStore()
-const form = reactive({ locationCode: '', date: '', startTime: '', endTime: '' })
+const form = reactive({ location_code: '', date: '', startTime: '', endTime: '' })
+const locations = ref([])
 const available = ref([])
 const loading = ref(false)
 const error = ref('')
@@ -48,24 +60,76 @@ async function checkAvailability() {
   checked.value = false
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/schedules/check-staff-availability', {
+    const res = await api.get('/user-shift-schedules/check-staff-availability', {
       params: {
-        businessCode: biz,
-        locationCode: form.locationCode,
+        business_code: biz,
+        location_code: form.location_code,
         date: form.date,
-        startTime: form.startTime,
-        endTime: form.endTime,
+        start_time: form.startTime,
+        end_time: form.endTime,
       }
     })
-    available.value = res.data.data || []
+    available.value = res.data.available || []
     checked.value = true
   } catch (err) {
-    error.value = err.response?.data?.message || 'Check failed'
-    checked.value = true
-  } finally {
+
+    console.log('FULL ERROR:', err)
+
+    console.log(
+        'RESPONSE:',
+        err.response?.data
+    )
+
+    console.log(
+        'MESSAGE:',
+        err.message
+    )
+
+    alert(
+        err.response?.data?.error
+        ||
+        err.response?.data?.message
+        ||
+        err.message
+        ||
+        'Unknown Error'
+    )
+
+  }finally {
     loading.value = false
   }
 }
+
+onMounted(async () => {
+
+  try{
+
+    const biz =
+        authStore.user?.business_code
+
+    const res =
+        await api.get(
+            '/business-locations',
+            {
+              params:{
+                business_code:biz
+              }
+            }
+        )
+
+    locations.value =
+        res.data.data.data || []
+
+  }
+  catch(err){
+
+    console.log(
+        err.response?.data
+    )
+
+  }
+
+})
 </script>
 
 <style scoped>
@@ -76,7 +140,8 @@ async function checkAvailability() {
 .form { display: flex; flex-direction: column; gap: 16px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 13px; font-weight: 600; color: #374151; }
-.field input { padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; outline: none; }
+.field input,
+.field select { padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; outline: none; }
 .check-btn { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; align-self: flex-start; }
 .result-card h3 { margin: 0 0 12px; font-size: 16px; }
 .table { width: 100%; border-collapse: collapse; }

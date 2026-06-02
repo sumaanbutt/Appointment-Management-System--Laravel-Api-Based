@@ -108,7 +108,7 @@ const form = reactive({
   currency:'',
   time_duration:null,
   duration_uom:null,
-  availability:'active'
+  status:'active'
 })
 
 const businesses = ref([])
@@ -201,7 +201,27 @@ async function submit() {
     await api.post('/services', payload)
     router.push(backLink.value)
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to create service'
+
+    console.log(err.response?.data)
+
+    if(err.response?.data?.errors){
+
+      error.value =
+          Object.values(
+              err.response.data.errors
+          )
+              .flat()
+              .join('\n')
+
+    }else{
+
+      error.value =
+          err.response?.data?.error
+          || err.response?.data?.message
+          || 'Create failed'
+
+    }
+
   } finally {
     loading.value = false
   }

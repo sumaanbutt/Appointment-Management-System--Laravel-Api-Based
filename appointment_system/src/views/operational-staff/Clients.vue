@@ -2,7 +2,7 @@
   <div class="page">
     <div class="header">
       <h2>Clients</h2>
-      <router-link to="/operations/clients/create" class="btn">+ New Client</router-link>
+<!--      <router-link to="/operations/clients/create" class="btn">+ New Client</router-link>-->
     </div>
     <div class="search-bar">
       <input v-model="searchQuery" placeholder="Search by name or email..." />
@@ -13,11 +13,11 @@
       <table v-else class="table">
         <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Code</th></tr></thead>
         <tbody>
-          <tr v-for="client in filtered" :key="client.client_code">
-            <td>{{ client.name }}</td>
-            <td>{{ client.email }}</td>
-            <td>{{ client.phone || '—' }}</td>
-            <td><code>{{ client.client_code }}</code></td>
+          <tr v-for="client in filtered" :key="client.code">
+            <td>{{ client.user?.name }}</td>
+            <td>{{ client.user?.email }}</td>
+            <td>{{ client.user?.phone || '—' }}</td>
+            <td><code>{{ client.code }}</code></td>
           </tr>
           <tr v-if="filtered.length === 0"><td colspan="4" class="empty">No clients found</td></tr>
         </tbody>
@@ -48,8 +48,8 @@ async function fetchClients() {
   error.value = ''
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/clients/get-client', { params: biz ? { business_code: biz } : {} })
-    clients.value = res.data.data || []
+    const res = await api.get('/clients', { params: biz ? { business_code: biz } : {} })
+    clients.value = res.data.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load clients'
   } finally {

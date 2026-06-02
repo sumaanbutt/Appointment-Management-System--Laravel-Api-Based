@@ -98,8 +98,8 @@
         <tbody>
         <tr v-for="appt in recentAppointments" :key="appt.code">
           <td>{{ appt.code }}</td>
-          <td>{{ appt.client_code || '—' }}</td>
-          <td>{{ appt.service_code || '—' }}</td>
+          <td>{{ appt.client?.user?.name || appt.client?.name || '—' }}</td>
+          <td><code>{{ appt.service?.service_name }}</code></td>
           <td>{{ appt.appointment_start_date || '—' }}</td>
           <td>
             <span :class="['badge',appt.status?.toLowerCase()]">{{ appt.status }}</span>

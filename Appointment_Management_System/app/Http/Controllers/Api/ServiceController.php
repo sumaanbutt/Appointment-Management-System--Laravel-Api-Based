@@ -42,14 +42,13 @@ class ServiceController extends Controller
         try{
             $service = Service::create([
                 'business_code' => $request->business_code,
-                'location_code' => $request->location_code,
                 'service_name' => $request->service_name,
                 'description' => $request->description ?? null,
                 'time_duration' => $request->time_duration ?? null,
                 'charges' => $request->charges ?? 0,
                 'cost' => $request->cost ?? null,
                 'currency' => $request->currency ?? 'PKR',
-                'availability' => $request->availability,
+                'status' => $request->status ?? 'active',
                 'duration_uom' => $request->duration_uom ?? null,
             ]);
 
@@ -109,7 +108,7 @@ class ServiceController extends Controller
                 ],404);
             }
 
-            $service->update($request->all());
+            $service->update($request->validated());
 
             return response()->json([
                 'success' => true,

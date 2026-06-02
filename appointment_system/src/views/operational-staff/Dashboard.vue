@@ -48,15 +48,27 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="appt in pendingAppts" :key="appt.appointment_code">
-            <td><code>{{ appt.appointment_code }}</code></td>
+          <tr v-for="appt in pendingAppts" :key="appt.code">
+            <td><code>{{ appt.code }}</code></td>
             <td>{{ appt.appointment_start_date?.split('T')[0] ?? '—' }}</td>
-            <td>{{ appt.client_code ?? '—' }}</td>
-            <td>{{ appt.location_code ?? '—' }}</td>
+            <td>{{ appt.client?.user?.name || appt.client?.name || '—' }}</td>
+<!--            <td>{{ appt.location_code ?? '—' }}</td>-->
+            <td>{{
+                [
+                  appt.location?.apartment,
+                  appt.location?.street,
+                  appt.location?.address,
+                  appt.location?.city
+                ]
+                    .filter(Boolean)
+                    .join(', ')
+                || '—'
+              }}
+            </td>
             <td><span class="badge pending">Pending</span></td>
             <td>
-              <button class="approve-btn" @click="changeStatus(appt, 'approved')">Approve</button>
-              <button class="reject-btn" @click="changeStatus(appt, 'rejected')">Reject</button>
+              <button class="approve-btn" @click="changeStatus(appt, 'APPROVED')">Approve</button>
+              <button class="reject-btn" @click="changeStatus(appt, 'REJECTED')">Reject</button>
             </td>
           </tr>
           <tr v-if="pendingAppts.length === 0">
@@ -71,9 +83,9 @@
         <h3>Quick Actions</h3>
       </div>
       <div class="action-row">
-        <router-link to="/operations/appointments" class="action-btn">All Appointments</router-link>
-        <router-link to="/operations/appointments/pending" class="action-btn">Pending Requests</router-link>
-        <router-link to="/operations/availability" class="action-btn">Check Availability</router-link>
+        <router-link to="/ops/appointments" class="action-btn">All Appointments</router-link>
+        <router-link to="/ops/pending" class="action-btn">Pending Requests</router-link>
+        <router-link to="/ops/availability" class="action-btn">Check Availability</router-link>
       </div>
     </div>
   </div>
@@ -89,7 +101,7 @@ const appointments = ref([])
 const loading = ref(true)
 
 const stats = reactive({ pending: 0, today: 0, approved: 0, total: 0 })
-const pendingAppts = computed(() => appointments.value.filter(a => a.status === 'pending'))
+const pendingAppts = computed(() => appointments.value.filter(a => a.status === 'PENDING'))
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -98,10 +110,10 @@ async function fetchAppointments() {
   try {
     const biz = authStore.user?.business_code
     const res = await api.get('/appointments', { params: biz ? { business_code: biz } : {} })
-    appointments.value = res.data.data || []
+    appointments.value = res.data.data.data || []
     stats.total = appointments.value.length
-    stats.pending = appointments.value.filter(a => a.status === 'pending').length
-    stats.approved = appointments.value.filter(a => a.status === 'approved').length
+    stats.pending = appointments.value.filter(a => a.status === 'PENDING').length
+    stats.approved = appointments.value.filter(a => a.status === 'APPROVED').length
     stats.today = appointments.value.filter(a => a.appointment_start_date?.startsWith(today)).length
   } catch (_) {}
   finally { loading.value = false }
@@ -109,7 +121,7 @@ async function fetchAppointments() {
 
 async function changeStatus(appt, status) {
   try {
-    await api.patch(`/appointments/${appt.appointment_code}/status`, { status })
+    await api.patch(`/appointments/${appt.code}/status`, { status })
     await fetchAppointments()
   } catch (_) {}
 }

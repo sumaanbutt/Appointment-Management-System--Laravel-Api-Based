@@ -23,10 +23,10 @@ class UpdateInvoiceRequest extends FormRequest
             'status' => [
                 'sometimes',
                 Rule::in([
-                    'PENDING',
-                    'PAID',
-                    'FAILED',
-                    'REFUNDED',
+                    'draft',
+                    'issued',
+                    'paid',
+                    'canceled',
                 ]),
             ],
             'invoice_date' => ['sometimes', 'date'],

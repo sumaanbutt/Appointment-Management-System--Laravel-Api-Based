@@ -24,14 +24,13 @@ class UpdateServiceRequest extends FormRequest
     {
         return [
             'business_code' => 'required|exists:businesses,code',
-            'location_code' => 'required|exists:business_locations,code',
             'service_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'time_duration' => 'nullable|integer',
             'charges' => 'nullable|numeric',
             'cost' => 'nullable|numeric',
             'currency' => 'nullable|string|max:10',
-            'availability' => 'required|in:ONSITE,ONLINE,BOTH',
+            'status' => 'required|in:active,inactive',
             'duration_uom' => 'nullable|in:WEEK,DAY,HOUR,MINUTE',
         ];
     }

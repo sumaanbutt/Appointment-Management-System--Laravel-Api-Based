@@ -5,15 +5,16 @@
       <div v-if="loading" class="loading">Loading...</div>
       <div v-else-if="error" class="error-msg">{{ error }}</div>
       <table v-else class="table">
-        <thead><tr><th>Staff Code</th><th>Working Days</th><th>Start Time</th><th>End Time</th><th>Employee Type</th><th>Location</th></tr></thead>
+        <thead><tr><th>Staff Code</th><th>Working Days</th><th>Start Time</th><th>End Time</th><th>Location</th></tr></thead>
         <tbody>
           <tr v-for="s in schedules" :key="s.id">
             <td><code>{{ s.user_code }}</code></td>
-            <td>{{ s.working_days }}</td>
-            <td>{{ s.start_time }}</td>
-            <td>{{ s.end_time }}</td>
-            <td>{{ s.employee_type || '—' }}</td>
-            <td>{{ s.location_code || '—' }}</td>
+            <td>{{ s.working_day }}</td>
+            <td>{{ s.shift_start_time }}</td>
+            <td>{{ s.shift_end_time }}</td>
+<!--            <td>{{ s.location_code || '—' }}</td>-->
+            <td>{{ [s.location.apartment, s.location.street, s.location.address, s.location.city ] .filter(Boolean)
+                .join(', ')|| '—' }}</td>
           </tr>
           <tr v-if="schedules.length === 0"><td colspan="6" class="empty">No schedules found</td></tr>
         </tbody>
@@ -37,8 +38,8 @@ async function fetchSchedules() {
   error.value = ''
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/schedules/get-schedule', { params: biz ? { business_code: biz } : {} })
-    schedules.value = res.data.data || []
+    const res = await api.get('/user-shift-schedules', { params: biz ? { business_code: biz } : {} })
+    schedules.value = res.data.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load schedules'
   } finally {

@@ -34,14 +34,52 @@
           </thead>
           <tbody>
             <tr v-for="svc in filteredServices" :key="svc.code">
-              <td class="ps-3">{{ svc.name }}</td>
+              <td class="ps-3">{{ svc.service_name }}</td>
               <td><code>{{ svc.code }}</code></td>
               <td>{{ svc.description }}</td>
               <td>{{ svc.cost != null ? svc.cost : '—' }}</td>
               <td><span :class="['ams-badge', svc.status]">{{ svc.status }}</span></td>
               <td class="pe-3">
-                <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(svc)">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" @click="openDelete(svc)">Delete</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button
+                          class="dropdown-item"
+                          @click="openEdit(svc)">
+
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit
+
+                      </button>
+                    </li>
+
+                    <li>
+                      <button
+                          class="dropdown-item text-danger"
+                          @click="openDelete(svc)">
+
+                        <i class="bi bi-trash me-2"></i>
+                        Delete
+
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="filteredServices.length === 0">
@@ -64,21 +102,21 @@
             <div class="modal-body">
               <div class="mb-3">
                 <label class="form-label fw-semibold">Service Name *</label>
-                <input v-model="editForm.name" class="form-control" placeholder="Service Name" required />
+                <input v-model="editForm.service_name" class="form-control" placeholder="Service Name" required />
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Duration (minutes) *</label>
-                <input v-model.number="editForm.duration_minutes" type="number" class="form-control" placeholder="Duration (minutes)" min="1" required />
+                <input v-model.number="editForm.time_duration" type="number" class="form-control" placeholder="Duration (minutes)" min="1" required />
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Price</label>
-                <input v-model.number="editForm.price" type="number" class="form-control" placeholder="Price" step="0.01" min="0" />
+                <input v-model.number="editForm.charges" type="number" class="form-control" placeholder="Price" step="0.01" min="0" />
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
                 <select v-model="editForm.status" class="form-select">
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE ">Inactive</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
                 </select>
               </div>
               <p v-if="formError" class="text-danger small mb-0">{{ formError }}</p>
@@ -130,7 +168,13 @@ const bizFilter = ref('')
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const selected = ref(null)
-const editForm = reactive({ name: '', duration_minutes: '', price: '', status: 'ACTIVE' })
+const editForm = reactive({
+  service_name:'',
+  time_duration:'',
+  charges:'',
+  status:'active',
+  business_code:''
+})
 
 const filteredServices = computed(() => {
   const s = search.value.toLowerCase()
@@ -173,8 +217,7 @@ async function fetchServices() {
                   || '—',
 
               status:
-                  svc.availability
-                  || svc.status
+                  svc.status
                   || '—',
 
               price:
@@ -203,21 +246,24 @@ async function fetchServices() {
   }
 }
 
-function openEdit(svc) {
+function openEdit(svc){
 
   selected.value = svc
 
-  editForm.name =
-      svc.name
+  editForm.service_name =
+      svc.service_name
 
-  editForm.duration_minutes =
+  editForm.time_duration =
       svc.time_duration
 
-  editForm.price =
-      svc.cost ?? ''
+  editForm.charges =
+      svc.charges ?? ''
 
   editForm.status =
-      svc.availability
+      svc.status
+
+  editForm.business_code =
+      svc.business_code
 
   formError.value=''
 

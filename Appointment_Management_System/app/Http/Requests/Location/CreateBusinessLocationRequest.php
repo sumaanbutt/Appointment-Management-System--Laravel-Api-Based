@@ -20,16 +20,37 @@ class CreateBusinessLocationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'business_code' => 'required',
-            'location_name' => 'required',
-            'address' => 'required',
-            'apartment' => 'required',
-            'street' => 'required',
-            'city' => 'required',
-            'state' => 'required',
-            'postal_code' => 'required',
-            'country' => 'required',
-            'status' => 'required|in:ACTIVE,INACTIVE',
+
+            'business_code' =>
+                'required',
+
+            'location_type' =>
+                'required|in:BUSINESS,CLIENT',
+
+            'address' =>
+                'required',
+
+            'apartment' =>
+                'required',
+
+            'street' =>
+                'required',
+
+            'city' =>
+                'required',
+
+            'state' =>
+                'required',
+
+            'postal_code' =>
+                'required',
+
+            'country' =>
+                'required',
+
+            'status' =>
+                'required|in:active,inactive'
+
         ];
     }
 }
