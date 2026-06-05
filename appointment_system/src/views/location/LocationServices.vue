@@ -30,7 +30,7 @@
           <thead class="table-light">
             <tr>
               <th class="ps-3">ID</th>
-              <th>Business</th>
+              <th>Business Name</th>
               <th>Location</th>
               <th>Service</th>
               <th>Availability</th>
@@ -40,9 +40,8 @@
           <tbody>
             <tr v-for="item in mappings" :key="item.id">
               <td class="ps-3">{{ item.id }}</td>
-              <td><code>{{ item.business?.name }}</code></td>
+              <td>{{ item.business?.name }}</td>
               <td>
-                <code>
                   {{
                     [
                       item.location?.apartment,
@@ -54,13 +53,10 @@
                         .join(', ')
                     || '—'
                   }}
-                </code>
               </td>
-              <td><code>{{ item.service?.service_name }}</code></td>
+              <td>{{ item.service?.service_name }}</td>
               <td>
-                <span :class="['ams-badge', item.availability === 'AVAILABLE' ? 'ACTIVE' : 'INACTIVE']">
-                  {{ item.availability }}
-                </span>
+                <span :class="['badge', item.availability === 'AVAILABLE' ? 'bg-success' : 'bg-secondary']">{{ item.availability === 'AVAILABLE' ? 'Available' : 'Not Available'}}</span>
               </td>
               <td class="pe-3">
 
@@ -174,7 +170,8 @@
           </div>
           <form @submit.prevent="updateMapping">
             <div class="modal-body">
-              <p class="text-muted small mb-3">Location: <code>{{ selected?.location_code }}</code> / Service: <code>{{ selected?.service_code }}</code></p>
+              <p class="text-muted small mb-3">Location: <code>{{ selected?.location.address }}</code></p>
+              <p class="text-muted small mb-3">Service: <code>{{ selected?.service?.service_name }}</code></p>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Availability</label>
                 <select v-model="editForm.availability" class="form-select">

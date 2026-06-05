@@ -14,7 +14,18 @@ class ChargesController extends Controller
     public function index()
     {
         try{
-            $charge = Charge::latest()->paginate(10);
+            $query = Charge::with('business');
+
+            if(request()->business_code){
+                $query->where(
+                    'business_code',
+                    request()->business_code
+                );
+            }
+
+            $charge = $query
+                ->latest()
+                ->paginate(10);
 
             return response()->json([
                 'status' => true,
@@ -40,6 +51,7 @@ class ChargesController extends Controller
                 'description' => $request->description,
                 'charge_uom' => $request->charge_uom,
                 'charge_value' => $request->charge_value,
+                'status' => 'ACTIVE',
             ]);
 
             return response()->json([

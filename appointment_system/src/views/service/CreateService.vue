@@ -93,7 +93,9 @@ import api from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const isAdmin = computed(() => authStore.role === 'SUPER_ADMIN')
+const isAdmin = computed(
+    () => authStore.user?.user_type === 'SUPER_ADMIN'
+)
 const backLink = computed(() => isAdmin.value ? '/services' : '/business/services')
 
 const currencies = ['PKR', 'USD', 'EUR']

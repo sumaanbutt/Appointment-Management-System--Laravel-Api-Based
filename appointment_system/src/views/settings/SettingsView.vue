@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import Navbar from "@/components/layout/Navbar.vue";
 
 const activeSection = ref('profile')
 
@@ -36,7 +37,9 @@ const sections = [
 
 <template>
 
-  <div class="settings-page">
+  <div class="settings-page">.
+
+    <Navbar />
 
     <!-- HEADER -->
 
@@ -433,7 +436,7 @@ const sections = [
 <style scoped>
 
 .settings-page {
-  padding: 30px;
+  padding: 20px 30px 30px;
   background: #f4f6f9;
   min-height: 100vh;
 }
@@ -844,5 +847,7 @@ li.active {
 
   color:white;
 }
+
+
 
 </style>

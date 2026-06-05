@@ -32,10 +32,68 @@
               <td>{{ appt.end_time ?? '—' }}</td>
               <td><span :class="['ams-badge', appt.status?.toLowerCase()]">{{ appt.status }}</span></td>
               <td class="pe-3">
-                <button v-if="appt.status === 'RESCHEDULED'" class="btn btn-sm btn-success me-1" @click="respondReschedule(appt, 'ACCEPTED')">Accept</button>
-                <button v-if="appt.status === 'RESCHEDULED'" class="btn btn-sm btn-outline-danger me-1" @click="respondReschedule(appt, 'REJECTED')">Reject</button>
-                <button v-if="appt.status === 'PENDING'" class="btn btn-sm btn-outline-secondary me-1" @click="cancelAppt(appt)">Cancel</button>
-                <button class="btn btn-sm btn-outline-primary" @click="openView(appt)">View</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button
+                          class="dropdown-item"
+                          @click="openView(appt)">
+
+                        <i class="bi bi-eye me-2"></i>
+                        View
+
+                      </button>
+                    </li>
+
+                    <li v-if="appt.status === 'RESCHEDULED'">
+                      <button
+                          class="dropdown-item text-success"
+                          @click="respondReschedule(appt,'ACCEPTED')">
+
+                        <i class="bi bi-check-circle me-2"></i>
+                        Accept
+
+                      </button>
+                    </li>
+
+                    <li v-if="appt.status === 'RESCHEDULED'">
+                      <button
+                          class="dropdown-item text-danger"
+                          @click="respondReschedule(appt,'REJECTED')">
+
+                        <i class="bi bi-x-circle me-2"></i>
+                        Reject
+
+                      </button>
+                    </li>
+
+                    <li v-if="appt.status === 'PENDING'">
+                      <button
+                          class="dropdown-item text-secondary"
+                          @click="cancelAppt(appt)">
+
+                        <i class="bi bi-slash-circle me-2"></i>
+                        Cancel
+
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="appointments.length === 0"><td colspan="6" class="text-center text-muted py-4">No appointments found</td></tr>

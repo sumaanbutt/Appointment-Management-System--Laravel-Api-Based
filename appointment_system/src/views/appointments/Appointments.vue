@@ -34,7 +34,7 @@
           <thead class="table-light">
             <tr>
               <th class="ps-3">Appointment Code</th>
-              <th>Business Code</th>
+              <th>Business Name</th>
               <th>Notes</th>
               <th>Date</th>
               <th>Start Time</th>
@@ -47,9 +47,20 @@
             <td class="ps-3"><code>{{ appt.code }}</code></td>
             <td>{{ appt.business?.name || '—' }}</td>
             <td>{{ appt.notes || '—' }}</td>
-            <td>{{ appt.start_date || appt.appointment_start_date || '—' }}</td>
-            <td>{{ appt.start_time || '—' }}</td>
-              <td><span :class="['ams-badge', appt.status]">{{ appt.status }}</span></td>
+            <td>{{ formatDate(appt.start_date || appt.appointment_start_date || '—') }}</td>
+            <td>{{ formatTime(appt.start_time || '—') }}</td>
+            <td><span :class="['badge',
+                  appt.status === 'COMPLETED' ? 'bg-success' :
+                  appt.status === 'APPROVED' ? 'bg-success' :
+                  appt.status === 'IN_PROGRESS' ? 'bg-info' :
+                  appt.status === 'PENDING' ? 'bg-warning text-dark' :
+                  appt.status === 'REJECTED' ? 'bg-danger' :
+                  appt.status === 'CANCELLED' ? 'bg-dark' :
+                  appt.status === 'RESCHEDULED' ? 'bg-secondary' :
+                  'bg-light text-dark'
+                  ]">
+              {{ appt.status.replaceAll('_', ' ').toLowerCase() }}
+              </span></td>
             <td class="pe-3">
 
               <div class="dropdown">
@@ -288,7 +299,7 @@
                     <input type="radio" :value="s.user_code" v-model="selectedStaff" class="form-check-input mt-0" />
                     <div>
                       <div class="fw-semibold">{{ s.user_name || s.user_code }}</div>
-                      <small class="text-muted">{{ s.working_days }} &bull; {{ s.start_time }}–{{ s.end_time }}</small>
+                      <small class="text-muted">{{ s.working_days }} &bull; {{ s.shift_start_time }}–{{ s.shift_end_time }}</small>
                     </div>
                   </label>
                 </div>
@@ -435,6 +446,26 @@ async function fetchAppointments() {
   }
 }
 
+function formatDate(date) {
+  if (!date) return '—'
+
+  const d = new Date(date)
+
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const year = d.getFullYear()
+
+  return `${day}-${month}-${year}`
+}
+
+function formatTime(t) {
+  if (!t) return '—'
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
 const filteredAppointments = computed(() => {
   return appointments.value.filter(a => {
 
@@ -521,6 +552,7 @@ const approvalRescheduleForm = reactive({
 })
 
 async function openApprovalDialog(appt) {
+  console.log('Approve clicked', appt)
   selected.value = appt
   showApproval.value = true
   availabilityError.value = ''
@@ -537,6 +569,18 @@ async function openApprovalDialog(appt) {
   availabilityLoading.value = true
   try {
     const res = await api.get(`/appointments/${appt.code}/availability`)
+    console.log('Availability Data:', res.data.data)
+
+    console.log(
+        'Available Staff:',
+        res.data.data.available_staff
+    )
+
+    console.log(
+        'Full Response:',
+        JSON.stringify(res.data, null, 2)
+    )
+    console.log('Availability Response:', res.data)
     availableStaff.value = res.data.data?.available_staff || []
   } catch (err) {
     availabilityError.value = err.response?.data?.message || 'Could not check availability'

@@ -26,7 +26,37 @@
               <td>{{ inv.total ?? '—' }}</td>
               <td><span :class="['ams-badge', inv.status]">{{ inv.status }}</span></td>
               <td>{{ formatDate(inv.created_at) }}</td>
-              <td class="pe-3"><button class="btn btn-sm btn-outline-primary" @click="openView(inv)">View</button></td>
+                  <td class="pe-3">
+
+                    <div class="dropdown">
+
+                      <button
+                          class="btn btn-sm btn-outline-secondary"
+                          type="button"
+                          data-bs-toggle="dropdown">
+
+                        <i class="bi bi-three-dots-vertical"></i>
+
+                      </button>
+
+                      <ul class="dropdown-menu dropdown-menu-end">
+
+                        <li>
+                          <button
+                              class="dropdown-item"
+                              @click="openView(inv)">
+
+                            <i class="bi bi-eye me-2"></i>
+                            View
+
+                          </button>
+                        </li>
+
+                      </ul>
+
+                    </div>
+
+                  </td>
             </tr>
             <tr v-if="invoices.length === 0"><td colspan="5" class="text-center text-muted py-4">No invoices found</td></tr>
           </tbody>
@@ -59,7 +89,13 @@
                 <option value="paid">Paid</option>
                 <option value="canceled">Canceled</option>
               </select>
-              <button class="btn btn-ams btn-sm" @click="updateStatus" :disabled="saving">{{ saving ? '...' : 'Update' }}</button>
+              <button
+                  class="btn btn-primary btn-sm px-3"
+                  @click="updateStatus"
+                  :disabled="saving">
+                {{ saving ? 'Updating...' : 'Update' }}
+
+              </button>
             </div>
             <p v-if="formError" class="text-danger small mt-2 mb-0">{{ formError }}</p>
           </div>

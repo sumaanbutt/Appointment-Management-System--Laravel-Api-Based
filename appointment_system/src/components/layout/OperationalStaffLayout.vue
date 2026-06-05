@@ -40,14 +40,10 @@
 
         <!-- CLIENTS -->
         <div class="group">
-          <div class="group-title" @click="toggle('client')">
+          <router-link to="/ops/clients" class="group-title">
             <i class="icon">👥</i>
             <span v-if="!collapsed">Clients</span>
-            <i v-if="!collapsed" class="arrow" :class="{ rotated: open.client }">›</i>
-          </div>
-          <div v-show="open.client && !collapsed" class="submenu">
-            <router-link to="/ops/clients" class="sub-item">All Clients</router-link>
-          </div>
+          </router-link>
         </div>
       </nav>
 
@@ -194,6 +190,7 @@ async function handleLogout() {
   color: #94a3b8;
   font-size: 13px;
   font-weight: 500;
+  text-decoration: none;
   transition: all 0.15s;
 }
 

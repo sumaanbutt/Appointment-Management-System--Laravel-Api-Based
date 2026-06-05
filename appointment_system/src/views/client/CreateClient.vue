@@ -17,7 +17,7 @@
 
         <div class="field">
           <label>Email *</label>
-          <input v-model="form.email" type="email" placeholder="Enter email" :class="{ 'field-input-error': errors.email }" @blur="validateField('email')" />
+          <input v-model="form.email" type="email" placeholder="Enter email" autocomplete="off" :class="{ 'field-input-error': errors.email }" @blur="validateField('email')" />
           <p v-if="errors.email" class="field-error">{{ errors.email }}</p>
         </div>
 
@@ -29,7 +29,7 @@
 
         <div class="field">
           <label>Password *</label>
-          <input v-model="form.password" type="password" placeholder="Enter password" :class="{ 'field-input-error': errors.password }" @blur="validateField('password')" />
+          <input v-model="form.password" type="password" placeholder="Enter password" autocomplete="new-password" :class="{ 'field-input-error': errors.password }" @blur="validateField('password')" />
           <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
         </div>
 

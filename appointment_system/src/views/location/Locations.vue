@@ -6,7 +6,7 @@
         <h2 class="mb-0">Locations</h2>
         <p class="text-muted small mb-0">Manage all locations</p>
       </div>
-      <router-link to="/locations/create" class="btn btn-ams">+ New Location</router-link>
+      <router-link to="/admin/locations/create" class="btn btn-ams">+ New Location</router-link>
     </div>
 
     <div class="d-flex gap-2">
@@ -23,21 +23,30 @@
         <table v-else class="table table-hover ams-table mb-0">
           <thead class="table-light">
             <tr>
-              <th class="ps-3">Code</th>
-              <th>Type</th>
-              <th>City</th>
+              <th class="ps-3">Business Name</th>
               <th>Address</th>
+              <th>Street</th>
+              <th>Apartment</th>
+              <th>City</th>
+              <th>State</th>
+              <th>Country</th>
+              <th>Type</th>
               <th>Status</th>
               <th class="pe-3" style="width:140px">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="loc in locations" :key="loc.code">
-              <td class="ps-3"><code>{{ loc.code }}</code></td>
-              <td>{{ loc.location_type }}</td>
+              <td class="ps-3">{{loc.business?.name || '—' }}</td>
+              <td>{{ loc.address || '—' }}</td>
+              <td>{{ loc.street || '—' }}</td>
+              <td> {{ loc.apartment || '—' }} </td>
               <td>{{ loc.city || '—' }}</td>
-              <td>{{ loc.address || loc.street || '—' }}</td>
-              <td><span :class="['ams-badge', loc.status]">{{ loc.status }}</span></td>
+              <td>{{ loc.state || '—' }}</td>
+              <td>{{ loc.country || '—' }}</td>
+              <td>{{ loc.location_type }}</td>
+<!--              <td><span :class="['ams-badge', loc.status]">{{ loc.status }}</span></td>-->
+              <td><span :class="['badge', loc.status=== 'ACTIVE' ? 'bg-success' : 'bg-secondary']">{{ loc.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</span></td>
               <td class="pe-3">
 
                 <div class="dropdown">
@@ -99,14 +108,18 @@
           </div>
           <form @submit.prevent="updateLocation">
             <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Location Type</label>
-                <select v-model="editForm.location_type" class="form-select">
-                  <option value="business">Business</option>
-                  <option value="client">Client</option>
-                </select>
-              </div>
+<!--              <div class="mb-3">-->
+<!--                <label class="form-label fw-semibold">Location Type</label>-->
+<!--                <select v-model="editForm.location_type" class="form-select">-->
+<!--                  <option value="business">Business</option>-->
+<!--                  <option value="client">Client</option>-->
+<!--                </select>-->
+<!--              </div>-->
               <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Apartment</label>
+                  <input v-model="editForm.apartment" class="form-control" placeholder="Apartment" />
+                </div>
                 <div class="col-12">
                   <label class="form-label fw-semibold">Street</label>
                   <input v-model="editForm.street" class="form-control" placeholder="Street" />
@@ -135,8 +148,8 @@
               <div class="mt-3">
                 <label class="form-label fw-semibold">Status</label>
                 <select v-model="editForm.status" class="form-select">
-                  <option value="active">active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
                 </select>
               </div>
               <p v-if="formError" class="text-danger small mt-2 mb-0">{{ formError }}</p>
@@ -187,7 +200,7 @@ const bizFilter = ref('')
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const selected = ref(null)
-const editForm = reactive({ location_type: 'business', street: '', address: '', city: '', province: '', postal_code: '', country: '', status: 'active' })
+const editForm = reactive({ apartment:'', street: '', address: '', city: '', province: '', postal_code: '', country: '', status: 'ACTIVE' })
 
 async function fetchLocations() {
   loading.value = true
@@ -205,7 +218,8 @@ async function fetchLocations() {
 
 function openEdit(loc) {
   selected.value = loc
-  editForm.location_type = loc.location_type || 'business'
+  // editForm.location_type = loc.location_type || 'business'
+  editForm.apartment = loc.apartment || ''
   editForm.street = loc.street || ''
   editForm.address = loc.address || ''
   editForm.city = loc.city || ''

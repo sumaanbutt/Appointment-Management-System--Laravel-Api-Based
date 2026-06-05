@@ -3,7 +3,7 @@
 
     <div class="page-header">
       <h2>New User</h2>
-      <router-link to="/users" class="back-link">← Back</router-link>
+      <router-link to="/admin/users" class="back-link">← Back</router-link>
     </div>
 
     <div class="card">
@@ -17,7 +17,7 @@
 
         <div class="field">
           <label>Email</label>
-          <input v-model="form.email" type="email" placeholder="Enter email" :class="{ 'field-input-error': errors.email }" @blur="validateField('email')" />
+          <input v-model="form.email" type="email" placeholder="Enter email" autocomplete="off" :class="{ 'field-input-error': errors.email }" @blur="validateField('email')" />
           <p v-if="errors.email" class="field-error">{{ errors.email }}</p>
         </div>
 
@@ -29,7 +29,7 @@
 
         <div class="field">
           <label>Password *</label>
-          <input v-model="form.password" type="password" placeholder="Enter password" :class="{ 'field-input-error': errors.password }" @blur="validateField('password')" />
+          <input v-model="form.password" type="password" placeholder="Enter password" autocomplete="new-password"  :class="{ 'field-input-error': errors.password }" @blur="validateField('password')" />
           <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
         </div>
 
@@ -48,6 +48,16 @@
             <option value="CLIENT">Client</option>
           </select>
           <p v-if="errors.user_type" class="field-error">{{ errors.user_type }}</p>
+        </div>
+
+        <div v-if="['SERVICE_STAFF', 'OPERATION_STAFF'].includes(form.user_type)" class="field">
+          <label>Employee Type *</label>
+          <select v-model="form.employee_type">
+            <option value="">Select Employee Type</option>
+            <option value="PERMANENT">Permanent</option>
+            <option value="VISITING">Visiting</option>
+            <option value="REMOTE">Remote</option>
+          </select>
         </div>
 
         <div class="field">
@@ -96,6 +106,7 @@ const form = reactive({
   password:'',
   password_confirmation:'',
   user_type:'',
+  employee_type:'',
   business_code:'',
   status:'ACTIVE'
 })
@@ -147,6 +158,13 @@ async function submit() {
   error.value = ''
   try {
     const payload = { ...form }
+
+    if (
+        authStore.user?.business_code &&
+        payload.user_type === 'CLIENT'
+    ) {
+      payload.business_code = authStore.user.business_code
+    }
     if (!payload.business_code) delete payload.business_code
     await api.post('/users', payload)
     router.push('/users')

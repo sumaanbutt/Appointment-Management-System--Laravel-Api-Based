@@ -263,7 +263,7 @@ class AppointmentController extends Controller
 
             ->where(
                 'user_shift_schedules.working_day',
-                strtoupper($day)
+                strtolower($day)
             )
 
             ->where(

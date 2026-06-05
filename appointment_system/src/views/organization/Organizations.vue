@@ -7,7 +7,7 @@
         <h2 class="mb-0">Organizations</h2>
         <p class="text-muted small mb-0">Manage all organizations</p>
       </div>
-      <router-link to="/organizations/create" class="btn btn-ams">+ New Organization</router-link>
+      <router-link to="/admin/organizations/create" class="btn btn-ams">+ New Organization</router-link>
     </div>
 
     <!-- TABLE CARD -->
@@ -28,7 +28,11 @@
           <tr v-for="org in organizations" :key="org.code">
               <td class="ps-3">{{ org.name }}</td>
             <td><code>{{ org.code }}</code></td>
-              <td><span :class="['ams-badge', org.status]">{{ org.status }}</span></td>
+            <td><span :class="['badge',
+              org.status === 'active' ? 'bg-success' :
+              org.status === 'inactive' ? 'bg-secondary':
+              'bg-light text-dark'
+              ]">{{ org.status }}</span></td>
             <td class="pe-3">
 
               <div class="dropdown">
@@ -79,6 +83,40 @@
         </table>
       </div>
     </div>
+
+    <nav class="mt-3">
+      <ul class="pagination justify-content-end">
+
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <button class="page-link" @click="changePage(currentPage - 1)">
+            Previous
+          </button>
+        </li>
+
+        <li
+            v-for="page in lastPage"
+            :key="page"
+            class="page-item"
+            :class="{ active: currentPage === page }">
+
+          <button
+              class="page-link"
+              @click="changePage(page)">
+
+            {{ page }}
+
+          </button>
+
+        </li>
+
+        <li class="page-item" :class="{ disabled: currentPage === lastPage }">
+          <button class="page-link" @click="changePage(currentPage + 1)">
+            Next
+          </button>
+        </li>
+
+      </ul>
+    </nav>
 
     <!-- EDIT MODAL -->
     <div v-if="showEditModal" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
@@ -139,6 +177,8 @@ import { ref, reactive, onMounted } from 'vue'
 import api from '@/services/api'
 
 const organizations = ref([])
+const currentPage = ref(1)
+const lastPage = ref(1)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
@@ -154,18 +194,34 @@ async function fetchOrgs() {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/organizations')
+
+    const res = await api.get('/organizations', {
+      params: {
+        page: currentPage.value
+      }
+    })
+
     organizations.value =
         res.data?.data?.data
         ??
         res.data?.data
         ??
         []
+    currentPage.value = res.data.data.current_page
+    lastPage.value = res.data.data.last_page
+
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load organizations'
   } finally {
     loading.value = false
   }
+}
+
+async function changePage(page) {
+  if (page < 1 || page > lastPage.value) return
+
+  currentPage.value = page
+  await fetchOrgs()
 }
 
 function openEdit(org) {

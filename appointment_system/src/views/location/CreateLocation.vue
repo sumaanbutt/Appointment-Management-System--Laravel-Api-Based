@@ -9,11 +9,11 @@
     <div class="card">
       <form class="form" @submit.prevent="submit">
 
-        <div v-if="isAdmin" class="field">
+        <div v-if="form.location_type === 'BUSINESS' && isAdmin" class="field">
           <label>Business *</label>
           <select v-model="form.business_code" :class="{ 'field-input-error': errors.business_code }" @change="validateField('business_code')">
             <option value="">Select business</option>
-            <option v-for="biz in businesses" :key="biz.business_code" :value="biz.business_code">
+            <option v-for="biz in businesses" :key="biz.code" :value="biz.code">
               {{ biz.name }}
             </option>
           </select>
@@ -23,10 +23,36 @@
         <div class="field">
           <label>Type *</label>
           <select v-model="form.location_type" :class="{ 'field-input-error': errors.location_type }" @change="validateField('location_type')">
+            <option value="">Select Type</option>
             <option value="BUSINESS">Business</option>
             <option value="CLIENT">Client</option>
           </select>
           <p v-if="errors.location_type" class="field-error">{{ errors.location_type }}</p>
+        </div>
+
+        <div
+            v-if="form.location_type === 'CLIENT'"
+            class="field">
+
+          <label>Client *</label>
+
+          <select v-model="form.client_code">
+
+            <option value="">
+              Select Client
+            </option>
+
+            <option
+                v-for="client in clients"
+                :key="client?.code"
+                :value="client?.code">
+
+              {{ client?.name }}
+
+            </option>
+
+          </select>
+
         </div>
 
         <div class="field">
@@ -80,19 +106,24 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const isAdmin = computed(() => authStore.role === 'admin')
+const isAdmin = computed(
+    () => authStore.user?.user_type === 'SUPER_ADMIN'
+)
+console.log('isAdmin', isAdmin.value)
+console.log(authStore.user)
 const backLink = computed(() => isAdmin.value ? '/business-locations' : '/business/locations')
 
 const form = reactive({
   business_code:'',
-  location_type:'BUSINESS',
+  client_code:'',
+  location_type:'',
   address:'',
   street:'',
   apartment:'',
@@ -103,6 +134,7 @@ const form = reactive({
   status:'active'
 })
 const businesses = ref([])
+const clients = ref([])
 const loading = ref(false)
 const error = ref('')
 const errors = reactive({})
@@ -151,15 +183,65 @@ function validateField(field) {
   if (result[field]) { errors[field] = result[field] } else { delete errors[field] }
 }
 
+watch(
+    () => form.location_type,
+    (type) => {
+
+      if (
+          type === 'BUSINESS'
+          && !isAdmin.value
+      ) {
+        form.business_code =
+            authStore.user?.business_code
+      }
+
+      if(type !== 'BUSINESS'){
+        form.business_code = ''
+      }
+
+      if(type !== 'CLIENT'){
+        form.client_code = ''
+      }
+    }
+)
+
 onMounted(async () => {
+
   if (!isAdmin.value) {
-    form.business_code = authStore.user?.business_code || ''
-    return
+    form.business_code =
+        authStore.user?.business_code || ''
   }
+
   try {
-    const res = await api.get('/businesses')
-    businesses.value = res.data.data || []
-  } catch (_) {}
+
+    if (isAdmin.value) {
+
+      const res = await api.get('/businesses')
+
+      businesses.value =
+          res.data.data?.data ||
+          res.data.data ||
+          []
+
+    }
+
+    const clientsRes = await api.get('/users', {
+      params: {
+        user_type: 'CLIENT'
+      }
+    })
+
+    clients.value =
+        clientsRes.data.data?.data ||
+        clientsRes.data.data ||
+        []
+
+  } catch (e) {
+
+    console.error(e)
+
+  }
+
 })
 
 async function submit() {

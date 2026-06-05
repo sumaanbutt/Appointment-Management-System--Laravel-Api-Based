@@ -147,8 +147,10 @@ async function fetchInvoices() {
   loading.value = true
 
   try {
-
-    const res = await api.get('/invoices')
+    const params = {}
+    if (bizFilter.value) params.business_code = bizFilter.value
+    if (statusFilter.value) params.status = statusFilter.value
+    const res = await api.get('/invoices', { params })
 
     console.log('INVOICE RESPONSE:', res.data)
 

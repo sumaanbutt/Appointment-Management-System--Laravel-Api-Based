@@ -28,6 +28,7 @@ class UpdateChargeRequest extends FormRequest
             'description' => 'nullable|string|max:5000',
             'charge_uom' => 'nullable|in:FIXED,PERCENTAGE',
             'charge_value' => 'nullable|numeric|min:0',
+            'status' => 'sometimes|in:ACTIVE,INACTIVE',
         ];
     }
 }

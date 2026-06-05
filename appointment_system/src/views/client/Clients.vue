@@ -7,7 +7,7 @@
         <h2 class="mb-0">Clients</h2>
         <p class="text-muted small mb-0">Manage all clients</p>
       </div>
-      <router-link to="/clients/create" class="btn btn-ams">+ New Client</router-link>
+      <router-link to="/admin/clients/create" class="btn btn-ams">+ New Client</router-link>
     </div>
 
     <!-- FILTER -->

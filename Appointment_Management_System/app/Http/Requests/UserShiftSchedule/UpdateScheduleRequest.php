@@ -24,7 +24,7 @@ class UpdateScheduleRequest extends FormRequest
             'location_code'    => ['nullable', 'string', 'exists:business_locations,code'],
             'shift_start_time' => ['required_if:status,ACTIVE,active', 'nullable', 'date_format:H:i'],
             'shift_end_time'   => ['required_if:status,ACTIVE,active', 'nullable', 'date_format:H:i'],
-            'status'           => ['sometimes', 'in:ACTIVE,INACTIVE,active,inactive'],
+            'status'           => ['sometimes', 'in:ACTIVE,INACTIVE'],
         ];
     }
 }

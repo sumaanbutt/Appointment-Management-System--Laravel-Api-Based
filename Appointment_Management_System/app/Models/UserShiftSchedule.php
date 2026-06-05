@@ -17,6 +17,7 @@ class UserShiftSchedule extends Model
         'working_day',
         'shift_start_time',
         'shift_end_time',
+        'status',
         //'is_available',
     ];
     protected static $codePrefix = 'USS';

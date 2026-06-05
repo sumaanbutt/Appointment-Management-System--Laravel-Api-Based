@@ -13,7 +13,8 @@ class AppointmentParticipant extends Model
         'appointment_code',
         'business_code',
         'user_code',
-        'role',
+        'user_role',
+        'user_type',
         'status',
     ];
 
@@ -22,6 +23,15 @@ class AppointmentParticipant extends Model
     public function getRouteKeyName()
     {
         return 'code';
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(
+            User::class,
+            'user_code',
+            'code'
+        );
     }
 
     // Example relations for AppointmentParticipant

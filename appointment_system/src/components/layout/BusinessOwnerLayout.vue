@@ -12,92 +12,86 @@
           <span v-if="!collapsed">Dashboard</span>
         </router-link>
 
+<!--        Appointments-->
+
         <div class="group">
-          <div class="group-title" @click="toggle('app')">
+          <router-link to="/owner/appointments" class="group-title">
             <i class="icon">📅</i>
             <span v-if="!collapsed">Appointments</span>
-            <i v-if="!collapsed" class="arrow" :class="{ rotated: open.app }">›</i>
-          </div>
-          <div v-show="open.app && !collapsed" class="submenu">
-            <router-link to="/owner/appointments" class="sub-item">All Requests</router-link>
-            <router-link to="/owner/appointments/create" class="sub-item">New Request</router-link>
-          </div>
+          </router-link>
         </div>
 
+<!--        Services-->
 
         <div class="group">
           <div class="group-title" @click="toggle('svc')">
+
             <i class="icon">⚕️</i>
+
             <span v-if="!collapsed">Services</span>
-            <i v-if="!collapsed" class="arrow" :class="{ rotated: open.svc }">›</i>
+
+            <i
+                v-if="!collapsed"
+                class="arrow"
+                :class="{ rotated: open.svc }"
+            >
+              ›
+            </i>
           </div>
+
           <div v-show="open.svc && !collapsed" class="submenu">
-            <router-link to="/owner/services" class="sub-item">All Services</router-link>
-            <router-link to="/owner/services/create" class="sub-item">New Service</router-link>
+            <router-link to="/owner/services" class="sub-item">
+              All Services
+            </router-link>
+
+            <router-link to="/owner/location-services" class="sub-item">
+              Location Services
+            </router-link>
           </div>
         </div>
 
+<!--        Location-->
 
         <div class="group">
-          <div class="group-title" @click="toggle('loc')">
+          <router-link to="/owner/locations" class="group-title">
             <i class="icon">📍</i>
             <span v-if="!collapsed">Locations</span>
-            <i v-if="!collapsed" class="arrow" :class="{ rotated: open.loc }">›</i>
-          </div>
-          <div v-show="open.loc && !collapsed" class="submenu">
-            <router-link to="/owner/locations" class="sub-item">All Locations</router-link>
-            <router-link to="/owner/locations/create" class="sub-item">New Location</router-link>
-            <router-link to="/owner/location-services" class="sub-item">Location Services</router-link>
-          </div>
+          </router-link>
         </div>
 
+<!--        Staff-->
+
         <div class="group">
-          <div class="group-title" @click="toggle('staff')">
+          <router-link to="/owner/staff" class="group-title">
             <i class="icon">👤</i>
             <span v-if="!collapsed">Staff</span>
-            <i v-if="!collapsed" class="arrow" :class="{ rotated: open.staff }">›</i>
-          </div>
-          <div v-show="open.staff && !collapsed" class="submenu">
-
-            <router-link
-                to="/owner/staff"
-                class="sub-item"
-            >
-              All Staff
-            </router-link>
-
-            <router-link
-                to="/owner/staff/create"
-                class="sub-item"
-            >
-              Add Staff
-            </router-link>
-
-          </div>
+          </router-link>
         </div>
+
+<!--        Clients-->
 
         <div class="group">
-          <div class="group-title" @click="toggle('client')">
+          <router-link to="/owner/clients" class="group-title">
             <i class="icon">👥</i>
             <span v-if="!collapsed">Clients</span>
-            <i v-if="!collapsed" class="arrow" :class="{ rotated: open.client }">›</i>
-          </div>
-          <div v-show="open.client && !collapsed" class="submenu">
-            <router-link to="/owner/clients" class="sub-item">All Clients</router-link>
-            <router-link to="/owner/clients/create" class="sub-item">Add Client</router-link>
-          </div>
+          </router-link>
         </div>
+
+<!--        Schedules-->
 
         <router-link to="/owner/schedules" class="item">
           <i class="icon">🗓️</i>
           <span v-if="!collapsed">Schedules</span>
         </router-link>
 
+<!--        Charges-->
 
         <router-link to="/owner/charges" class="item">
           <i class="icon">💰</i>
           <span v-if="!collapsed">Charges</span>
         </router-link>
+
+<!--        Invoices-->
 
         <router-link to="/owner/invoices" class="item">
           <i class="icon">🧾</i>
@@ -176,7 +170,7 @@ async function handleLogout() {
 .item:hover, .item.router-link-active { background: #1e293b; color: white; }
 .icon { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center; }
 .group { margin-bottom: 2px; }
-.group-title { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px; cursor: pointer; color: #94a3b8; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+.group-title { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px; cursor: pointer; color: #94a3b8; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.15s; }
 .group-title:hover { background: #1e293b; color: white; }
 .arrow { font-size: 16px; margin-left: auto; transition: transform 0.2s; }
 .arrow.rotated { transform: rotate(90deg); }

@@ -6,7 +6,7 @@
         <h2 class="mb-0">Services</h2>
         <p class="text-muted small mb-0">Manage all services</p>
       </div>
-      <router-link to="/services/create" class="btn btn-ams">+ New Service</router-link>
+      <router-link to="/admin/services/create" class="btn btn-ams">+ New Service</router-link>
     </div>
 
     <div class="d-flex gap-2 flex-wrap">
@@ -24,21 +24,29 @@
         <table v-else class="table table-hover ams-table mb-0">
           <thead class="table-light">
             <tr>
-              <th class="ps-3">Name</th>
-              <th>Service Code</th>
+              <th class="ps-3">Business Name</th>
+              <th>Service Name</th>
               <th>Description</th>
               <th>Price</th>
+              <th>Cost</th>
+<!--              <th>Duration</th>-->
               <th>Status</th>
               <th class="pe-3" style="width:150px">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="svc in filteredServices" :key="svc.code">
-              <td class="ps-3">{{ svc.service_name }}</td>
-              <td><code>{{ svc.code }}</code></td>
-              <td>{{ svc.description }}</td>
+              <td class="ps-3">{{ svc.business_code || '—' }}</td>
+              <td>{{ svc.service_name }}</td>
+              <td>{{ svc.description || '—' }}</td>
+              <td>{{ svc.charges != null ? svc.charges : '—' }}</td>
               <td>{{ svc.cost != null ? svc.cost : '—' }}</td>
-              <td><span :class="['ams-badge', svc.status]">{{ svc.status }}</span></td>
+<!--              <td>{{ svc.duration.value }} {{ svc.duration_uom }}</td>-->
+              <td><span :class="['badge',
+              svc.status === 'active' ? 'bg-success' :
+              svc.status === 'inactive' ? 'bg-secondary':
+              'bg-light text-dark'
+              ]">{{ svc.status }}</span></td>
               <td class="pe-3">
 
                 <div class="dropdown">
@@ -105,12 +113,28 @@
                 <input v-model="editForm.service_name" class="form-control" placeholder="Service Name" required />
               </div>
               <div class="mb-3">
-                <label class="form-label fw-semibold">Duration (minutes) *</label>
+                <label class="form-label fw-semibold">Description</label>
+                <input v-model="editForm.description" class="form-control" placeholder="Description" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Duration Time</label>
                 <input v-model.number="editForm.time_duration" type="number" class="form-control" placeholder="Duration (minutes)" min="1" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Duration Unit Value</label>
+                <select v-model="editForm.duration_uom" class="form-control"  >
+                  <option :value="null">Select Duration Unit</option>
+                  <option v-for="duration_uom in durationUnits" :key="duration_uom" :value="duration_uom">{{ duration_uom }}</option>
+                </select>
+                <!--                <input v-model.number="editForm.duration_uom" type="number" class="form-control" placeholder="Duration " min="1" />-->
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Price</label>
                 <input v-model.number="editForm.charges" type="number" class="form-control" placeholder="Price" step="0.01" min="0" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Cost</label>
+                <input v-model.number="editForm.cost" type="number" class="form-control" placeholder="Price" step="0.01" min="0" />
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
@@ -170,11 +194,15 @@ const showDeleteModal = ref(false)
 const selected = ref(null)
 const editForm = reactive({
   service_name:'',
+  description:'',
   time_duration:'',
+  duration_uom:'',
   charges:'',
+  cost:'',
   status:'active',
   business_code:''
 })
+const durationUnits = ['WEEK', 'DAY', 'HOUR', 'MINUTE']
 
 const filteredServices = computed(() => {
   const s = search.value.toLowerCase()
@@ -253,11 +281,20 @@ function openEdit(svc){
   editForm.service_name =
       svc.service_name
 
+  editForm.service_description =
+      svc.service_description
+
   editForm.time_duration =
       svc.time_duration
 
+  editForm.duration_uom =
+      svc.duration_uom
+
   editForm.charges =
       svc.charges ?? ''
+
+  editForm.cost =
+      svc.cost ?? ''
 
   editForm.status =
       svc.status

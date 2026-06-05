@@ -25,7 +25,8 @@ class AppointmentParticipantController extends Controller
                 'appointment_code' => $request->appointment_code,
                 'business_code' => $request->business_code,
                 'user_code' => $request->user_code,
-                'role' => $request->role,
+                'user_role' => $request->role,
+                'user_type' => $request->user_type,
                 'status' => $request->status ?? 'ACTIVE',
             ]);
 

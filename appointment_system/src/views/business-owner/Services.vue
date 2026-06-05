@@ -2,7 +2,7 @@
   <div class="ams-page">
     <div class="d-flex align-items-center justify-content-between">
       <div><h2 class="mb-0">Services</h2><p class="text-muted small mb-0">Manage your business services</p></div>
-      <router-link to="/business/services/create" class="btn btn-ams">+ New Service</router-link>
+      <router-link to="/owner/services/create" class="btn btn-ams">+ New Service</router-link>
     </div>
     <div class="card shadow-sm border-0">
       <div class="card-body p-0">
@@ -20,8 +20,46 @@
               <td>{{ svc.cost != null ? svc.cost : '—'}}</td>
               <td><span :class="['badge',svc.status==='active'?'bg-success':'bg-secondary']">{{ svc.status }}</span></td>
               <td class="pe-3">
-                <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(svc)">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" @click="openDelete(svc)">Delete</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button
+                          class="dropdown-item"
+                          @click="openEdit(svc)">
+
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit
+
+                      </button>
+                    </li>
+
+                    <li>
+                      <button
+                          class="dropdown-item text-danger"
+                          @click="openDelete(svc)">
+
+                        <i class="bi bi-trash me-2"></i>
+                        Delete
+
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="services.length === 0"><td colspan="6" class="text-center text-muted py-4">No services found</td></tr>

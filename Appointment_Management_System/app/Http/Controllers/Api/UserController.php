@@ -14,11 +14,19 @@ class UserController extends Controller
     public function index()
     {
         try{
-            $query = User::query();
+            $query = User::query()->with('business');
+
             if(request()->business_code){
                 $query->where(
                     'business_code',
                     request()->business_code
+                );
+            }
+
+            if(request()->user_type){
+                $query->where(
+                    'user_type',
+                    request()->user_type
                 );
             }
             $users = $query

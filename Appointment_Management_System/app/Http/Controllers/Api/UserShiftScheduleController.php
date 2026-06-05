@@ -19,7 +19,7 @@ class UserShiftScheduleController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $users_shift = UserShiftSchedule::with('user', 'location')->latest()->paginate(20);
+            $users_shift = UserShiftSchedule::with('user', 'location')->latest()->paginate(10);
 
             return response()->json([
                 'success' => true,
@@ -54,9 +54,9 @@ class UserShiftScheduleController extends Controller
                     'user_code'        => $row['user_code'],
                     'working_day'      => strtolower($dayInput),
                     'location_code'    => $row['location_code'] ?? null,
-                    'shift_start_time' => (strtoupper($row['status']) === 'ACTIVE') ? $row['shift_start_time'] : '00:00:00',
-                    'shift_end_time'   => (strtoupper($row['status']) === 'ACTIVE') ? $row['shift_end_time'] : '00:00:00',
-                    'status'           => strtoupper($row['status']),
+                    'shift_start_time' => $row['shift_start_time'],
+                    'shift_end_time'   => $row['shift_end_time'],
+                    'status'           => 'ACTIVE',
                     'created_at'       => $now,
                     'updated_at'       => $now,
                 ];
@@ -107,8 +107,8 @@ class UserShiftScheduleController extends Controller
             $validated = $request->validated();
 
             if (isset($validated['status']) && strtoupper($validated['status']) === 'INACTIVE') {
-                $validated['shift_start_time'] = null;
-                $validated['shift_end_time'] = null;
+                $validated['shift_start_time'] = '00:00:00';
+                $validated['shift_end_time'] = '00:00:00';
             }
 
             $userShiftSchedule->update($validated);

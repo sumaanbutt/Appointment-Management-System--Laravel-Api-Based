@@ -7,7 +7,7 @@
         <h2 class="mb-0">Businesses</h2>
         <p class="text-muted small mb-0">Manage all businesses</p>
       </div>
-      <router-link to="/businesses/create" class="btn btn-ams">+ New Business</router-link>
+      <router-link to="/admin/businesses/create" class="btn btn-ams">+ New Business</router-link>
     </div>
 
     <!-- TABLE CARD -->
@@ -38,11 +38,11 @@
               {{ business.organization.name || business.organization_code || '—' }}
             </td>
 
-            <td>
-      <span :class="['ams-badge', business.status]">
-        {{ business.status }}
-      </span>
-            </td>
+            <td><span :class="['badge',
+              business.status === 'ACTIVE' ? 'bg-success' :
+              business.status === 'INACTIVE' ? 'bg-secondary':
+              'bg-light text-dark'
+              ]">{{ business.status.replaceAll('_', ' ').toLowerCase()  }}</span></td>
 
             <td class="pe-3">
 
@@ -104,6 +104,40 @@
       </div>
     </div>
 
+    <nav class="mt-3">
+      <ul class="pagination justify-content-end">
+
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <button class="page-link" @click="changePage(currentPage - 1)">
+            Previous
+          </button>
+        </li>
+
+        <li
+            v-for="page in lastPage"
+            :key="page"
+            class="page-item"
+            :class="{ active: currentPage === page }">
+
+          <button
+              class="page-link"
+              @click="changePage(page)">
+
+            {{ page }}
+
+          </button>
+
+        </li>
+
+        <li class="page-item" :class="{ disabled: currentPage === lastPage }">
+          <button class="page-link" @click="changePage(currentPage + 1)">
+            Next
+          </button>
+        </li>
+
+      </ul>
+    </nav>
+
     <!-- EDIT MODAL -->
     <div v-if="showEditModal" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
       <div class="modal-dialog modal-dialog-centered">
@@ -163,6 +197,8 @@ import { ref, reactive, onMounted } from 'vue'
 import api from '@/services/api'
 
 const businesses = ref([])
+const currentPage = ref(1)
+const lastPage = ref(1)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
@@ -178,13 +214,26 @@ async function fetchBusinesses() {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/businesses')
+    const res = await api.get('/businesses',{
+      params: {
+        page: currentPage.value
+      }
+    })
     businesses.value = res.data.data.data || []
+    currentPage.value = res.data.data.current_page
+    lastPage.value = res.data.data.last_page
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load businesses'
   } finally {
     loading.value = false
   }
+}
+
+async function changePage(page) {
+  if (page < 1 || page > lastPage.value) return
+
+  currentPage.value = page
+  await fetchBusinesses()
 }
 
 function openEdit(business) {

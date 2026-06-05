@@ -15,6 +15,7 @@ class Charge extends Model
         'description',
         'charge_uom',
         'charge_value',
+        'status',
     ];
 
     protected static $codePrefix = 'CHG';
@@ -22,5 +23,14 @@ class Charge extends Model
     public function getRouteKeyName()
     {
         return 'code';
+    }
+
+    public function business()
+    {
+        return $this->belongsTo(
+            Business::class,
+            'business_code',
+            'code'
+        );
     }
 }

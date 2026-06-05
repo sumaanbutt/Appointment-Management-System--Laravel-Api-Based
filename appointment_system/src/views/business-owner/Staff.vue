@@ -1,128 +1,3 @@
-<!--<template>-->
-<!--  <div class="container-fluid py-4">-->
-
-<!--    <div class="d-flex align-items-center justify-content-between mb-4">-->
-<!--      <div>-->
-<!--        <h2 class="text-dark fw-bold mb-1">Staff Directory</h2>-->
-<!--        <p class="text-muted small mb-0">Review active management profiles for operational and service delivery teams.</p>-->
-<!--      </div>-->
-<!--    </div>-->
-
-<!--    <div class="card border-0 shadow-sm rounded-3">-->
-<!--      <div class="card-body p-0">-->
-<!--        <div class="table-responsive">-->
-<!--          <table class="table table-hover align-middle mb-0">-->
-<!--            <thead class="table-light text-secondary text-uppercase fs-7 small fw-bold">-->
-<!--            <tr>-->
-<!--              <th class="ps-4 py-3">Full Identity</th>-->
-<!--              <th>Contact Communications</th>-->
-<!--              <th>Privilege Group</th>-->
-<!--              <th>Employment Type</th>-->
-<!--              <th>Operational Status</th>-->
-<!--              <th class="pe-4 text-end" style="width: 120px;">Actions</th>-->
-<!--            </tr>-->
-<!--            </thead>-->
-<!--            <tbody>-->
-<!--            <tr v-if="filteredStaffList.length === 0">-->
-<!--              <td colspan="6" class="text-center py-5 text-muted">-->
-<!--                No operational or service staff members found.-->
-<!--              </td>-->
-<!--            </tr>-->
-<!--            <tr v-for="user in filteredStaffList" :key="user.code">-->
-
-<!--              <td class="ps-4">-->
-<!--                <div class="fw-bold text-dark">{{ user.name }}</div>-->
-<!--                <div class="text-secondary small font-monospace fs-7">#{{ user.code }}</div>-->
-<!--              </td>-->
-
-<!--              <td>-->
-<!--                <div class="text-dark fs-6">{{ user.email || '—' }}</div>-->
-<!--                <div class="text-muted small">{{ user.phone || '—' }}</div>-->
-<!--              </td>-->
-
-<!--              <td>-->
-<!--                  <span class="badge bg-dark-subtle text-dark border px-2 py-1 small">-->
-<!--                    {{ user.user_type }}-->
-<!--                  </span>-->
-<!--              </td>-->
-
-<!--              <td>-->
-<!--                  <span v-if="user.employee_type" class="badge bg-primary text-white border-0 px-2.5 py-1.5 font-monospace">-->
-<!--                    {{ user.employee_type }}-->
-<!--                  </span>-->
-<!--                <span v-else class="text-muted opacity-50 fst-italic small ps-2">— N/A</span>-->
-<!--              </td>-->
-
-<!--              <td>-->
-<!--                  <span :class="['badge px-2.5 py-1.5 rounded-pill font-monospace fw-bold',-->
-<!--                    user.status === 'ACTIVE' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger']">-->
-<!--                    {{ user.status || 'ACTIVE' }}-->
-<!--                  </span>-->
-<!--              </td>-->
-
-<!--              <td class="pe-4 text-end">-->
-<!--                <button class="btn btn-sm btn-outline-danger border-0" @click="handleDeleteUser(user.code)">-->
-<!--                  <i class="bi bi-trash3"></i>-->
-<!--                </button>-->
-<!--              </td>-->
-
-<!--            </tr>-->
-<!--            </tbody>-->
-<!--          </table>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-
-<!--  </div>-->
-<!--</template>-->
-
-<!--<script setup>-->
-<!--import { ref, onMounted, computed } from 'vue'-->
-<!--import { useAuthStore } from '@/stores/auth.store'-->
-<!--import api from '@/services/api'-->
-
-<!--const authStore = useAuthStore()-->
-<!--const rawUsersList = ref([])-->
-
-<!--// Frontend safety filter to strictly isolate operational and service roles-->
-<!--const filteredStaffList = computed(() => {-->
-<!--  return rawUsersList.value.filter(user =>-->
-<!--      ['OPERATION_STAFF', 'SERVICE_STAFF'].includes(user.user_type)-->
-<!--  )-->
-<!--})-->
-
-<!--onMounted(async () => {-->
-<!--  await fetchSystemUsersDirectory()-->
-<!--})-->
-
-<!--async function fetchSystemUsersDirectory() {-->
-<!--  const corporateBusinessCode = authStore.user?.business_code || ''-->
-<!--  if (!corporateBusinessCode) return-->
-
-<!--  try {-->
-<!--    const response = await api.get('/users', { params: { business_code: corporateBusinessCode } })-->
-<!--    rawUsersList.value = response.data.data?.data || response.data.data || []-->
-<!--  } catch (err) {-->
-<!--    console.error('Failed to query database user directory.', err)-->
-<!--  }-->
-<!--}-->
-
-<!--async function handleDeleteUser(userCode) {-->
-<!--  if (!confirm('Are you certain you want to purge this staff member?')) return-->
-<!--  try {-->
-<!--    await api.delete(`/users/${userCode}`)-->
-<!--    await fetchSystemUsersDirectory()-->
-<!--  } catch (err) {-->
-<!--    alert('Error occurred clearing staff record.')-->
-<!--  }-->
-<!--}-->
-<!--</script>-->
-
-<!--<style scoped>-->
-<!--.fs-7 { font-size: 0.765rem; }-->
-<!--</style>-->
-
-
 <template>
   <div class="ams-page">
     <div class="d-flex align-items-center justify-content-between">
@@ -156,10 +31,48 @@
             <td>{{ user.email }}</td>
             <td>{{ user.user_type }}</td>
             <!--              <td><code>{{ user.user_code }}</code></td>-->
-            <td><span :class="['ams-badge', user.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE']">{{ user.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</span></td>
+            <td><span :class="['badge', user.status=== 'ACTIVE' ? 'bg-success' : 'bg-secondary']">{{ user.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</span></td>
             <td class="pe-3">
-              <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(user)">Edit</button>
-              <button class="btn btn-sm btn-outline-warning" @click="openDeactivate(user)">Deactivate</button>
+
+              <div class="dropdown">
+
+                <button
+                    class="btn btn-sm btn-outline-secondary"
+                    type="button"
+                    data-bs-toggle="dropdown">
+
+                  <i class="bi bi-three-dots-vertical"></i>
+
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end">
+
+                  <li>
+                    <button
+                        class="dropdown-item"
+                        @click="openEdit(user)">
+
+                      <i class="bi bi-pencil me-2"></i>
+                      Edit
+
+                    </button>
+                  </li>
+
+                  <li>
+                    <button
+                        class="dropdown-item text-warning"
+                        @click="openDeactivate(user)">
+
+                      <i class="bi bi-person-x me-2"></i>
+                      Deactivate
+
+                    </button>
+                  </li>
+
+                </ul>
+
+              </div>
+
             </td>
           </tr>
           <tr v-if="staff.length === 0"><td colspan="6" class="text-center text-muted py-4">No staff found</td></tr>
@@ -183,9 +96,9 @@
               <div class="mb-3">
                 <label class="form-label fw-semibold">Employee Type</label>
                 <select v-model="editForm.employee_type" class="form-select">
-                  <option value="permanent">Permanent</option>
-                  <option value="visiting">Visiting</option>
-                  <option value="remote">Remote</option>
+                  <option value="PERMANENT">Permanent</option>
+                  <option value="VISITING">Visiting</option>
+                  <option value="REMOTE">Remote</option>
                 </select>
               </div>
 
@@ -255,7 +168,17 @@ async function fetchStaff() {
     if (biz) params.business_code = biz
     if (typeFilter.value) params.user_type = typeFilter.value
     const res = await api.get('/users', { params })
-    staff.value = (res.data.data.data || []).filter(u => ['OPERATION_STAFF','SERVICE_STAFF'].includes(u.user_type))
+    const users = res.data.data.data || []
+
+    staff.value = users.filter(u => {
+      const isStaff = ['OPERATION_STAFF', 'SERVICE_STAFF'].includes(u.user_type)
+
+      if (!typeFilter.value) {
+        return isStaff
+      }
+
+      return isStaff && u.user_type === typeFilter.value
+    })
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load staff'
   } finally {

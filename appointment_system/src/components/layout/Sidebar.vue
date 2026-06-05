@@ -18,122 +18,36 @@
 
       <!-- ORGANIZATIONS -->
       <div class="group">
-        <div
-            class="group-title"
-            @click="handleGroupClick('org', '/organizations')"
-        >
-          <i class="icon">🏢</i>
-
+        <router-link to="/admin/organizations" class="group-title">
+          <i class="bi bi-building icon"></i>
           <span v-if="!collapsed">Organizations</span>
-
-          <i
-              v-if="!collapsed"
-              class="arrow"
-              :class="{ rotated: open.org }"
-          >
-            ›
-          </i>
-        </div>
-
-        <div v-show="open.org && !collapsed" class="submenu">
-          <router-link to="/admin/organizations" class="sub-item">
-            All Organizations
-          </router-link>
-
-          <router-link to="/admin/organizations/create" class="sub-item">
-            New Organization
-          </router-link>
-        </div>
+        </router-link>
       </div>
+
 
       <!-- BUSINESSES -->
       <div class="group">
-        <div
-            class="group-title"
-            @click="handleGroupClick('biz', '/businesses')"
-        >
+        <router-link to="/admin/businesses" class="group-title">
           <i class="icon">🏪</i>
-
           <span v-if="!collapsed">Businesses</span>
-
-          <i
-              v-if="!collapsed"
-              class="arrow"
-              :class="{ rotated: open.biz }"
-          >
-            ›
-          </i>
-        </div>
-
-        <div v-show="open.biz && !collapsed" class="submenu">
-          <router-link to="/admin/businesses" class="sub-item">
-            All Businesses
-          </router-link>
-
-          <router-link to="/admin/businesses/create" class="sub-item">
-            New Business
-          </router-link>
-        </div>
+        </router-link>
       </div>
 
       <!-- CLIENTS -->
       <div class="group">
-        <div
-            class="group-title"
-            @click="handleGroupClick('client', '/clients')"
-        >
+        <router-link to="/admin/clients" class="group-title">
           <i class="icon">👥</i>
-
           <span v-if="!collapsed">Clients</span>
-
-          <i
-              v-if="!collapsed"
-              class="arrow"
-              :class="{ rotated: open.client }"
-          >
-            ›
-          </i>
-        </div>
-
-        <div v-show="open.client && !collapsed" class="submenu">
-          <router-link to="/admin/clients" class="sub-item">
-            All Clients
-          </router-link>
-
-          <router-link to="/admin/clients/create" class="sub-item">
-            New Client
-          </router-link>
-        </div>
+        </router-link>
       </div>
+
 
       <!-- APPOINTMENTS -->
       <div class="group">
-        <div
-            class="group-title"
-            @click="handleGroupClick('app', '/appointments')"
-        >
+        <router-link to="/admin/appointments" class="group-title">
           <i class="icon">📅</i>
-
           <span v-if="!collapsed">Appointments</span>
-
-          <i
-              v-if="!collapsed"
-              class="arrow"
-              :class="{ rotated: open.app }"
-          >
-            ›
-          </i>
-        </div>
-
-        <div v-show="open.app && !collapsed" class="submenu">
-          <router-link to="/admin/appointments" class="sub-item">
-            All Appointments
-          </router-link>
-
-          <router-link to="/admin/appointments/create" class="sub-item">
-            New Appointment
-          </router-link>
-        </div>
+        </router-link>
       </div>
 
       <!-- SERVICES -->
@@ -160,41 +74,18 @@
             All Services
           </router-link>
 
-          <router-link to="/admin/services/create" class="sub-item">
-            New Service
+          <router-link to="/admin/location-services" class="sub-item">
+            Location Services
           </router-link>
         </div>
       </div>
 
       <!-- LOCATIONS -->
       <div class="group">
-        <div class="group-title" @click="handleGroupClick('loc', '/locations')">
+        <router-link to="/admin/locations" class="group-title">
           <i class="icon">📍</i>
-
           <span v-if="!collapsed">Locations</span>
-
-          <i
-              v-if="!collapsed"
-              class="arrow"
-              :class="{ rotated: open.loc }"
-          >
-            ›
-          </i>
-        </div>
-
-        <div v-show="open.loc && !collapsed" class="submenu">
-          <router-link to="/admin/locations" class="sub-item">
-            All Locations
-          </router-link>
-
-          <router-link to="/admin/locations/create" class="sub-item">
-            New Location
-          </router-link>
-
-          <router-link to="/admin/location-services" class="sub-item">
-            Location Services
-          </router-link>
-        </div>
+        </router-link>
       </div>
 
       <!-- SCHEDULES -->
@@ -217,34 +108,11 @@
 
       <!-- USERS -->
       <div class="group">
-        <div
-            class="group-title"
-            @click="handleGroupClick('usr', '/users')"
-        >
+        <router-link to="/admin/users" class="group-title">
           <i class="icon">👤</i>
-
           <span v-if="!collapsed">Users</span>
-
-          <i
-              v-if="!collapsed"
-              class="arrow"
-              :class="{ rotated: open.usr }"
-          >
-            ›
-          </i>
-        </div>
-
-        <div v-show="open.usr && !collapsed" class="submenu">
-          <router-link to="/admin/users" class="sub-item">
-            All Users
-          </router-link>
-
-          <router-link to="/admin/users/create" class="sub-item">
-            New User
-          </router-link>
-        </div>
+        </router-link>
       </div>
-
     </nav>
 
 <!--    &lt;!&ndash; LOGOUT &ndash;&gt;-->

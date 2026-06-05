@@ -50,7 +50,8 @@
                 || '—'
               }}
             </td>
-            <td><span :class="['badge', appt.status]">{{ appt.status }}</span></td>
+<!--            <td><span :class="['badge',appt.status?.toLowerCase().replace(' ', '_')]">{{ appt.status }}</span></td>-->
+            <td>{{ appt.status }}</td>
           </tr>
           <tr v-if="todayAppts.length === 0">
             <td colspan="5" class="empty">No appointments today</td>

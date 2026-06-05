@@ -154,14 +154,14 @@
   <div class="page">
     <div class="page-header">
       <h2>Add Staff</h2>
-      <router-link to="/business/staff" class="back-link">? Back</router-link>
+      <router-link to="/business/staff" class="back-link"><- Back</router-link>
     </div>
     <div class="card">
       <form class="form" @submit.prevent="submit">
         <div class="field"><label>Full Name *</label><input v-model="form.name" placeholder="Enter full name" required /></div>
-        <div class="field"><label>Email *</label><input v-model="form.email" type="email" placeholder="Enter email" required /></div>
+        <div class="field"><label>Email *</label><input v-model="form.email" type="email" placeholder="Enter email" autocomplete="off" required /></div>
         <div class="field"><label>Phone *</label><input v-model="form.phone" placeholder="Phone number" required /></div>
-        <div class="field"><label>Password *</label><input v-model="form.password" type="password" placeholder="Password (min 6 chars)" required /></div>
+        <div class="field"><label>Password *</label><input v-model="form.password" type="password" placeholder="Password" autocomplete="new-password" required /></div>
         <div class="field"><label>Confirm Password *</label><input v-model="form.password_confirmation" type="password" placeholder="Confirm password" required/>
         </div>
         <div class="field">

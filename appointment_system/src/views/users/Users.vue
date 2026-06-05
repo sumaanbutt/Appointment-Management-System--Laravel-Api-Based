@@ -7,7 +7,7 @@
         <h2 class="mb-0">Users</h2>
         <p class="text-muted small mb-0">Manage system users</p>
       </div>
-      <router-link to="/users/create" class="btn btn-ams">+ New User</router-link>
+      <router-link to="/admin/users/create" class="btn btn-ams">+ New User</router-link>
     </div>
 
     <!-- TABLE CARD -->
@@ -18,25 +18,24 @@
         <table v-else class="table table-hover ams-table mb-0">
           <thead class="table-light">
             <tr>
-              <th class="ps-3">Full Name</th>
+              <th class="ps-3">User Name</th>
+              <th>Business Name</th>
               <th>Email</th>
-              <th>Type</th>
-              <th>Code</th>
+              <th>Phone</th>
+              <th>Role</th>
               <th>Status</th>
               <th class="pe-3" style="width:160px">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in users" :key="user._code">
+            <tr v-for="user in users" :key="user.code">
               <td class="ps-3">{{ user.name }}</td>
+              <td>{{user.business?.name || '—' }}</td>
               <td>{{ user.email }}</td>
+              <td>{{user.phone}}</td>
               <td>{{ user.user_type }}</td>
-              <td><code>{{ user.code }}</code></td>
-              <td>
-  <span :class="['ams-badge', user.status]">
-  {{ user.status }}
-</span>
-              </td>
+<!--              <td><code>{{ user.code }}</code></td>-->
+              <td><span :class="['badge', user.status=== 'ACTIVE' ? 'bg-success' : 'bg-secondary']">{{ user.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</span></td>
               <td class="pe-3">
 
                 <div class="dropdown">
@@ -88,6 +87,40 @@
       </div>
     </div>
 
+    <nav class="mt-3">
+      <ul class="pagination justify-content-end">
+
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <button class="page-link" @click="changePage(currentPage - 1)">
+            Previous
+          </button>
+        </li>
+
+        <li
+            v-for="page in lastPage"
+            :key="page"
+            class="page-item"
+            :class="{ active: currentPage === page }">
+
+          <button
+              class="page-link"
+              @click="changePage(page)">
+
+            {{ page }}
+
+          </button>
+
+        </li>
+
+        <li class="page-item" :class="{ disabled: currentPage === lastPage }">
+          <button class="page-link" @click="changePage(currentPage + 1)">
+            Next
+          </button>
+        </li>
+
+      </ul>
+    </nav>
+
     <!-- EDIT MODAL -->
     <div v-if="showEditModal" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
       <div class="modal-dialog modal-dialog-centered">
@@ -105,6 +138,26 @@
               <div class="mb-3">
                 <label class="form-label fw-semibold">Email *</label>
                 <input v-model="editForm.email" type="email" class="form-control" placeholder="Email" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Phone *</label>
+                <input v-model="editForm.phone" type="text" class="form-control" placeholder="Phone" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">
+                  New Password
+                </label>
+
+                <input
+                    v-model="editForm.password"
+                    type="password"
+                    class="form-control"
+                    placeholder="Leave blank to keep current password"
+                />
+
+                <small class="text-muted">
+                  Leave empty if you don't want to change the password.
+                </small>
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
@@ -149,8 +202,13 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import api from '@/services/api'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap-icons/font/bootstrap-icons.css'
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const users = ref([])
+const currentPage = ref(1)
+const lastPage = ref(1)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
@@ -163,6 +221,8 @@ const selected = ref(null)
 const editForm = reactive({
   name:'',
   email:'',
+  phone:'',
+  password:'',
   status:'ACTIVE'
 })
 
@@ -170,14 +230,20 @@ async function fetchUsers() {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/users')
+    const res = await api.get('/users', {
+      params: {
+        page: currentPage.value
+      }
+    })
 
-    console.log('USERS RESPONSE:', res.data)
-    console.log('FIRST USER:', res.data.data.data[0])
-    console.log('IS_ACTIVE:', res.data.data.data[0].is_active)
-    console.log('STATUS:', res.data.data.data[0].status)
+    // console.log('USERS RESPONSE:', res.data)
+    // console.log('FIRST USER:', res.data.data.data[0])
+    // console.log('IS_ACTIVE:', res.data.data.data[0].is_active)
+    // console.log('STATUS:', res.data.data.data[0].status)
 
     users.value = res.data.data.data || []
+    currentPage.value = res.data.data.current_page
+    lastPage.value = res.data.data.last_page
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load users'
   } finally {
@@ -185,10 +251,19 @@ async function fetchUsers() {
   }
 }
 
+async function changePage(page) {
+  if (page < 1 || page > lastPage.value) return
+
+  currentPage.value = page
+  await fetchUsers()
+}
+
 function openEdit(user) {
   selected.value = user
   editForm.name = user.name
   editForm.email = user.email
+  editForm.phone = user.phone
+  editForm.password = ''
   editForm.status = user.status
   formError.value = ''
   showEditModal.value = true
@@ -203,7 +278,18 @@ async function updateUser() {
   saving.value = true
   formError.value = ''
   try {
-    await api.put(`/users/${selected.value.code}`, editForm)
+    const payload = {
+      name: editForm.name,
+      email: editForm.email,
+      phone: editForm.phone,
+      status: editForm.status
+    }
+
+    if (editForm.password?.trim()) {
+      payload.password = editForm.password
+    }
+
+    await api.put(`/users/${selected.value.code}`, payload)
     showEditModal.value = false
     await fetchUsers()
   } catch (err) {

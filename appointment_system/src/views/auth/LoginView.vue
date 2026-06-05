@@ -38,6 +38,10 @@ async function login() {
   <template>
     <div class="login-page">
 
+      <!-- LEFT -->
+
+      <div class="login-left">
+
       <div class="login-card">
 
         <div class="login-header">
@@ -147,28 +151,99 @@ async function login() {
           </button>
 
         </form>
-        
-
 
       </div>
 
+      </div>
+
+      <!-- RIGHT -->
+
+<!--      <div class="login-right">-->
+
+<!--        <div class="overlay">-->
+
+<!--          <div class="right-content">-->
+
+<!--            <h1>AMS Portal</h1>-->
+
+<!--            <p>-->
+<!--              Manage appointments, clients,-->
+<!--              schedules, invoices and staff-->
+<!--              from one platform.-->
+<!--            </p>-->
+
+<!--            <div class="hero-features">-->
+
+<!--              <div>-->
+<!--                <i class="bi bi-check-circle-fill"></i>-->
+<!--                Appointment Scheduling-->
+<!--              </div>-->
+
+<!--              <div>-->
+<!--                <i class="bi bi-check-circle-fill"></i>-->
+<!--                Staff Management-->
+<!--              </div>-->
+
+<!--              <div>-->
+<!--                <i class="bi bi-check-circle-fill"></i>-->
+<!--                Invoice Tracking-->
+<!--              </div>-->
+
+<!--              <div>-->
+<!--                <i class="bi bi-check-circle-fill"></i>-->
+<!--                Business Operations-->
+<!--              </div>-->
+
+<!--            </div>-->
+
+<!--          </div>-->
+
+<!--        </div>-->
+
+<!--      </div>-->
+
     </div>
+
   </template>
 
 <style scoped>
 
+/* FULL PAGE */
 
 .login-page {
 
   min-height: 100vh;
 
-  background: #f4f6f9;
-
   display: flex;
   justify-content: center;
   align-items: center;
 
-  padding: 20px;
+  background-image:
+      url('https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=1600');
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+/* BLUE OVERLAY */
+
+.login-page::before {
+
+  content: '';
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+      rgba(13,110,253,.75);
+
+  z-index: 1;
 }
 
 .login-card {
@@ -176,38 +251,104 @@ async function login() {
   width: 100%;
   max-width: 500px;
 
-  background: white;
+  background: rgba(255,255,255,.95);
+
+  backdrop-filter: blur(12px);
 
   padding: 50px;
 
-  border-radius: 18px;
+  border-radius: 20px;
 
-  box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+  box-shadow:
+      0 20px 60px rgba(0,0,0,.25);
+
+  position: relative;
+
+  z-index: 3;
 }
 
+/* CENTER LOGIN */
+
+.login-left {
+
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  position: relative;
+
+  z-index: 2;
+
+  padding: 20px;
+}
+
+/* HIDE RIGHT PANEL */
+
+.login-right {
+
+  display: none;
+}
+
+/* LOGIN CARD */
+
+.login-card {
+
+  width: 100%;
+  max-width: 500px;
+
+  background: rgba(255,255,255,.96);
+
+  backdrop-filter: blur(12px);
+
+  padding: 50px;
+
+  border-radius: 20px;
+
+  box-shadow:
+      0 20px 60px rgba(0,0,0,.25);
+
+  position: relative;
+
+  z-index: 3;
+}
+
+/* HEADER */
+
 .login-header {
+
   text-align: center;
+
   margin-bottom: 35px;
 }
 
 .login-header h2 {
 
   font-size: 30px;
+
   font-weight: 700;
 
   color: #111827;
+
+  margin-bottom: 10px;
 }
 
 .login-header p {
 
-  margin-top: 10px;
-
   color: #6b7280;
+
+  margin: 0;
 }
+
+/* INPUT WRAPPER */
 
 .input-wrapper {
+
   position: relative;
 }
+
+/* INPUT ICON */
 
 .input-icon {
 
@@ -223,6 +364,8 @@ async function login() {
   z-index: 10;
 }
 
+/* INPUTS */
+
 .custom-input {
 
   height: 55px;
@@ -231,11 +374,18 @@ async function login() {
   padding-right: 45px;
 
   border-radius: 12px;
+
+  border: 1px solid #d1d5db;
 }
 
 .custom-input:focus {
+
   box-shadow: none;
+
+  border-color: #0d6efd;
 }
+
+/* PASSWORD TOGGLE */
 
 .password-toggle {
 
@@ -253,47 +403,45 @@ async function login() {
   z-index: 10;
 }
 
+/* BUTTON */
+
 .login-btn {
 
   height: 55px;
 
   border-radius: 12px;
 
-  font-weight: 600;
-
   font-size: 16px;
+
+  font-weight: 600;
 }
+
+/* FORGOT PASSWORD */
 
 .forgot-link {
 
   text-decoration: none;
 
   font-size: 14px;
+
+  color: #0d6efd;
 }
 
 .forgot-link:hover {
+
   text-decoration: underline;
 }
 
 /* DARK MODE */
 
-:global(body.dark-mode .login-page){
-
-  background:#111827;
-}
-
 :global(body.dark-mode .login-card){
 
-  background:#1f2937;
+  background: rgba(31,41,55,.95);
 
-  border-color:#374151;
+  border: 1px solid #374151;
 }
 
-:global(body.dark-mode.login-header h2){
-
-}
-
-:global(body.dark-mode input){
+:global(body.dark-mode .custom-input){
 
   background:#111827;
 
@@ -302,15 +450,43 @@ async function login() {
   border-color:#374151;
 }
 
-:global(body.dark-mode h1),
+:global(body.dark-mode .custom-input::placeholder){
+
+  color:#9ca3af;
+}
 
 :global(body.dark-mode .login-header h2),
 
 :global(body.dark-mode .login-header p),
 
-:global(body.dark-mode label){
+:global(body.dark-mode label),
+
+:global(body.dark-mode .form-check-label){
 
   color:white;
 }
 
-</style>>
+:global(body.dark-mode .input-icon),
+
+:global(body.dark-mode .password-toggle){
+
+  color:#9ca3af;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+  .login-card {
+
+    padding: 30px;
+  }
+
+  .login-header h2 {
+
+    font-size: 24px;
+  }
+
+}
+
+</style>

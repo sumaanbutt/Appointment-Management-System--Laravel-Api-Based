@@ -14,12 +14,30 @@ class InvoiceController extends Controller
     public function index()
     {
         try{
-        $invoices = Invoice::latest()->paginate(10);
-        return response()->json([
-            'status' => true,
-            'message' => 'Invoice List',
-            'invoices' => $invoices,
-        ],200);
+                $query = Invoice::query();
+
+                if (request()->business_code) {
+                    $query->where(
+                        'business_code',
+                        request()->business_code
+                    );
+                }
+
+                if (request()->status) {
+                    $query->where(
+                        'status',
+                        request()->status
+                    );
+                }
+
+                $invoices = $query
+                    ->latest()
+                    ->paginate(10);
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Invoice List',
+                    'invoices' => $invoices,
+                ],200);
 
         } catch (\Exception $e){
             return response()->json([

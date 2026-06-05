@@ -2,7 +2,7 @@
   <div class="ams-page">
     <div class="d-flex align-items-center justify-content-between">
       <div><h2 class="mb-0">Locations</h2><p class="text-muted small mb-0">Manage business locations</p></div>
-      <router-link to="/business/locations/create" class="btn btn-ams">+ New Location</router-link>
+      <router-link to="/owner/locations/create" class="btn btn-ams">+ New Location</router-link>
     </div>
     <div class="card shadow-sm border-0">
       <div class="card-body p-0">
@@ -20,8 +20,46 @@
               <td>{{ loc.address + ' ' + loc.street + ' ' + loc.city }}</td>
               <td><span :class="['ams-badge', loc.status]">{{ loc.status }}</span></td>
               <td class="pe-3">
-                <button class="btn btn-sm btn-outline-primary me-1" @click="openEdit(loc)">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" @click="openDelete(loc)">Delete</button>
+
+                <div class="dropdown">
+
+                  <button
+                      class="btn btn-sm btn-outline-secondary"
+                      type="button"
+                      data-bs-toggle="dropdown">
+
+                    <i class="bi bi-three-dots-vertical"></i>
+
+                  </button>
+
+                  <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                      <button
+                          class="dropdown-item"
+                          @click="openEdit(loc)">
+
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit
+
+                      </button>
+                    </li>
+
+                    <li>
+                      <button
+                          class="dropdown-item text-danger"
+                          @click="openDelete(loc)">
+
+                        <i class="bi bi-trash me-2"></i>
+                        Delete
+
+                      </button>
+                    </li>
+
+                  </ul>
+
+                </div>
+
               </td>
             </tr>
             <tr v-if="locations.length === 0"><td colspan="6" class="text-center text-muted py-4">No locations found</td></tr>

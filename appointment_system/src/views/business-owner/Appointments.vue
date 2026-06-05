@@ -5,7 +5,7 @@
         <h2 class="mb-0">Appointments</h2>
         <p class="text-muted small mb-0">Manage appointment requests for your business</p>
       </div>
-      <router-link to="/business/appointments/create" class="btn btn-ams">+ New Appointment</router-link>
+      <router-link to="/owner/appointments/create" class="btn btn-ams">+ New Appointment</router-link>
     </div>
 
     <!-- FILTERS -->
