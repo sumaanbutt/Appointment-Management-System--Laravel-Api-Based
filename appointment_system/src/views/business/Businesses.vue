@@ -19,8 +19,10 @@
           <thead class="table-light">
             <tr>
               <th class="ps-3">Name</th>
-              <th>Business Code</th>
-              <th>Organization</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Organization Name</th>
+              <th>Time Zone</th>
               <th>Status</th>
               <th class="pe-3" style="width:230px">Actions</th>
             </tr>
@@ -29,15 +31,10 @@
           <tr v-for="business in businesses" :key="business.code">
 
             <td class="ps-3">{{ business.name }}</td>
-
-            <td>
-              <code>{{ business.code }}</code>
-            </td>
-
-            <td>
-              {{ business.organization.name || business.organization_code || '—' }}
-            </td>
-
+            <td>{{ business?.email }}</td>
+            <td>{{ business?.phone }}</td>
+            <td>{{ business.organization.name || business.organization_code || '—' }}</td>
+            <td>{{ business?.timezone || '—' }}</td>
             <td><span :class="['badge',
               business.status === 'ACTIVE' ? 'bg-success' :
               business.status === 'INACTIVE' ? 'bg-secondary':

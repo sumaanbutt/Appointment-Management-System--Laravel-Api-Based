@@ -35,9 +35,9 @@
           <tbody>
             <tr v-for="appt in filteredAppointments" :key="appt.code">
               <td class="ps-3"><code>{{ appt.code }}</code></td>
-              <td>{{ appt.appointment_start_date }}</td>
-              <td>{{ appt.start_time }}</td>
-              <td>{{ appt.end_time }}</td>
+              <td>{{ formatDate(appt.appointment_start_date || '—') }}</td>
+              <td>{{ formatTime(appt.start_time || '—') }}</td>
+              <td>{{ formatTime(appt.end_time || '—') }}</td>
               <td>{{ [appt.location.apartment, appt.location.street, appt.location.address, appt.location.city ] .filter(Boolean)
                   .join(', ')|| '—' }}</td>
               <td><span :class="['ams-badge', appt.status?.toLowerCase()]">{{ appt.status }}</span></td>
@@ -214,6 +214,17 @@
                     </div>
                   </label>
                 </div>
+                <div v-if="engagedStaff.length" class="mt-4">
+                  <h6 class="text-danger">Engaged Staff</h6>
+                  <div v-for="staff in engagedStaff" :key="staff.user_code" class="border rounded p-2 mb-2">
+                    <div><strong>{{ staff.user_name }}</strong></div>
+                    <div class="small text-muted">Occupied with: {{ staff.conflict_appointment_code }}</div>
+
+                    <button class="btn btn-sm btn-warning mt-2" @click="forceAssignStaff(staff.user_code)">
+                      Reassign To This Appointment
+                    </button>
+                  </div>
+                </div>
                 <p v-if="approvalError" class="text-danger small mb-2">{{ approvalError }}</p>
               </div>
               <div v-else class="alert alert-warning d-flex align-items-start gap-2 mb-3">
@@ -368,6 +379,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import formatDate from "@/services/formatDate.ts";
+import formatTime from "@/services/formatTime.ts";
 
 const authStore = useAuthStore()
 const appointments = ref([])
@@ -396,6 +409,7 @@ const showApproval = ref(false)
 const availabilityLoading = ref(false)
 const availabilityError = ref('')
 const availableStaff = ref([])
+const engagedStaff = ref([])
 const approvalSelectedStaff = ref('')
 const approvalSaving = ref(false)
 const approvalError = ref('')
@@ -503,6 +517,7 @@ async function openApprovalDialog(appt) {
   try {
     const res = await api.get(`/appointments/${appt.code}/availability`)
     availableStaff.value = res.data.data?.data?.available_staff || []
+    engagedStaff.value = res.data.data?.engaged_staff || []
   } catch (err) {
     availabilityError.value = err.response?.data?.message || 'Could not check availability'
   } finally {
@@ -527,6 +542,37 @@ async function submitApproveWithStaff() {
   } catch (err) {
     approvalError.value = err.response?.data?.message || 'Approval failed'
   } finally {
+    approvalSaving.value = false
+  }
+}
+
+async function forceAssignStaff(
+    staffCode
+) {
+
+  approvalSaving.value = true
+
+  try {
+
+    await api.post(
+        `/appointments/${selected.value.code}/approve`,
+        {
+          staff_code: staffCode,
+          force_reassign: true
+        }
+    )
+
+    showApproval.value = false
+
+    await fetchAppointments()
+
+  } catch (err) {
+
+    approvalError.value =
+        err.response?.data?.message
+
+  } finally {
+
     approvalSaving.value = false
   }
 }

@@ -82,7 +82,7 @@
         <p v-if="error" class="error-msg">{{ error }}</p>
 
         <div class="form-actions">
-          <router-link to="/appointments" class="cancel-btn">Cancel</router-link>
+          <router-link to="/admin/appointments" class="cancel-btn">Cancel</router-link>
           <button type="submit" class="submit-btn" :disabled="loading">
             {{ loading ? 'Creating...' : 'Create Appointment' }}
           </button>
@@ -224,7 +224,7 @@ async function submit() {
     if (!payload.client_code) delete payload.client_code
 
     await api.post('/appointments', payload)
-    router.push('/appointments')
+    router.push('/admin/appointments')
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create appointment'
   } finally {

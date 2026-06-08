@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Appointment\CreateAppointmentRequest;
 use App\Http\Requests\Appointment\UpdateAppointmentRequest;
 use App\Models\Appointment;
+use App\Models\AppointmentParticipant;
 use App\Models\AppointmentHistory;
 use App\Models\User;
 use App\Models\UserShiftSchedule;
@@ -23,7 +24,7 @@ class AppointmentController extends Controller
         try {
 
             $query = Appointment::with([
-                'business','location','client.user', 'service',
+                'business','location','client.user', 'service','createdBy', 'approvedBy',
             ]);
 
             if(request()->business_code){
@@ -223,7 +224,6 @@ class AppointmentController extends Controller
         }
     }
 
-
     public function availability($appointment)
     {
         $appointment = Appointment::where(
@@ -235,14 +235,15 @@ class AppointmentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Appointment not found'
-            ],404);
+            ], 404);
         }
 
         $day = Carbon::parse(
             $appointment->appointment_start_date
         )->format('l');
 
-        $availableStaff = UserShiftSchedule::query()
+        // Staff scheduled for this day and time
+        $scheduledStaff = UserShiftSchedule::query()
 
             ->join(
                 'users',
@@ -288,18 +289,191 @@ class AppointmentController extends Controller
 
             ->get();
 
+        $availableStaff = [];
+        $engagedStaff = [];
+
+        foreach ($scheduledStaff as $staff) {
+
+            $conflict = AppointmentParticipant::query()
+
+                ->join(
+                    'appointments',
+                    'appointments.code',
+                    '=',
+                    'appointment_participants.appointment_code'
+                )
+
+                ->where(
+                    'appointment_participants.user_code',
+                    $staff->user_code
+                )
+
+                ->where(
+                    'appointment_participants.status',
+                    'ACTIVE'
+                )
+
+                ->whereDate(
+                    'appointments.appointment_start_date',
+                    $appointment->appointment_start_date
+                )
+
+                ->whereIn(
+                    'appointments.status',
+                    [
+                        'APPROVED',
+                        'IN_PROGRESS'
+                    ]
+                )
+
+                ->where(
+                    'appointments.code',
+                    '!=',
+                    $appointment->code
+                )
+
+                ->where(function ($query) use ($appointment) {
+
+                    $query
+                        ->where(
+                            'appointments.start_time',
+                            '<',
+                            $appointment->end_time
+                        )
+
+                        ->where(
+                            'appointments.end_time',
+                            '>',
+                            $appointment->start_time
+                        );
+                })
+
+                ->select(
+                    'appointments.code as appointment_code',
+                    'appointments.start_time',
+                    'appointments.end_time'
+                )
+
+                ->first();
+
+            if ($conflict) {
+
+                $engagedStaff[] = [
+                    'user_code' => $staff->user_code,
+                    'user_name' => $staff->user_name,
+                    'working_day' => $staff->working_day,
+                    'shift_start_time' => $staff->shift_start_time,
+                    'shift_end_time' => $staff->shift_end_time,
+
+                    'conflict_appointment_code' =>
+                        $conflict->appointment_code,
+
+                    'conflict_start_time' =>
+                        $conflict->start_time,
+
+                    'conflict_end_time' =>
+                        $conflict->end_time,
+                ];
+
+            } else {
+
+                $availableStaff[] = [
+                    'user_code' => $staff->user_code,
+                    'user_name' => $staff->user_name,
+                    'working_day' => $staff->working_day,
+                    'shift_start_time' => $staff->shift_start_time,
+                    'shift_end_time' => $staff->shift_end_time,
+                ];
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
-                'available_staff' => $availableStaff
+                'available_staff' => $availableStaff,
+                'engaged_staff' => $engagedStaff,
             ]
         ]);
     }
 
+
+//    public function availability($appointment)
+//    {
+//        $appointment = Appointment::where(
+//            'code',
+//            $appointment
+//        )->first();
+//
+//        if (!$appointment) {
+//            return response()->json([
+//                'success' => false,
+//                'message' => 'Appointment not found'
+//            ],404);
+//        }
+//
+//        $day = Carbon::parse(
+//            $appointment->appointment_start_date
+//        )->format('l');
+//
+//        $availableStaff = UserShiftSchedule::query()
+//
+//            ->join(
+//                'users',
+//                'users.code',
+//                '=',
+//                'user_shift_schedules.user_code'
+//            )
+//
+//            ->where(
+//                'users.business_code',
+//                $appointment->business_code
+//            )
+//
+//            ->where(
+//                'users.user_type',
+//                'SERVICE_STAFF'
+//            )
+//
+//            ->where(
+//                'user_shift_schedules.working_day',
+//                strtolower($day)
+//            )
+//
+//            ->where(
+//                'user_shift_schedules.shift_start_time',
+//                '<=',
+//                $appointment->start_time
+//            )
+//
+//            ->where(
+//                'user_shift_schedules.shift_end_time',
+//                '>=',
+//                $appointment->end_time
+//            )
+//
+//            ->select(
+//                'users.code as user_code',
+//                'users.name as user_name',
+//                'user_shift_schedules.working_day',
+//                'user_shift_schedules.shift_start_time',
+//                'user_shift_schedules.shift_end_time'
+//            )
+//
+//            ->get();
+//
+//        return response()->json([
+//            'success' => true,
+//            'data' => [
+//                'available_staff' => $availableStaff
+//            ]
+//        ]);
+//    }
+
     public function approve(Request $request, $appointment)
     {
         $request->validate([
-            'staff_code' => 'required'
+            'staff_code' => 'required',
+            'force_reassign' => 'nullable|boolean',
         ]);
 
         $appointment = Appointment::where(
@@ -332,11 +506,134 @@ class AppointmentController extends Controller
         }
 
         $appointment->status = 'APPROVED';
-
-        $appointment->staff_code = $staff->code;
-
+        $appointment->approved_by_code = auth()->user()->code;
         $appointment->save();
 
+        $existingParticipant = AppointmentParticipant::where(
+            'appointment_code',
+            $appointment->code
+        )
+            ->where(
+                'user_code',
+                $staff->code
+            )
+            ->where(
+                'status',
+                'ACTIVE'
+            )
+            ->first();
+
+        if (!$existingParticipant) {
+
+            if ($request->force_reassign) {
+
+                $activeAssignments = AppointmentParticipant::where(
+                    'user_code',
+                    $staff->code
+                )
+                    ->where(
+                        'status',
+                        'ACTIVE'
+                    )
+                    ->get();
+
+                foreach ($activeAssignments as $assignment) {
+
+                    // Old appointment becomes pending
+                    Appointment::where(
+                        'code',
+                        $assignment->appointment_code
+                    )->update([
+                        'status' => 'PENDING',
+                        'approved_by_code' => null,
+                    ]);
+
+                    // Staff removed from old appointment
+                    $assignment->update([
+                        'status' => 'INACTIVE'
+                    ]);
+                }
+            }
+
+            $conflictingAssignments = AppointmentParticipant::query()
+
+                ->join(
+                    'appointments',
+                    'appointments.code',
+                    '=',
+                    'appointment_participants.appointment_code'
+                )
+
+                ->where(
+                    'appointment_participants.user_code',
+                    $staff->code
+                )
+
+                ->where(
+                    'appointment_participants.status',
+                    'ACTIVE'
+                )
+
+                ->where(
+                    'appointments.code',
+                    '!=',
+                    $appointment->code
+                )
+
+                ->whereDate(
+                    'appointments.appointment_start_date',
+                    $appointment->appointment_start_date
+                )
+
+                ->where(
+                    'appointments.start_time',
+                    '<',
+                    $appointment->end_time
+                )
+
+                ->where(
+                    'appointments.end_time',
+                    '>',
+                    $appointment->start_time
+                )
+
+                ->select(
+                    'appointment_participants.id',
+                    'appointment_participants.appointment_code'
+                )
+
+                ->get();
+
+            if ($request->force_reassign) {
+
+                foreach ($conflictingAssignments as $conflict) {
+
+                    Appointment::where(
+                        'code',
+                        $conflict->appointment_code
+                    )->update([
+                        'status' => 'PENDING',
+                        'approved_by_code' => null,
+                    ]);
+
+                    AppointmentParticipant::where(
+                        'id',
+                        $conflict->id
+                    )->update([
+                        'status' => 'INACTIVE'
+                    ]);
+                }
+            }
+
+        AppointmentParticipant::create([
+            'appointment_code' => $appointment->code,
+            'business_code'    => $appointment->business_code,
+            'user_code'        => $staff->code,
+            'user_role'        => strtolower($staff->user_type),
+            'user_type'        => strtolower(auth()->user()->user_type),
+            'status'           => 'ACTIVE',
+        ]);
+        }
         return response()->json([
             'success' => true,
             'message' => 'Appointment approved successfully',

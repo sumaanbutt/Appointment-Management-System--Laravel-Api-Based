@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AppointmentParticipant extends Model
 {
-    use HasCode;
+//    use HasCode;
 
     protected $fillable = [
         'appointment_code',
@@ -18,12 +18,12 @@ class AppointmentParticipant extends Model
         'status',
     ];
 
-    protected static $codePrefix = 'APP';
-
-    public function getRouteKeyName()
-    {
-        return 'code';
-    }
+//    protected static $codePrefix = 'APP';
+//
+//    public function getRouteKeyName()
+//    {
+//        return 'code';
+//    }
 
     public function user()
     {

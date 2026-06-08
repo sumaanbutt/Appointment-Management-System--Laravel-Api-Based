@@ -33,10 +33,12 @@
         <table v-else class="table table-hover ams-table mb-0">
           <thead class="table-light">
             <tr>
-              <th class="ps-3">Appointment Code</th>
               <th>Business Name</th>
+              <th>Service Name</th>
               <th>Notes</th>
-              <th>Date</th>
+              <th>Created By</th>
+              <th>Approved By</th>
+              <th>Start Date</th>
               <th>Start Time</th>
               <th>Status</th>
               <th class="pe-3" style="width:280px">Actions</th>
@@ -44,10 +46,15 @@
           </thead>
           <tbody>
           <tr v-for="appt in filteredAppointments" :key="appt.code">
-            <td class="ps-3"><code>{{ appt.code }}</code></td>
+<!--            <td class="ps-3"><code>{{ appt.code }}</code></td>-->
             <td>{{ appt.business?.name || '—' }}</td>
+            <td>{{ appt.service?.service_name || '—' }}</td>
             <td>{{ appt.notes || '—' }}</td>
-            <td>{{ formatDate(appt.start_date || appt.appointment_start_date || '—') }}</td>
+            <td>{{ appt.created_by?.name || '—' }}</td>
+            <td>{{ appt.approved_by?.name || '—' }}</td>
+<!--            <td>{{ appt.createdBy?.name || '—' }}</td>-->
+<!--            <td>{{ appt.approvedBy?.name || '—' }}</td>-->
+            <td>{{ formatDate(appt.appointment_start_date || '—') }}</td>
             <td>{{ formatTime(appt.start_time || '—') }}</td>
             <td><span :class="['badge',
                   appt.status === 'COMPLETED' ? 'bg-success' :
@@ -166,6 +173,40 @@
         </table>
       </div>
     </div>
+
+    <nav class="mt-3">
+      <ul class="pagination justify-content-end">
+
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <button class="page-link" @click="changePage(currentPage - 1)">
+            Previous
+          </button>
+        </li>
+
+        <li
+            v-for="page in lastPage"
+            :key="page"
+            class="page-item"
+            :class="{ active: currentPage === page }">
+
+          <button
+              class="page-link"
+              @click="changePage(page)">
+
+            {{ page }}
+
+          </button>
+
+        </li>
+
+        <li class="page-item" :class="{ disabled: currentPage === lastPage }">
+          <button class="page-link" @click="changePage(currentPage + 1)">
+            Next
+          </button>
+        </li>
+
+      </ul>
+    </nav>
 
     <!-- DETAILS MODAL -->
     <div v-if="showDetails" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
@@ -303,6 +344,17 @@
                     </div>
                   </label>
                 </div>
+                <div v-if="engagedStaff.length" class="mt-4">
+                  <h6 class="text-danger">Engaged Staff</h6>
+                  <div v-for="staff in engagedStaff" :key="staff.user_code" class="border rounded p-2 mb-2">
+                    <div><strong>{{ staff.user_name }}</strong></div>
+                    <div class="small text-muted">Occupied with: {{ staff.conflict_appointment_code }}</div>
+
+                    <button class="btn btn-sm btn-warning mt-2" @click="forceAssignStaff(staff.user_code)">
+                      Reassign To This Appointment
+                    </button>
+                  </div>
+                </div>
                 <p v-if="approvalError" class="text-danger small mb-2">{{ approvalError }}</p>
               </div>
 
@@ -397,12 +449,16 @@
 <script setup>
 import { computed, reactive, ref, onMounted } from 'vue'
 import api from '@/services/api'
+import formatDate from "@/services/formatDate.ts";
+import formatTime from "@/services/formatTime.ts";
 
 const appointments = ref([])
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 const rescheduleError = ref('')
+const currentPage = ref(1)
+const lastPage = ref(1)
 
 const search = ref('')
 const statusFilter = ref('')
@@ -428,13 +484,25 @@ async function fetchAppointments() {
 
   try {
 
-    const res = await api.get('/appointments')
+    const res = await api.get('/appointments',{
+      params: {
+        page: currentPage.value
+      }
+    })
 
     console.log('FIRST OBJECT:', res.data.data.data[0])
 
     appointments.value =
         res.data.data.data || []
 
+    currentPage.value = res.data.data.current_page
+    lastPage.value = res.data.data.last_page
+
+
+    console.log(
+        'FIRST APPOINTMENT:',
+        JSON.stringify(appointments.value[0], null, 2)
+    )
   } catch(err){
 
     error.value =
@@ -446,25 +514,32 @@ async function fetchAppointments() {
   }
 }
 
-function formatDate(date) {
-  if (!date) return '—'
+async function changePage(page) {
+  if (page < 1 || page > lastPage.value) return
 
-  const d = new Date(date)
-
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const year = d.getFullYear()
-
-  return `${day}-${month}-${year}`
+  currentPage.value = page
+  await fetchAppointments()
 }
 
-function formatTime(t) {
-  if (!t) return '—'
-  const [h, m] = t.split(':').map(Number)
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const hour = h % 12 || 12
-  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
-}
+// function formatDate(date) {
+//   if (!date) return '—'
+//
+//   const d = new Date(date)
+//
+//   const month = String(d.getMonth() + 1).padStart(2, '0')
+//   const day = String(d.getDate()).padStart(2, '0')
+//   const year = d.getFullYear()
+//
+//   return `${day}-${month}-${year}`
+// }
+//
+// function formatTime(t) {
+//   if (!t) return '—'
+//   const [h, m] = t.split(':').map(Number)
+//   const ampm = h >= 12 ? 'PM' : 'AM'
+//   const hour = h % 12 || 12
+//   return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
+// }
 
 const filteredAppointments = computed(() => {
   return appointments.value.filter(a => {
@@ -538,6 +613,7 @@ const showApproval = ref(false)
 const availabilityLoading = ref(false)
 const availabilityError = ref('')
 const availableStaff = ref([])
+const engagedStaff = ref([])
 const selectedStaff = ref('')
 const approvalSaving = ref(false)
 const approvalError = ref('')
@@ -582,6 +658,7 @@ async function openApprovalDialog(appt) {
     )
     console.log('Availability Response:', res.data)
     availableStaff.value = res.data.data?.available_staff || []
+    engagedStaff.value = res.data.data?.engaged_staff || []
   } catch (err) {
     availabilityError.value = err.response?.data?.message || 'Could not check availability'
   } finally {
@@ -606,6 +683,37 @@ async function submitApproveWithStaff() {
   } catch (err) {
     approvalError.value = err.response?.data?.message || 'Approval failed'
   } finally {
+    approvalSaving.value = false
+  }
+}
+
+async function forceAssignStaff(
+    staffCode
+) {
+
+  approvalSaving.value = true
+
+  try {
+
+    await api.post(
+        `/appointments/${selected.value.code}/approve`,
+        {
+          staff_code: staffCode,
+          force_reassign: true
+        }
+    )
+
+    showApproval.value = false
+
+    await fetchAppointments()
+
+  } catch (err) {
+
+    approvalError.value =
+        err.response?.data?.message
+
+  } finally {
+
     approvalSaving.value = false
   }
 }
