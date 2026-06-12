@@ -34,7 +34,7 @@
           </thead>
           <tbody>
             <tr v-for="appt in filteredAppointments" :key="appt.code">
-              <td class="ps-3"><code>{{ appt.code }}</code></td>
+              <td class="ps-3">{{ appt.code }}</td>
               <td>{{ formatDate(appt.appointment_start_date || '—') }}</td>
               <td>{{ formatTime(appt.start_time || '—') }}</td>
               <td>{{ formatTime(appt.end_time || '—') }}</td>
@@ -134,6 +134,40 @@
       </div>
     </div>
 
+    <nav class="mt-3">
+      <ul class="pagination justify-content-end">
+
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <button class="page-link" @click="changePage(currentPage - 1)">
+            Previous
+          </button>
+        </li>
+
+        <li
+            v-for="page in lastPage"
+            :key="page"
+            class="page-item"
+            :class="{ active: currentPage === page }">
+
+          <button
+              class="page-link"
+              @click="changePage(page)">
+
+            {{ page }}
+
+          </button>
+
+        </li>
+
+        <li class="page-item" :class="{ disabled: currentPage === lastPage }">
+          <button class="page-link" @click="changePage(currentPage + 1)">
+            Next
+          </button>
+        </li>
+
+      </ul>
+    </nav>
+
     <!-- DETAILS MODAL -->
     <div v-if="showDetails" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
       <div class="modal-dialog modal-dialog-centered">
@@ -197,43 +231,63 @@
             <div v-else-if="availabilityError" class="alert alert-warning py-2 mb-3">{{ availabilityError }}</div>
 
             <template v-else-if="!showRescheduleInApproval">
-              <div v-if="availableStaff.length > 0">
-                <p class="fw-semibold mb-2">Available staff for this slot:</p>
-                <div class="list-group mb-3">
-                  <label
-                    v-for="s in availableStaff" :key="s.user_code"
-                    class="list-group-item list-group-item-action d-flex align-items-center gap-3"
-                    style="cursor:pointer"
-                    :class="{ active: approvalSelectedStaff === s.user_code }"
-                    @click="approvalSelectedStaff = s.user_code"
-                  >
-                    <input type="radio" :value="s.user_code" v-model="approvalSelectedStaff" class="form-check-input mt-0" />
-                    <div>
-                      <div class="fw-semibold">{{ s.user_name || s.user_code }}</div>
-                      <small class="text-muted">{{ s.working_days }} &bull; {{ s.start_time }}–{{ s.end_time }}</small>
-                    </div>
-                  </label>
-                </div>
-                <div v-if="engagedStaff.length" class="mt-4">
-                  <h6 class="text-danger">Engaged Staff</h6>
-                  <div v-for="staff in engagedStaff" :key="staff.user_code" class="border rounded p-2 mb-2">
-                    <div><strong>{{ staff.user_name }}</strong></div>
-                    <div class="small text-muted">Occupied with: {{ staff.conflict_appointment_code }}</div>
 
-                    <button class="btn btn-sm btn-warning mt-2" @click="forceAssignStaff(staff.user_code)">
-                      Reassign To This Appointment
+              <div v-if="availableStaff.length > 0" class="mb-4">
+                <p class="fw-semibold mb-2">Available staff for this slot:</p>
+                <div
+                    v-for="s in availableStaff"
+                    :key="s.user_code"
+                    class="list-group-item list-group-item-action d-flex align-items-center p-3 mb-2"
+                    :class="{ 'border-primary bg-light': approvalSelectedStaff === s.user_code }"
+                    style="cursor:pointer; border-radius: 10px;"
+                    @click="approvalSelectedStaff = s.user_code"
+                >
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="radio" :value="s.user_code" v-model="approvalSelectedStaff">
+                  </div>
+                  <div>
+                    <div class="fw-bold">{{ s.user_name }}</div>
+                    <div class="text-muted small">{{ s.user_code }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="engagedStaff.length > 0" class="mt-4">
+                <h6 class="text-danger fw-bold mb-3">
+                  <i class="bi bi-exclamation-triangle me-2"></i>Engaged Staff (Busy)
+                </h6>
+
+                <div
+                    v-for="staff in engagedStaff"
+                    :key="staff.user_code"
+                    class="border rounded-3 p-3 mb-2 bg-light shadow-sm"
+                >
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <strong class="d-block">{{ staff.user_name }}</strong>
+                      <div class="small text-muted mt-1">
+                        <span class="badge bg-danger-subtle text-danger me-2">Conflict</span>
+                        Occupied with: <code>{{ staff.conflict_appointment_code }}</code>
+                      </div>
+                      <div class="small text-muted">
+                        Time: {{ staff.conflict_start_time }} - {{ staff.conflict_end_time }}
+                      </div>
+                    </div>
+
+                    <button
+                        class="btn btn-sm btn-warning"
+                        @click="forceAssignStaff(staff.user_code)"
+                    >
+                      Force Reassign
                     </button>
                   </div>
                 </div>
-                <p v-if="approvalError" class="text-danger small mb-2">{{ approvalError }}</p>
               </div>
-              <div v-else class="alert alert-warning d-flex align-items-start gap-2 mb-3">
-                <span class="fs-5">&#9888;</span>
-                <div>
-                  <strong>No staff available</strong> for this date and time slot.
-                  <br>You can send a reschedule request to the client with a new date &amp; time.
-                </div>
+
+              <div v-if="availableStaff.length === 0 && engagedStaff.length === 0" class="alert alert-warning">
+                <strong>No staff found</strong> for this shift.
               </div>
+
             </template>
 
             <template v-if="showRescheduleInApproval">
@@ -388,6 +442,8 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 const rescheduleError = ref('')
+const currentPage = ref(1)
+const lastPage = ref(1)
 const search = ref('')
 const statusFilter = ref('')
 const showDetails = ref(false)
@@ -443,8 +499,10 @@ async function fetchAppointments() {
   error.value = ''
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/appointments', { params: biz ? { business_code: biz } : {} })
+    const res = await api.get('/appointments', { params: biz ? { page: currentPage.value, business_code: biz } : {} })
     appointments.value = res.data.data.data || []
+    currentPage.value = res.data.data.current_page
+    lastPage.value = res.data.data.last_page
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load appointments'
   } finally {
@@ -500,6 +558,12 @@ async function submitReschedule() {
   }
 }
 
+async function changePage(page) {
+  if (page < 1 || page > lastPage.value) return
+
+  currentPage.value = page
+  await fetchAppointments()}
+
 async function openApprovalDialog(appt) {
   selected.value = appt
   showApproval.value = true
@@ -515,8 +579,11 @@ async function openApprovalDialog(appt) {
   approvalRescheduleForm.notes = ''
   availabilityLoading.value = true
   try {
+    console.log('Appointment:', appt)
+    console.log('Appointment Code:', appt.code)
     const res = await api.get(`/appointments/${appt.code}/availability`)
-    availableStaff.value = res.data.data?.data?.available_staff || []
+    console.log('Availability Response', JSON.stringify(res.data, null, 2))
+    availableStaff.value = res.data.data?.available_staff || []
     engagedStaff.value = res.data.data?.engaged_staff || []
   } catch (err) {
     availabilityError.value = err.response?.data?.message || 'Could not check availability'
@@ -546,9 +613,17 @@ async function submitApproveWithStaff() {
   }
 }
 
-async function forceAssignStaff(
-    staffCode
-) {
+async function forceAssignStaff(staffCode) {
+
+  console.log('staffCode:', staffCode)
+  console.log('appointment:', selected.value)
+
+  const payload = {
+    staff_code: staffCode,
+    force_reassign: true
+  }
+
+  console.log('payload:', payload)
 
   approvalSaving.value = true
 
@@ -556,10 +631,7 @@ async function forceAssignStaff(
 
     await api.post(
         `/appointments/${selected.value.code}/approve`,
-        {
-          staff_code: staffCode,
-          force_reassign: true
-        }
+        payload
     )
 
     showApproval.value = false
@@ -568,12 +640,15 @@ async function forceAssignStaff(
 
   } catch (err) {
 
+    console.log('ERROR RESPONSE:', err.response?.data)
+
     approvalError.value =
         err.response?.data?.message
 
   } finally {
 
     approvalSaving.value = false
+
   }
 }
 

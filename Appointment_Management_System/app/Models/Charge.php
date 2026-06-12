@@ -16,6 +16,11 @@ class Charge extends Model
         'charge_uom',
         'charge_value',
         'status',
+        'auto_apply',
+    ];
+
+    protected $casts = [
+        'auto_apply' => 'boolean',
     ];
 
     protected static $codePrefix = 'CHG';

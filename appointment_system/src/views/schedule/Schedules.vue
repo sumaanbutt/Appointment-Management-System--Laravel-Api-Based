@@ -555,8 +555,10 @@
         <table v-else class="table table-hover ams-table mb-0">
           <thead class="table-light">
           <tr>
-            <th class="ps-3">ID</th>
+            <th class="ps-3">Business Name</th>
             <th>Staff Name</th>
+            <th>Staff Type</th>
+            <th>Location</th>
             <th>Day</th>
             <th>Start Time</th>
             <th>End Time</th>
@@ -566,8 +568,11 @@
           </thead>
           <tbody>
           <tr v-for="schedule in schedules" :key="schedule.code">
-            <td class="ps-3">{{ schedule.code }}</td>
+            <td class="ps-3">{{ schedule.business?.name || '—' }}</td>
             <td>{{ schedule.user?.name || schedule.user_code || '—' }}</td>
+            <td><span class="badge bg-white text-dark border px-2 py-1.5 fw-medium small text-lowercase">{{ schedule.user?.user_type || '-' }}</span></td>
+            <td>{{ [schedule.location.apartment, schedule.location.street, schedule.location.address, schedule.location.city ] .filter(Boolean)
+                .join(', ')|| '—' }}</td>
             <td>{{ schedule.working_day }}</td>
             <td>{{ schedule.status === 'INACTIVE' ? '—' : formatTime(schedule.shift_start_time) }}</td>
             <td>{{ schedule.status === 'INACTIVE' ? '—' : formatTime(schedule.shift_end_time) }}</td>
@@ -1219,5 +1224,64 @@ onMounted(async () => {
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
+}
+
+<style scoped>
+
+ .ams-page{
+   display:flex;
+   flex-direction:column;
+   gap:20px;
+ }
+
+.card{
+  border-radius:12px;
+}
+
+.ams-table th,
+.ams-table td{
+  vertical-align:middle;
+  font-size:14px;
+}
+
+code{
+  background:#f1f5f9;
+  padding:3px 8px;
+  border-radius:6px;
+  color:#334155;
+}
+
+.btn-ams{
+  background:#6366f1;
+  color:#fff;
+  border:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
+
+.form-control,
+.form-select{
+  border-radius:8px;
+  font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+
+/* BADGES */
+
+.ams-badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  text-transform:capitalize;
 }
 </style>

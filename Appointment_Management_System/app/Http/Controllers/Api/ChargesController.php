@@ -43,16 +43,13 @@ class ChargesController extends Controller
 
     public function store(CreateChargeRequest $request)
     {
-        $data = $request->validated();
         try{
-            $charge = Charge::create([
-                'business_code' => $request->business_code,
-                'name' => $request->name,
-                'description' => $request->description,
-                'charge_uom' => $request->charge_uom,
-                'charge_value' => $request->charge_value,
-                'status' => 'ACTIVE',
-            ]);
+            $data = $request->validated();
+
+            // Default status if not provided in request logic
+            $data['status'] = $data['status'] ?? 'ACTIVE';
+
+            $charge = Charge::create($data);
 
             return response()->json([
                 'status' => true,
@@ -96,8 +93,14 @@ class ChargesController extends Controller
 
     public function update(UpdateChargeRequest $request, Charge $charge)
     {
-        $data = $request->validated();
+//        $data = $request->validated();
         try{
+
+//            dd([
+//                'request_auto_apply' => $request->auto_apply,
+//                'type' => gettype($request->auto_apply),
+//                'all' => $request->all(),
+//            ]);
             if(!$charge){
                 return response()->json([
                     'status' => false,
@@ -106,7 +109,13 @@ class ChargesController extends Controller
                 ],404);
             }
 
-            $charge->update($request->validated());
+            $data = $request->validated();
+
+            dd([
+                'validated' => $data,
+                'auto_apply' => $data['auto_apply'] ?? null,
+                'type' => gettype($data['auto_apply'] ?? null),
+            ]);
 
             return response()->json([
                 'status' => true,

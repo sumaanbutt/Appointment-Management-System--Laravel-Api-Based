@@ -8,6 +8,8 @@ use App\Http\Requests\Appointment\UpdateAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\AppointmentParticipant;
 use App\Models\AppointmentHistory;
+use App\Models\Charge;
+use App\Models\LocationServices;
 use App\Models\User;
 use App\Models\UserShiftSchedule;
 use Carbon\Carbon;
@@ -71,10 +73,48 @@ class AppointmentController extends Controller
     {
         $data = $request->all();
         try{
+//            $alreadyBooked = Appointment::where(
+//                'location_code',
+//                $request->location_code
+//            )
+//                ->where(
+//                    'appointment_start_date',
+//                    $request->appointment_start_date
+//                )
+//
+//                ->where(function ($query) use ($request) {
+//
+//                    $query->where('start_time', '<', $request->end_time)
+//                        ->where('end_time', '>', $request->start_time);
+//                })
+//
+//                ->whereNotIn('status', [
+//                    'CANCELLED',
+//                    'REJECTED'
+//                ])
+//
+//                ->exists();
+
             $alreadyBooked = Appointment::where(
-                'location_code',
-                $request->location_code
+                'business_code',
+                $request->business_code
             )
+
+                ->where(
+                    'location_code',
+                    $request->location_code
+                )
+
+                ->where(
+                    'client_code',
+                    $request->client_code
+                )
+
+                ->where(
+                    'service_code',
+                    $request->service_code
+                )
+
                 ->where(
                     'appointment_start_date',
                     $request->appointment_start_date
@@ -82,14 +122,26 @@ class AppointmentController extends Controller
 
                 ->where(function ($query) use ($request) {
 
-                    $query->where('start_time', '<', $request->end_time)
-                        ->where('end_time', '>', $request->start_time);
+                    $query->where(
+                        'start_time',
+                        '<',
+                        $request->end_time
+                    )
+
+                        ->where(
+                            'end_time',
+                            '>',
+                            $request->start_time
+                        );
                 })
 
-                ->whereNotIn('status', [
-                    'CANCELLED',
-                    'REJECTED'
-                ])
+                ->whereNotIn(
+                    'status',
+                    [
+                        'CANCELLED',
+                        'REJECTED'
+                    ]
+                )
 
                 ->exists();
 
@@ -263,6 +315,11 @@ class AppointmentController extends Controller
             )
 
             ->where(
+                'user_shift_schedules.location_code',
+                $appointment->location_code
+            )
+
+            ->where(
                 'user_shift_schedules.working_day',
                 strtolower($day)
             )
@@ -291,6 +348,9 @@ class AppointmentController extends Controller
 
         $availableStaff = [];
         $engagedStaff = [];
+        $differentTimeSameLocation = [];
+        $differentLocationSameTime = [];
+        $serviceOtherLocations = [];
 
         foreach ($scheduledStaff as $staff) {
 
@@ -316,6 +376,11 @@ class AppointmentController extends Controller
                 ->whereDate(
                     'appointments.appointment_start_date',
                     $appointment->appointment_start_date
+                )
+
+                ->where(
+                    'appointments.location_code',
+                    $appointment->location_code
                 )
 
                 ->whereIn(
@@ -356,6 +421,7 @@ class AppointmentController extends Controller
 
                 ->first();
 
+
             if ($conflict) {
 
                 $engagedStaff[] = [
@@ -365,14 +431,9 @@ class AppointmentController extends Controller
                     'shift_start_time' => $staff->shift_start_time,
                     'shift_end_time' => $staff->shift_end_time,
 
-                    'conflict_appointment_code' =>
-                        $conflict->appointment_code,
-
-                    'conflict_start_time' =>
-                        $conflict->start_time,
-
-                    'conflict_end_time' =>
-                        $conflict->end_time,
+                    'conflict_appointment_code' => $conflict->appointment_code,
+                    'conflict_start_time' => $conflict->start_time,
+                    'conflict_end_time' => $conflict->end_time,
                 ];
 
             } else {
@@ -387,13 +448,245 @@ class AppointmentController extends Controller
             }
         }
 
+        if (empty($availableStaff)) {
+
+            $differentTimeSameLocation = UserShiftSchedule::query()
+
+                ->join(
+                    'users',
+                    'users.code',
+                    '=',
+                    'user_shift_schedules.user_code'
+                )
+
+                ->where(
+                    'user_type',
+                    'SERVICE_STAFF'
+                )
+
+                ->where(
+                    'users.business_code',
+                    $appointment->business_code
+                )
+
+                ->where(
+                    'user_shift_schedules.location_code',
+                    $appointment->location_code
+                )
+
+                ->where(
+                    'user_shift_schedules.working_day',
+                    strtoupper($day)
+                )
+
+                ->select(
+                    'users.code as user_code',
+                    'users.name as staff_name',
+                    'user_shift_schedules.location_code',
+                    'user_shift_schedules.working_day',
+                    'user_shift_schedules.shift_start_time as start_time',
+                    'user_shift_schedules.shift_end_time as end_time'
+                )
+
+                ->get()
+                ->toArray();
+        }
+
+
+        $autoApplyCharges = Charge::where(
+            'business_code',
+            $appointment->business_code
+        )
+            ->where(
+                'status',
+                'active, ACTIVE'
+            )
+
+            ->where('auto_apply',
+                true)
+
+            ->get();
+
+
+        $optionalCharges = Charge::where(
+            'business_code',
+            $appointment->business_code
+        )
+            ->where(
+                'status',
+                'active, ACTIVE'
+            )
+
+            ->where(
+                'auto_apply',
+                false
+            )
+
+            ->get();
+
+
+
+
+        if (empty($availableStaff)) {
+
+            $differentLocationSameTime = UserShiftSchedule::query()
+
+                ->join(
+                    'users',
+                    'users.code',
+                    '=',
+                    'user_shift_schedules.user_code'
+                )
+
+                ->where(
+                    'user_type',
+                    'SERVICE_STAFF'
+                )
+
+                ->where(
+                    'users.business_code',
+                    $appointment->business_code
+                )
+
+                ->where(
+                    'user_shift_schedules.location_code',
+                    '!=',
+                    $appointment->location_code
+                )
+
+                ->where(
+                    'user_shift_schedules.working_day',
+                    strtoupper($day)
+                )
+
+                ->where(
+                    'user_shift_schedules.shift_start_time',
+                    '<=',
+                    $appointment->start_time
+                )
+
+                ->where(
+                    'user_shift_schedules.shift_end_time',
+                    '>=',
+                    $appointment->end_time
+                )
+
+                ->select(
+                    'users.code as user_code',
+                    'users.name as staff_name',
+                    'user_shift_schedules.location_code',
+                    'user_shift_schedules.working_day',
+                    'user_shift_schedules.shift_start_time as start_time',
+                    'user_shift_schedules.shift_end_time as end_time'
+                )
+
+                ->get()
+                ->groupBy('location_code')
+                ->toArray();
+        }
+
+        if (
+            empty($availableStaff) &&
+            empty($engagedStaff)
+        ) {
+
+            $serviceOtherLocations = LocationServices::query()
+
+                ->join(
+                    'business_locations',
+                    'business_locations.code',
+                    '=',
+                    'location_services.location_code'
+                )
+
+                ->where(
+                    'location_services.business_code',
+                    $appointment->business_code
+                )
+
+                ->where(
+                    'location_services.service_code',
+                    $appointment->service_code
+                )
+
+                ->where(
+                    'location_services.location_code',
+                    '!=',
+                    $appointment->location_code
+                )
+
+                ->where(
+                    'location_services.availability',
+                    'AVAILABLE'
+                )
+
+                ->select(
+                    'location_services.location_code',
+                    'business_locations.address',
+                    'business_locations.city'
+                )
+
+                ->get()
+                ->toArray();
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
-                'available_staff' => $availableStaff,
-                'engaged_staff' => $engagedStaff,
+
+                'appointment_code' =>
+                    $appointment->code,
+
+                'date' =>
+                    $appointment->appointment_start_date,
+
+                'start_time' =>
+                    $appointment->start_time,
+
+                'end_time' =>
+                    $appointment->end_time,
+
+                'location_code' =>
+                    $appointment->location_code,
+
+                'working_day' =>
+                    strtolower($day),
+
+                'location_slot_already_booked' =>
+                    false,
+
+                'conflicting_appointments' =>
+                    [],
+
+                'available_staff' =>
+                    $availableStaff,
+
+                'engaged_staff' =>
+                    $engagedStaff,
+
+                'charges' => [
+                    'auto_apply' => $autoApplyCharges,
+                    'optional' => $optionalCharges,
+                ],
+
+                'alternatives' => [
+
+                    'different_time_same_location' =>
+                        $differentTimeSameLocation,
+
+                    'different_location_same_time' =>
+                        $differentLocationSameTime,
+
+                    'selected_service_other_locations' =>
+                        $serviceOtherLocations
+                ]
             ]
         ]);
+//        dd([
+//            'appointment' => $appointment->code,
+//            'availableStaff' => $availableStaff,
+//            'engagedStaff' => $engagedStaff,
+//        ]);
     }
 
 
@@ -471,6 +764,14 @@ class AppointmentController extends Controller
 
     public function approve(Request $request, $appointment)
     {
+
+//        dd([
+//            'headers' => $request->headers->all(),
+//            'content' => $request->getContent(),
+//            'all' => $request->all(),
+//            'appointment' => $appointment,
+//        ]);
+
         $request->validate([
             'staff_code' => 'required',
             'force_reassign' => 'nullable|boolean',
@@ -498,10 +799,37 @@ class AppointmentController extends Controller
             )
             ->first();
 
+//        dd([
+//            'appointment_code' => $appointment->code,
+//            'appointment_location' => $appointment->location_code,
+//            'staff_code' => $staff?->code,
+//            'staff_locations' => UserShiftSchedule::where(
+//                'user_code',
+//                $staff?->code
+//            )->pluck('location_code')
+//        ]);
+
         if (!$staff) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid service staff selected'
+            ],422);
+        }
+
+        $staffScheduledAtLocation = UserShiftSchedule::where(
+            'user_code',
+            $staff->code
+        )
+            ->where(
+                'location_code',
+                $appointment->location_code
+            )
+            ->exists();
+
+        if (!$staffScheduledAtLocation) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Staff is not assigned to this location'
             ],422);
         }
 
@@ -525,35 +853,35 @@ class AppointmentController extends Controller
 
         if (!$existingParticipant) {
 
-            if ($request->force_reassign) {
-
-                $activeAssignments = AppointmentParticipant::where(
-                    'user_code',
-                    $staff->code
-                )
-                    ->where(
-                        'status',
-                        'ACTIVE'
-                    )
-                    ->get();
-
-                foreach ($activeAssignments as $assignment) {
-
-                    // Old appointment becomes pending
-                    Appointment::where(
-                        'code',
-                        $assignment->appointment_code
-                    )->update([
-                        'status' => 'PENDING',
-                        'approved_by_code' => null,
-                    ]);
-
-                    // Staff removed from old appointment
-                    $assignment->update([
-                        'status' => 'INACTIVE'
-                    ]);
-                }
-            }
+//            if ($request->force_reassign) {
+//
+//                $activeAssignments = AppointmentParticipant::where(
+//                    'user_code',
+//                    $staff->code
+//                )
+//                    ->where(
+//                        'status',
+//                        'ACTIVE'
+//                    )
+//                    ->get();
+//
+//                foreach ($activeAssignments as $assignment) {
+//
+//                    // Old appointment becomes pending
+//                    Appointment::where(
+//                        'code',
+//                        $assignment->appointment_code
+//                    )->update([
+//                        'status' => 'PENDING',
+//                        'approved_by_code' => null,
+//                    ]);
+//
+//                    // Staff removed from old appointment
+//                    $assignment->update([
+//                        'status' => 'INACTIVE'
+//                    ]);
+//                }
+//            }
 
             $conflictingAssignments = AppointmentParticipant::query()
 
@@ -583,6 +911,11 @@ class AppointmentController extends Controller
                 ->whereDate(
                     'appointments.appointment_start_date',
                     $appointment->appointment_start_date
+                )
+
+                ->where(
+                    'appointments.location_code',
+                    $appointment->location_code
                 )
 
                 ->where(

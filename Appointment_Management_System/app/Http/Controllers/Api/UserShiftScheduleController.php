@@ -19,7 +19,7 @@ class UserShiftScheduleController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $users_shift = UserShiftSchedule::with('user', 'location')->latest()->paginate(10);
+            $users_shift = UserShiftSchedule::with('user', 'business', 'location')->latest()->paginate(10);
 
             return response()->json([
                 'success' => true,

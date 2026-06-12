@@ -213,7 +213,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
 
@@ -251,6 +251,27 @@ const filteredServices = computed(() =>
     createForm.business_code
         ? services.value.filter(s => s.business_code === createForm.business_code)
         : services.value
+)
+
+watch(
+    () => createForm.business_code,
+    (val) => {
+      console.log('Selected Business:', val)
+
+      console.log(
+          'Filtered Locations:',
+          locations.value.filter(
+              l => l.business_code === val
+          )
+      )
+
+      console.log(
+          'Filtered Services:',
+          services.value.filter(
+              s => s.business_code === val
+          )
+      )
+    }
 )
 
 async function fetchMappings() {
@@ -395,28 +416,31 @@ onMounted(async () => {
         []
   }
 
-  if(
-      locRes.status ===
-      'fulfilled'
-  ){
+  if (locRes.status === 'fulfilled') {
+
     locations.value =
         locRes.value.data?.data?.data
         ??
         locRes.value.data?.data
         ??
         []
+
+    console.log('LOCATIONS', locations.value)
+    console.log('FIRST LOCATION', locations.value[0])
+
   }
 
-  if(
-      svcRes.status ===
-      'fulfilled'
-  ){
+  if (svcRes.status === 'fulfilled') {
+
     services.value =
         svcRes.value.data?.data?.data
         ??
         svcRes.value.data?.data
         ??
         []
+
+    console.log('SERVICES', services.value)
+    console.log('FIRST SERVICE', services.value[0])
   }
 
 })
