@@ -200,8 +200,8 @@
             <div class="mb-3">
               <label class="form-label fw-semibold">Auto Apply</label>
               <select v-model="editForm.auto_apply" class="form-select">
-                <option value=true>Auto Apply</option>
-                <option value=false>Manual / Off</option>
+                <option :value=true>Auto Apply</option>
+                <option :value=false>Manual / Off</option>
               </select>
             </div>
             <p v-if="formError" class="text-danger small mb-0">{{ formError }}</p>
@@ -295,10 +295,17 @@ async function fetchCharges() {
 }
 
 function openEdit(charge) {
+
+  console.log('CHARGE FROM API:', charge)
+  console.log('AUTO APPLY:', charge.auto_apply)
+  console.log('TYPE:', typeof charge.auto_apply)
+
   selected.value = charge
   editForm.name = charge.name
   editForm.charge_value = charge.charge_value
   editForm.description = charge.description
+  editForm.status = charge.status
+  editForm.auto_apply = !!charge.auto_apply
 
   formError.value = ''
   showEditModal.value = true
@@ -389,10 +396,26 @@ async function updateCharge() {
   saving.value = true
   formError.value = ''
   try {
+
+    console.log('EDIT FORM:', editForm)
+    console.log('AUTO APPLY TYPE:', typeof editForm.auto_apply)
+    console.log('PAYLOAD:', JSON.stringify(editForm))
+
     await api.put(`/charges/${selected.value.code}`, editForm)
     showEditModal.value = false
     await fetchCharges()
   } catch (err) {
+
+    console.log('UPDATE ERROR:', err.response?.data)
+
+    alert(
+        JSON.stringify(
+            err.response?.data,
+            null,
+            2
+        )
+    )
+
     formError.value = err.response?.data?.message || 'Update failed'
   } finally {
     saving.value = false

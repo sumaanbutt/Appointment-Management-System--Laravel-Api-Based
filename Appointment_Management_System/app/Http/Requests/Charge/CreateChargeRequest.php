@@ -28,7 +28,7 @@ class CreateChargeRequest extends FormRequest
             'description' => 'nullable|string|max:5000',
             'charge_uom' => 'required|in:FIXED,PERCENTAGE',
             'charge_value' => 'required|numeric|min:0',
-            'auto_apply' => 'required|boolean',
+            'auto_apply'    => 'required|boolean',
         ];
     }
 }

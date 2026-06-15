@@ -17,6 +17,7 @@
         <option value="">All Status</option>
         <option value="draft">Draft</option>
         <option value="paid">Paid</option>
+        <option value="unpaid">UnPaid</option>
         <option value="issued">Issued</option>
         <option value="canceled">Canceled</option>
       </select>
@@ -70,7 +71,7 @@
                       </button>
                     </li>
 
-                    <li v-if="inv.status === 'draft'">
+                    <li v-if="inv.status === 'unpaid'">
                       <button
                           class="dropdown-item text-success"
                           @click="updateStatus(inv,'paid')">
@@ -117,8 +118,8 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="showDetails = false">Close</button>
-            <button v-if="selected?.status === 'draft'" class="btn btn-success btn-sm" @click="updateStatus(selected, 'paid')" :disabled="saving">Mark Paid</button>
-            <button v-if="selected?.status === 'draft'" class="btn btn-danger btn-sm" @click="updateStatus(selected, 'canceled')" :disabled="saving">Cancel</button>
+            <button v-if="selected?.status === 'unpaid'" class="btn btn-success btn-sm" @click="updateStatus(selected, 'paid')" :disabled="saving">Mark Paid</button>
+            <button v-if="selected?.status === 'unpaid'" class="btn btn-danger btn-sm" @click="updateStatus(selected, 'canceled')" :disabled="saving">Cancel</button>
           </div>
         </div>
       </div>

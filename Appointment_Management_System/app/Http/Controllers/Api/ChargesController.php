@@ -46,8 +46,10 @@ class ChargesController extends Controller
         try{
             $data = $request->validated();
 
+
             // Default status if not provided in request logic
             $data['status'] = $data['status'] ?? 'ACTIVE';
+            $data['auto_apply'] = $request->input('auto_apply', false);
 
             $charge = Charge::create($data);
 
@@ -110,12 +112,7 @@ class ChargesController extends Controller
             }
 
             $data = $request->validated();
-
-            dd([
-                'validated' => $data,
-                'auto_apply' => $data['auto_apply'] ?? null,
-                'type' => gettype($data['auto_apply'] ?? null),
-            ]);
+            $charge->update($data);
 
             return response()->json([
                 'status' => true,

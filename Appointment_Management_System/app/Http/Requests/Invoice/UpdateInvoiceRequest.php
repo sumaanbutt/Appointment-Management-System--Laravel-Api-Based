@@ -27,6 +27,7 @@ class UpdateInvoiceRequest extends FormRequest
                     'issued',
                     'paid',
                     'canceled',
+                    'unpaid',
                 ]),
             ],
             'invoice_date' => ['sometimes', 'date'],

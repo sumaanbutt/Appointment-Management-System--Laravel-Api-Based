@@ -9,7 +9,9 @@ use App\Models\Appointment;
 use App\Models\AppointmentParticipant;
 use App\Models\AppointmentHistory;
 use App\Models\Charge;
+use App\Models\Invoice;
 use App\Models\LocationServices;
+use App\Models\Service;
 use App\Models\User;
 use App\Models\UserShiftSchedule;
 use Carbon\Carbon;
@@ -18,9 +20,7 @@ use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
         try {
@@ -73,27 +73,6 @@ class AppointmentController extends Controller
     {
         $data = $request->all();
         try{
-//            $alreadyBooked = Appointment::where(
-//                'location_code',
-//                $request->location_code
-//            )
-//                ->where(
-//                    'appointment_start_date',
-//                    $request->appointment_start_date
-//                )
-//
-//                ->where(function ($query) use ($request) {
-//
-//                    $query->where('start_time', '<', $request->end_time)
-//                        ->where('end_time', '>', $request->start_time);
-//                })
-//
-//                ->whereNotIn('status', [
-//                    'CANCELLED',
-//                    'REJECTED'
-//                ])
-//
-//                ->exists();
 
             $alreadyBooked = Appointment::where(
                 'business_code',
@@ -159,7 +138,6 @@ class AppointmentController extends Controller
             'location_code' => $request->location_code,
             'client_code' => $request->client_code,
             'service_code' => $request->service_code,
-            //'availability_slot_code' => $request->availability_slot_code,
             'appointment_start_date' => $request->appointment_start_date,
             'appointment_end_date'=> $request->appointment_end_date,
             'start_time' => $request->start_time,
@@ -201,7 +179,6 @@ class AppointmentController extends Controller
                 'location',
                 'client',
                 'service',
-                //'availabilitySlot',
                 'createdBy',
                 'approvedBy',
                 //'canceller',
@@ -498,8 +475,7 @@ class AppointmentController extends Controller
             $appointment->business_code
         )
             ->where(
-                'status',
-                'active, ACTIVE'
+                'status', 'ACTIVE'
             )
 
             ->where('auto_apply',
@@ -513,8 +489,7 @@ class AppointmentController extends Controller
             $appointment->business_code
         )
             ->where(
-                'status',
-                'active, ACTIVE'
+                'status', 'ACTIVE'
             )
 
             ->where(
@@ -690,77 +665,7 @@ class AppointmentController extends Controller
     }
 
 
-//    public function availability($appointment)
-//    {
-//        $appointment = Appointment::where(
-//            'code',
-//            $appointment
-//        )->first();
-//
-//        if (!$appointment) {
-//            return response()->json([
-//                'success' => false,
-//                'message' => 'Appointment not found'
-//            ],404);
-//        }
-//
-//        $day = Carbon::parse(
-//            $appointment->appointment_start_date
-//        )->format('l');
-//
-//        $availableStaff = UserShiftSchedule::query()
-//
-//            ->join(
-//                'users',
-//                'users.code',
-//                '=',
-//                'user_shift_schedules.user_code'
-//            )
-//
-//            ->where(
-//                'users.business_code',
-//                $appointment->business_code
-//            )
-//
-//            ->where(
-//                'users.user_type',
-//                'SERVICE_STAFF'
-//            )
-//
-//            ->where(
-//                'user_shift_schedules.working_day',
-//                strtolower($day)
-//            )
-//
-//            ->where(
-//                'user_shift_schedules.shift_start_time',
-//                '<=',
-//                $appointment->start_time
-//            )
-//
-//            ->where(
-//                'user_shift_schedules.shift_end_time',
-//                '>=',
-//                $appointment->end_time
-//            )
-//
-//            ->select(
-//                'users.code as user_code',
-//                'users.name as user_name',
-//                'user_shift_schedules.working_day',
-//                'user_shift_schedules.shift_start_time',
-//                'user_shift_schedules.shift_end_time'
-//            )
-//
-//            ->get();
-//
-//        return response()->json([
-//            'success' => true,
-//            'data' => [
-//                'available_staff' => $availableStaff
-//            ]
-//        ]);
-//    }
+
 
     public function approve(Request $request, $appointment)
     {
@@ -837,6 +742,44 @@ class AppointmentController extends Controller
         $appointment->approved_by_code = auth()->user()->code;
         $appointment->save();
 
+        $service = Service::where(
+            'code',
+            $appointment->service_code
+        )->first();
+
+        $subtotal = $service->charges;
+        $total = $subtotal;
+
+        $selectedCharges = Charge::whereIn(
+            'code',
+            $request->selected_charge_codes ?? []
+        )->get();
+
+        foreach ($selectedCharges as $charge) {
+
+            if ($charge->charge_uom === 'PERCENTAGE') {
+
+                $chargeAmount =
+                    ($subtotal * $charge->charge_value) / 100;
+
+            } else {
+
+                $chargeAmount =
+                    $charge->charge_value;
+            }
+
+            $total += $chargeAmount;
+        }
+
+        Invoice::create([
+            'business_code' => $appointment->business_code,
+            'appointment_code' => $appointment->code,
+            'subtotal' => $subtotal,
+            'total' => $total,
+            'status' => 'unpaid',
+            'invoice_date' => now()->toDateString(),
+        ]);
+
         $existingParticipant = AppointmentParticipant::where(
             'appointment_code',
             $appointment->code
@@ -852,36 +795,6 @@ class AppointmentController extends Controller
             ->first();
 
         if (!$existingParticipant) {
-
-//            if ($request->force_reassign) {
-//
-//                $activeAssignments = AppointmentParticipant::where(
-//                    'user_code',
-//                    $staff->code
-//                )
-//                    ->where(
-//                        'status',
-//                        'ACTIVE'
-//                    )
-//                    ->get();
-//
-//                foreach ($activeAssignments as $assignment) {
-//
-//                    // Old appointment becomes pending
-//                    Appointment::where(
-//                        'code',
-//                        $assignment->appointment_code
-//                    )->update([
-//                        'status' => 'PENDING',
-//                        'approved_by_code' => null,
-//                    ]);
-//
-//                    // Staff removed from old appointment
-//                    $assignment->update([
-//                        'status' => 'INACTIVE'
-//                    ]);
-//                }
-//            }
 
             $conflictingAssignments = AppointmentParticipant::query()
 
