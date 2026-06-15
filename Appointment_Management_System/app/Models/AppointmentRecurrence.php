@@ -11,10 +11,11 @@ class AppointmentRecurrence extends Model
 
     protected $fillable = [
         'business_code',
-        'service_code',
-        'location_code',
+        'appointment_code',
         'recurrence_uom',
         'recurrence_value',
+        'auto_cancel_after_days',
+        'reschedule_after_days',
     ];
 
     protected static $codePrefix = 'APR';

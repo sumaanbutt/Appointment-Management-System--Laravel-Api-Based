@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Service extends Model
 {
 
-protected $fillable =
-    ['business_code',
+protected $fillable = [
+    'business_code',
     'service_name',
     'description',
     'time_duration',
@@ -17,7 +17,8 @@ protected $fillable =
     'cost',
     'currency',
     'status',
-    'duration_uom',];
+    'duration_uom',
+    ];
 
     use HasCode;
     protected static $codePrefix = 'SER';

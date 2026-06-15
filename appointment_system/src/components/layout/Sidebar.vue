@@ -50,6 +50,17 @@
         </router-link>
       </div>
 
+
+      <!-- Appointment Recurrence     -->
+      <div class="group">
+        <router-link to="/admin/appointment-recurrence" class="group-title">
+          <i class="bi bi-calendar3 icon"></i>
+
+          <span v-if="!collapsed">Appointments Recurrence</span>
+        </router-link>
+      </div>
+
+
       <!-- SERVICES -->
       <div class="group">
         <div

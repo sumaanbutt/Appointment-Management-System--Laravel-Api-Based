@@ -7,27 +7,22 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class CreateAppointmentRecurrenceRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+
     public function rules(): array
     {
         return [
             'business_code' => ['required'],
-            'service_code' => ['required'],
-            'location_code' => ['required'],
-            'recurrence_uom' => ['required'],
-            'recurrence_value' => ['required']
+            'appointment_code' => ['required'],
+            'recurrence_uom' => ['required,in:DAILY,WEEKLY,FORTNIGHTLY,MONTHLY,QUARTERLY,FIXED'],
+            'recurrence_value' => ['required'],
+            'auto_cancel_after_days' => ['required'],
+            'reschedule_after_days' => ['required'],
         ];
     }
 }

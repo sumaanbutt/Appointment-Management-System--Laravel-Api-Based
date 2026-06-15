@@ -217,81 +217,249 @@
             <button type="button" class="btn-close" @click="closeApprovalDialog"></button>
           </div>
           <div class="modal-body">
-            <!-- Appointment summary -->
+
             <div class="bg-light rounded p-3 mb-3 d-flex flex-wrap gap-3" v-if="selected">
-              <div><span class="text-muted small">Code</span><div><code>{{ selected.code }}</code></div></div>
-              <div><span class="text-muted small">Date</span><div>{{ selected.appointment_start_date }}</div></div>
-              <div><span class="text-muted small">Time</span><div>{{ selected.start_time }} – {{ selected.end_time }}</div></div>
-              <div><span class="text-muted small">Location</span><div>{{ selected.location_code || '—' }}</div></div>
+              <div><span class="text-muted small">Service Name</span><div>{{ selected.service?.service_name }}</div></div>
+              <div><span class="text-muted small">Start Date</span><div>{{ formatDate(selected.appointment_start_date) }}</div></div>
+              <div><span class="text-muted small">End Date</span><div>{{ formatDate(selected.appointment_end_date) }}</div></div>
+              <div><span class="text-muted small">Start Time</span><div>{{ formatTime(selected.start_time) }}</div></div>
+              <div><span class="text-muted small">End Time</span><div>{{ formatTime(selected.end_time) }}</div></div>
+              <div><span class="text-muted small">Location</span><div>{{ selected.location?.city || '—' }} &bull; {{ selected.location?.address || '—' }}</div></div>
             </div>
 
             <div v-if="availabilityLoading" class="text-center text-muted py-4">
-              <div class="spinner-border spinner-border-sm me-2"></div> Checking staff availability…
+              <div class="spinner-border spinner-border-sm me-2"></div> Checking staff availability...
             </div>
+
             <div v-else-if="availabilityError" class="alert alert-warning py-2 mb-3">{{ availabilityError }}</div>
 
             <template v-else-if="!showRescheduleInApproval">
+              <div v-if="slotAlreadyBooked" class="alert alert-danger py-2 mb-3">
+                This slot is already booked.
+                <span v-if="conflictingAppointments.length"> Conflicting appointments: {{ conflictingAppointments.join(', ') }}</span>
+              </div>
 
               <div v-if="availableStaff.length > 0" class="mb-4">
                 <p class="fw-semibold mb-2">Available staff for this slot:</p>
-                <div
-                    v-for="s in availableStaff"
-                    :key="s.user_code"
-                    class="list-group-item list-group-item-action d-flex align-items-center p-3 mb-2"
-                    :class="{ 'border-primary bg-light': approvalSelectedStaff === s.user_code }"
-                    style="cursor:pointer; border-radius: 10px;"
-                    @click="approvalSelectedStaff = s.user_code"
-                >
-                  <div class="form-check me-3">
-                    <input class="form-check-input" type="radio" :value="s.user_code" v-model="approvalSelectedStaff">
+                <div class="list-group mb-3">
+                  <label
+                      v-for="s in availableStaff"
+                      :key="s.user_code"
+                      class="list-group-item list-group-item-action d-flex align-items-center gap-3 cursor-pointer"
+                      :class="{ 'bg-success-subtle text-success-emphasis border-success': approvalSelectedStaff === s.user_code }"
+                      @click="approvalSelectedStaff = s.user_code"
+                  >
+                    <input type="radio" :value="s.user_code" v-model="approvalSelectedStaff" class="form-check-input mt-0" />
+                    <div>
+                      <div class="fw-semibold">{{ s.staff_name || s.user_name || s.user_code }}</div>
+                      <small class="text-muted">{{ s.working_day }} &bull; {{ formatTime(s.shift_start_time) }} - {{ formatTime(s.shift_end_time) }}</small>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div v-if="engagedStaff.length > 0" class="mb-4">
+                <p class="fw-semibold mb-2 text-danger">Engaged staff during this slot (Busy):</p>
+                <div class="list-group">
+                  <label
+                      v-for="s in engagedStaff"
+                      :key="`engaged-${s.user_code}`"
+                      class="list-group-item list-group-item-action d-flex align-items-start gap-3 cursor-pointer border-danger p-3 mb-2"
+                      :class="{ 'bg-danger-subtle text-danger-emphasis': approvalSelectedStaff === s.user_code }"
+                      @click="approvalSelectedStaff = s.user_code"
+                  >
+                    <input type="radio" :value="s.user_code" v-model="approvalSelectedStaff" class="form-check-input mt-1 border-danger" />
+                    <div class="flex-grow-1">
+                      <div class="fw-semibold d-flex align-items-center gap-2 mb-1">
+                        <span>{{ s.staff_name || s.user_name || s.user_code }}</span>
+                        <span class="badge bg-danger">Busy</span>
+                      </div>
+
+                      <div v-for="a in s.appointments" :key="a.appointment_code" class="small text-danger-emphasis mt-1 bg-white p-2 rounded-2 border border-danger-subtle" style="font-size:12px;">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        Conflict Appt: <code>{{ a.appointment_code }}</code>
+                        &bull; Time: {{ formatTime(a.start_time) }} - {{ formatTime(a.end_time) }}
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div v-if="approvalSelectedStaff && engagedStaff.some(s => s.user_code === approvalSelectedStaff)" class="alert alert-danger py-2 mt-2">
+                Warning: selected staff already has another appointment during this time slot. The button below will force assign this staff.
+              </div>
+
+              <!--Charges-->
+
+              <div v-if="autoCharges.length || optionalCharges.length" class="card border-0 bg-light mb-3">
+                <div class="card-body">
+                  <h6 class="fw-semibold mb-3">Appointment Charges</h6>
+
+                  <div v-if="autoCharges.length" class="mb-3">
+                    <div class="fw-semibold text-success mb-2">Automatically Applied Charges</div>
+                    <!--                    <div v-for="charge in autoCharges" :key="charge.charge_code" class="form-check mb-2">-->
+                    <!--                      <input checked disabled type="checkbox" class="form-check-input">-->
+                    <!--                      <label class="form-check-label">-->
+                    <!--                        {{ charge.name }}-->
+                    <!--                        <span class="text-muted">( {{ charge.charge_uom === 'percentage' ? `${charge.charge_value}%` : charge.charge_value }} )</span>-->
+                    <!--                        <span class="badge text-bg-success ms-2">Auto</span>-->
+                    <!--                      </label>-->
+                    <!--                    </div>-->
+
+                    <div v-for="charge in autoCharges"
+                         :key="charge.code"
+                         class="form-check mb-2">
+
+                      <input
+                          :id="`auto-charge-${charge.code}`"
+                          v-model="selectedChargeCodes"
+                          :value="charge.code"
+                          type="checkbox"
+                          class="form-check-input"
+                      >
+
+                      <label
+                          class="form-check-label"
+                          :for="`auto-charge-${charge.code}`">
+                        {{ charge.name }}
+
+                        <span class="text-muted">
+                        ({{ charge.charge_uom === 'PERCENTAGE'
+                            ? `${charge.charge_value}%`
+                            : charge.charge_value }})
+                        </span>
+
+                        <span class="badge text-bg-success ms-2">Auto</span>
+                      </label>
+                    </div>
                   </div>
-                  <div>
-                    <div class="fw-bold">{{ s.user_name }}</div>
-                    <div class="text-muted small">{{ s.user_code }}</div>
+
+                  <div v-if="optionalCharges.length">
+                    <div class="fw-semibold mb-2">Optional Charges</div>
+                    <div v-for="charge in optionalCharges" :key="charge.charge_code" class="form-check mb-2">
+                      <input :id="`charge-${charge.code}`" v-model="selectedChargeCodes" :value="charge.code" type="checkbox" class="form-check-input" />
+                      <label class="form-check-label" :for="`charge-${charge.charge_code}`">
+                        {{ charge.name }}
+                        <span class="text-muted">( {{ charge.charge_uom === 'percentage' ? `${charge.charge_value}%` : charge.charge_value }} )</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div v-if="engagedStaff.length > 0" class="mt-4">
-                <h6 class="text-danger fw-bold mb-3">
-                  <i class="bi bi-exclamation-triangle me-2"></i>Engaged Staff (Busy)
-                </h6>
+              <div v-if="availableStaff.length === 0" class="alert alert-warning py-2">
+                No free staff available for this slot. You may reschedule the appointment and propose one of the alternatives below.
+              </div>
 
-                <div
-                    v-for="staff in engagedStaff"
-                    :key="staff.user_code"
-                    class="border rounded-3 p-3 mb-2 bg-light shadow-sm"
-                >
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <strong class="d-block">{{ staff.user_name }}</strong>
-                      <div class="small text-muted mt-1">
-                        <span class="badge bg-danger-subtle text-danger me-2">Conflict</span>
-                        Occupied with: <code>{{ staff.conflict_appointment_code }}</code>
-                      </div>
-                      <div class="small text-muted">
-                        Time: {{ staff.conflict_start_time }} - {{ staff.conflict_end_time }}
-                      </div>
-                    </div>
-
-                    <button
-                        class="btn btn-sm btn-warning"
-                        @click="forceAssignStaff(staff.user_code)"
-                    >
-                      Force Reassign
+              <div v-if="availableStaff.length === 0" class="card mb-3">
+                <div class="card-body">
+                  <h6 class="fw-semibold mb-3">Choose Alternative Option</h6>
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary" :class="{ active: selectedAlternativeType === 'same_location' }" @click="selectedAlternativeType = 'same_location'">
+                      Different Time Same Location
+                    </button>
+                    <button class="btn btn-outline-primary" :class="{ active: selectedAlternativeType === 'other_location' }" @click="selectedAlternativeType = 'other_location'">
+                      Different Location Same Time
+                    </button>
+                    <button class="btn btn-outline-primary" :class="{ active: selectedAlternativeType === 'service_location' }" @click="selectedAlternativeType = 'service_location'">
+                      Service Available At Other Locations
                     </button>
                   </div>
                 </div>
               </div>
 
-              <div v-if="availableStaff.length === 0 && engagedStaff.length === 0" class="alert alert-warning">
-                <strong>No staff found</strong> for this shift.
+              <div v-if="availableStaff.length === 0 && selectedAlternativeType === 'same_location' && alternativeTimeSameLocation.length" class="mb-3">
+                <div class="fw-semibold mb-2">Other service staff at different time (same location)</div>
+                <div class="list-group">
+                  <div v-for="s in alternativeTimeSameLocation" :key="`same-${s.user_code}-${s.start_time}-${s.end_time}`" class="list-group-item">
+                    <div class="fw-semibold d-flex align-items-center gap-2">
+                      <span>{{ s.staff_name || s.user_code }}</span>
+                      <span v-if="isRecommendedAlternative(selected?.location_code, s.start_time, s.end_time, s.user_code)" class="badge text-bg-success">Recommended</span>
+                    </div>
+                    <div class="small text-muted">{{ s.user_code }} &bull; {{ formatTime(s.start_time) }} - {{ formatTime(s.end_time) }}</div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" @click="selectedAlternative = { location_code: selected?.location_code, start_time: s.start_time, end_time: s.end_time }">
+                      Select
+                    </button>
+                  </div>
+                </div>
               </div>
 
+              <div v-if="availableStaff.length === 0 && selectedAlternativeType === 'other_location' && alternativeLocationSameTime.length" class="mb-3">
+                <div class="fw-semibold mb-2">Other locations at the same time slot</div>
+                <div class="border rounded p-2 mb-2" v-for="loc in alternativeLocationSameTime" :key="`loc-${loc.location_code}`">
+                  <div class="small mb-2">Location: {{ selected.location?.address || '-' }} &bull; {{ selected.location?.city || '-' }}</div>
+                  <button type="button" class="btn btn-sm btn-outline-primary mb-2" @click="selectedAlternative = { location_code: loc.location_code, start_time: selected?.start_time, end_time: selected?.end_time }">
+                    Select this Location
+                  </button>
+                  <div class="list-group">
+                    <div v-for="s in loc.staff" :key="`loc-staff-${loc.location_code}-${s.user_code}-${s.start_time}-${s.end_time}`" class="list-group-item">
+                      <div class="fw-semibold d-flex align-items-center gap-2">
+                        <span>{{ s.staff_name || s.user_code }}</span>
+                      </div>
+                      <div class="small text-muted">{{ formatTime(s.start_time) }} - {{ formatTime(s.end_time) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="availableStaff.length === 0 && selectedAlternativeType === 'service_location' && serviceLocationsAlternatives.length" class="mb-3">
+                <div class="fw-semibold mb-2">Selected service available at other locations</div>
+                <div class="border rounded p-2 mb-2" v-for="loc in serviceLocationsAlternatives" :key="`svc-${loc.location_code}`">
+                  <div class="small fw-semibold">Location: {{ loc.location_code }}</div>
+                  <div class="small text-muted mb-2" v-if="loc.location?.city || loc.location?.address">
+                    {{ loc.location?.city || '?' }} &bull; {{ loc.location?.address || '?' }}
+                  </div>
+                  <div class="small text-muted mb-2">Services: {{ (loc.matched_service_codes || []).join(', ') || '?' }}</div>
+
+                  <div v-if="loc.available_staff_same_slot?.length" class="mb-2">
+                    <div class="small fw-semibold">Available at same slot</div>
+                    <div class="list-group">
+                      <div v-for="s in loc.available_staff_same_slot" :key="`svc-same-${loc.location_code}-${s.user_code}-${s.start_time}-${s.end_time}`" class="list-group-item">
+                        <div class="fw-semibold d-flex align-items-center gap-2">
+                          <span>{{ s.staff_name || s.user_code }}</span>
+                          <span v-if="isRecommendedAlternative(loc.location_code, s.start_time, s.end_time, s.user_code)" class="badge text-bg-success">Recommended</span>
+                        </div>
+                        <div class="small text-muted">{{ s.user_code }} &bull; {{ formatTime(s.start_time) }} - {{ formatTime(s.end_time) }}</div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" @click="prefillApprovalReschedule({ locationCode: loc.location_code, startTime: selected?.start_time, endTime: selected?.end_time })">
+                          Select Location & Current Time
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="loc.alternative_staff_time_slots?.length">
+                    <div class="small fw-semibold">Alternative time slots</div>
+                    <div class="list-group">
+                      <div v-for="s in loc.alternative_staff_time_slots" :key="`svc-alt-${loc.location_code}-${s.user_code}-${s.start_time}-${s.end_time}`" class="list-group-item">
+                        <div class="fw-semibold d-flex align-items-center gap-2">
+                          <span>{{ s.staff_name || s.user_code }}</span>
+                          <span v-if="isRecommendedAlternative(loc.location_code, s.start_time, s.end_time, s.user_code)" class="badge text-bg-success">Recommended</span>
+                        </div>
+                        <div class="small text-muted">{{ s.user_code }} &bull; {{ formatTime(s.start_time) }} - {{ formatTime(s.end_time) }}</div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" @click="prefillApprovalReschedule({ locationCode: loc.location_code, startTime: s.start_time, endTime: s.end_time })">
+                          Select this Location & Slot
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedAlternative && availableStaff.length === 0" class="alert alert-success mt-3">
+                <div class="fw-semibold">Selected Alternative</div>
+                <div>Location: {{ selectedAlternative.location_code }}</div>
+                <div>Time: {{ formatTime(selectedAlternative.start_time) }} - {{ formatTime(selectedAlternative.end_time) }}</div>
+                <button class="btn btn-primary btn-sm mt-2" @click="prefillApprovalReschedule(selectedAlternative)">
+                  Continue With Reschedule
+                </button>
+              </div>
+              <p v-if="approvalError" class="text-danger small mt-2 mb-0">{{ approvalError }}</p>
             </template>
 
             <template v-if="showRescheduleInApproval">
-              <div class="alert alert-info py-2 mb-3">Fill in a new date &amp; time to propose to the client.</div>
+              <div class="alert alert-info py-2 mb-3">
+                Fill in a new date &amp; time to propose to the client.
+              </div>
               <div class="row g-3">
                 <div class="col-6">
                   <label class="form-label fw-semibold">New Start Date *</label>
@@ -310,119 +478,57 @@
                   <input type="time" v-model="approvalRescheduleForm.end_time" class="form-control" required />
                 </div>
                 <div class="col-12">
+                  <label class="form-label fw-semibold">Location Code</label>
+                  <input type="text" v-model="approvalRescheduleForm.location_code" class="form-control" />
+                </div>
+                <div class="col-12">
                   <label class="form-label fw-semibold">Reason / Notes</label>
-                  <textarea v-model="approvalRescheduleForm.notes" class="form-control" rows="2" placeholder="Reason for rescheduling…"></textarea>
+                  <textarea v-model="approvalRescheduleForm.notes" class="form-control" rows="2" placeholder="Reason for rescheduling..."></textarea>
                 </div>
               </div>
               <p v-if="approvalError" class="text-danger small mt-2 mb-0">{{ approvalError }}</p>
             </template>
           </div>
+
           <div class="modal-footer gap-2">
             <button type="button" class="btn btn-secondary" @click="closeApprovalDialog">Cancel</button>
+
             <button
-              v-if="!showRescheduleInApproval && availableStaff.length > 0"
-              class="btn btn-success"
-              :disabled="!approvalSelectedStaff || approvalSaving"
-              @click="submitApproveWithStaff"
-            >{{ approvalSaving ? 'Approving…' : 'Approve & Assign Staff' }}</button>
+                v-if="!showRescheduleInApproval && (availableStaff.length > 0 || engagedStaff.length > 0)"
+                class="btn"
+                :class="engagedStaff.some(e => e.user_code === approvalSelectedStaff) ? 'btn-danger' : 'btn-success'"
+                :disabled="!approvalSelectedStaff || approvalSaving"
+                @click="handleMainApprovalAction"
+            >
+              {{ approvalSaving ? 'Processing...' : (engagedStaff.some(e => e.user_code === approvalSelectedStaff) ? 'Force Approve & Reassign' : 'Approve & Assign Staff') }}
+            </button>
+
             <button
-              v-if="!showRescheduleInApproval && availableStaff.length > 0 && !availabilityLoading && !availabilityError"
-              class="btn btn-outline-primary"
-              @click="showRescheduleInApproval = true"
-            >Send Reschedule Request Instead</button>
-            <button
-              v-if="!showRescheduleInApproval && availableStaff.length === 0 && !availabilityLoading && !availabilityError"
-              class="btn btn-primary"
-              @click="showRescheduleInApproval = true"
+                v-if="!showRescheduleInApproval && availableStaff.length === 0 && engagedStaff.length === 0 && !availabilityLoading && !availabilityError"
+                class="btn btn-primary"
+                @click="showRescheduleInApproval = true"
             >Send Reschedule Request to Client</button>
-            <button
-              v-if="showRescheduleInApproval"
-              class="btn btn-outline-secondary"
-              @click="showRescheduleInApproval = false"
-            >&#8592; Back</button>
-            <button
-              v-if="showRescheduleInApproval"
-              class="btn btn-primary"
-              :disabled="approvalSaving"
-              @click="submitApprovalReschedule"
-            >{{ approvalSaving ? 'Sending…' : 'Send Reschedule Request' }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ASSIGN STAFF MODAL -->
-    <div v-if="showAssign && assignAppt" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
-      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Assign Service Staff</h5>
-            <button type="button" class="btn-close" @click="closeAssign"></button>
-          </div>
-          <div class="modal-body">
-            <p class="text-muted small mb-3">Appointment: <code>{{ assignAppt.code }}</code></p>
-            <div v-if="staffLoading" class="text-center text-muted py-3">Loading staff...</div>
-            <div v-else-if="!staffList.length" class="text-center text-muted py-3">No service staff found</div>
-            <div v-else class="d-flex flex-column gap-2" style="max-height:220px;overflow-y:auto">
-              <div
-                v-for="s in staffList" :key="s.user_code"
-                :class="['list-group-item list-group-item-action', { active: selectedStaff === s.user_code }]"
-                style="cursor:pointer"
-                @click="selectedStaff = s.user_code"
-              >
-                <div class="fw-semibold">{{ s.first_name }} {{ s.last_name }}</div>
-                <div class="text-muted small">{{ s.user_code }}</div>
-              </div>
-            </div>
-            <p v-if="assignError" class="text-danger small mt-2 mb-0">{{ assignError }}</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeAssign">Cancel</button>
-            <button class="btn btn-ams" :disabled="!selectedStaff || assigning" @click="assignStaff">{{ assigning ? 'Assigning...' : 'Assign' }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
+            <button
+                v-if="!showRescheduleInApproval && availableStaff.length === 0 && engagedStaff.length > 0"
+                class="btn btn-outline-primary"
+                @click="showRescheduleInApproval = true"
+            >Reschedule Instead</button>
 
-    <!-- RESCHEDULE MODAL -->
-    <div v-if="showReschedule" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Reschedule Appointment</h5>
-            <button type="button" class="btn-close" @click="showReschedule = false"></button>
+            <button
+                v-if="showRescheduleInApproval"
+                class="btn btn-outline-secondary"
+                @click="showRescheduleInApproval = false"
+            >&thinsp;&larr; Back</button>
+
+            <button
+                v-if="showRescheduleInApproval"
+                class="btn btn-primary"
+                :disabled="approvalSaving"
+                @click="submitApprovalReschedule"
+            >{{ approvalSaving ? 'Sending...' : 'Send Reschedule Request' }}</button>
           </div>
-          <form @submit.prevent="submitReschedule">
-            <div class="modal-body">
-              <div class="row g-3">
-                <div class="col-6">
-                  <label class="form-label fw-semibold">New Start Date *</label>
-                  <input type="date" v-model="rescheduleForm.appointment_start_date" class="form-control" required />
-                </div>
-                <div class="col-6">
-                  <label class="form-label fw-semibold">New End Date *</label>
-                  <input type="date" v-model="rescheduleForm.appointment_end_date" class="form-control" required />
-                </div>
-                <div class="col-6">
-                  <label class="form-label fw-semibold">Start Time *</label>
-                  <input type="time" v-model="rescheduleForm.start_time" class="form-control" required />
-                </div>
-                <div class="col-6">
-                  <label class="form-label fw-semibold">End Time *</label>
-                  <input type="time" v-model="rescheduleForm.end_time" class="form-control" required />
-                </div>
-              </div>
-              <div class="mt-3">
-                <label class="form-label fw-semibold">Reason</label>
-                <textarea v-model="rescheduleForm.reason" class="form-control" rows="3" placeholder="Reason for reschedule"></textarea>
-              </div>
-              <p v-if="rescheduleError" class="text-danger small mt-2 mb-0">{{ rescheduleError }}</p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="showReschedule = false">Cancel</button>
-              <button type="submit" class="btn btn-ams" :disabled="saving">{{ saving ? 'Saving...' : 'Submit Reschedule' }}</button>
-            </div>
-          </form>
+
         </div>
       </div>
     </div>
