@@ -1,12 +1,10 @@
 import api from '@/services/api'
 
 export default {
-    getAll(params :any) {
+    getAll(params :any = {}) {
         return api.get('/appointment-recurrences',
             {
-                params: {
-                    include: "business"
-                }
+                params
             })
     },
 
@@ -14,11 +12,10 @@ export default {
         return api.post('/appointment-recurrences', data)
     },
 
-    update(id :any, data :any) {
-        return api.put(`/appointment-recurrences`, data)
-    },
+    update(code :any, data :any) {
+        return api.put(`/appointment-recurrences/${code}`, data)    },
 
-    remove(id :any) {
-        return api.delete(`/appointment-recurrences`)
+    remove(code :any) {
+        return api.delete(`/appointment-recurrences/${code}`)
     }
 }

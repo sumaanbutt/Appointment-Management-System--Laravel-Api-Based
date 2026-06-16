@@ -41,7 +41,7 @@ export function useRecurrenceModals() {
         formError.value = ''
 
         try {
-            await updateFn(selected.value?.id, editForm.value)
+            await updateFn(selected.value?.code, editForm.value)
             showEditModal.value = false
             await refreshFn()
         } catch (err:any) {
@@ -55,7 +55,7 @@ export function useRecurrenceModals() {
         saving.value = true
 
         try {
-            await deleteFn(selected.value?.id)
+            await deleteFn(selected.value?.code)
             showDeleteModal.value = false
             await refreshFn()
         } catch (err:any) {

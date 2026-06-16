@@ -18,7 +18,7 @@
 
       <select v-model="bizFilter" @change="fetchRecurrences" class="form-select" style="max-width:220px">
         <option value="">All Businesses</option>
-        <option v-for="biz in businesses" :key="biz.business_code" :value="biz.business_code">
+        <option v-for="biz in businesses" :key="biz.code" :value="biz.code">
           {{ biz.name }}
         </option>
       </select>
@@ -69,8 +69,8 @@
 
           <tr v-for="rec in filteredRecurrences" :key="rec.code">
 
-            <td class="ps-3">{{ rec.business_code }}</td>
-            <td>{{ rec.appointment_code }}</td>
+            <td>{{ rec.business?.name || '-' }}</td>
+            <td><code>{{ rec.appointment_code }}</code></td>
             <td>{{ rec.recurrence_uom }}</td>
             <td>{{ rec.recurrence_value }}</td>
             <td>{{ rec.auto_cancel_after_days ?? '—' }}</td>
@@ -147,7 +147,10 @@
                 <select v-model="editForm.recurrence_uom" class="form-control">
                   <option value="DAILY">Daily</option>
                   <option value="WEEKLY">Weekly</option>
+                  <option value="FORTNIGHTLY">FortNightly</option>
                   <option value="MONTHLY">Monthly</option>
+                  <option value="QUARTERLY">Quarterly</option>
+                  <option value="FIXED">Fixed</option>
                 </select>
               </div>
 
@@ -159,8 +162,8 @@
               <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
                 <select v-model="editForm.status" class="form-control">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
                 </select>
               </div>
 
@@ -275,3 +278,68 @@ onMounted(async () => {
   ])
 })
 </script>
+
+<style scoped>
+
+.ams-page{
+display:flex;
+flex-direction:column;
+gap:20px;
+}
+.card{
+border-radius:12px;
+}
+.ams-table th,
+.ams-table td{
+vertical-align:middle;
+font-size:14px;
+}
+code{
+background:#f1f5f9;
+padding:3px 8px;
+border-radius:6px;
+color:#334155;
+}
+.btn-ams{
+background:#6366f1;
+color:#fff;
+border:none;
+}
+.btn-ams:hover{
+background:#4f46e5;
+color:#fff;
+}
+.form-control,
+.form-select{
+border-radius:8px;
+font-size:14px;
+}
+.form-control:focus,
+.form-select:focus{
+border-color:#6366f1;
+box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+.ams-badge{
+display:inline-block;
+padding:4px 10px;
+border-radius:999px;
+font-size:11px;
+font-weight:600;
+text-transform:capitalize;
+}
+
+.ams-badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  text-transform:capitalize;
+}
+
+.ams-badge.ACTIVE{ background:#dcfce7; color:#166534; }
+.ams-badge.INACTIVE{ background:#fee2e2; color:#991b1b; }
+
+
+
+</style>

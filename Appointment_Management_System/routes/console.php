@@ -10,4 +10,11 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command('app:auto-cancel-appointments')
-    ->hourly();
+    ->daily();
+
+Schedule::command('app:auto-reschedule-appointments')
+    ->daily();
+
+Schedule::command(
+    'appointments:generate-recurrence'
+)->daily();

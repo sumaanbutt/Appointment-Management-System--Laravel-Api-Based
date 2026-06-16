@@ -19,10 +19,14 @@ class CreateAppointmentRecurrenceRequest extends FormRequest
         return [
             'business_code' => ['required'],
             'appointment_code' => ['required'],
-            'recurrence_uom' => ['required,in:DAILY,WEEKLY,FORTNIGHTLY,MONTHLY,QUARTERLY,FIXED'],
+            'recurrence_uom' => [
+                'required',
+                'in:DAILY,WEEKLY,FORTNIGHTLY,MONTHLY,QUARTERLY,FIXED'
+            ],
             'recurrence_value' => ['required'],
             'auto_cancel_after_days' => ['required'],
             'reschedule_after_days' => ['required'],
-        ];
+            'status' => 'required|in:ACTIVE,INACTIVE',
+            ];
     }
 }

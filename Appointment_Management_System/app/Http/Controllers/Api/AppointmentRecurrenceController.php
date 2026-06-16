@@ -15,7 +15,9 @@ class AppointmentRecurrenceController extends Controller
     {
         try {
 
-            $data = AppointmentRecurrence::latest()->paginate(10);
+            $data = AppointmentRecurrence::with('business')
+                ->latest()
+                ->paginate(10);
 
             return response()->json([
                 'success' => true,
@@ -34,8 +36,12 @@ class AppointmentRecurrenceController extends Controller
 
     public function store(CreateAppointmentRecurrenceRequest $request)
     {
+//        dd($request->all());
+
         try {
+//            dd($request->all(), $request->status);
             $data = $request->validated();
+//            dd($data);
 
             $appointmentRecurrence = AppointmentRecurrence::create($data);
 
@@ -119,45 +125,102 @@ class AppointmentRecurrenceController extends Controller
         }
     }
 
-    public function autoCancel()
-    {
-        $recurrences = AppointmentRecurrence::whereNotNull(
-            'auto_cancel_after_days'
-        )->get();
+//    public function autoReschedule()
+//    {
+//        $recurrences = AppointmentRecurrence::whereNotNull(
+//            'reschedule_after_days'
+//        )->get();
+//
+//        foreach ($recurrences as $recurrence) {
+//
+//            $appointment = Appointment::where(
+//                'code',
+//                $recurrence->appointment_code
+//            )->first();
+//
+//            if (!$appointment) {
+//                continue;
+//            }
+//
+//            $rescheduleDate = Carbon::parse(
+//                $recurrence->created_at
+//            )->addDays(
+//                $recurrence->reschedule_after_days
+//            );
+//
+//            if (
+//                now()->greaterThanOrEqualTo($cancelDate) &&
+//                in_array(
+//                    $appointment->status,
+//                    ['PENDING']
+//                )
+//            ) {
+//                $appointment->update([
+//                    'status' => 'RESCHEDULED'
+//                ]);
+//            }
+//        }
+//
+//        return response()->json([
+//            'success' => true,
+//            'message' => 'Auto cancel completed'
+//        ]);
+//    }
+}
 
-        foreach ($recurrences as $recurrence) {
+/*
+ public function handle()
+{
+    $recurrences = AppointmentRecurrence::whereNotNull(
+        'reschedule_after_days'
+    )->get();
 
-            $appointment = Appointment::where(
-                'code',
-                $recurrence->appointment_code
-            )->first();
+    foreach ($recurrences as $recurrence) {
 
-            if (!$appointment) {
-                continue;
-            }
+        $appointment = Appointment::where(
+            'code',
+            $recurrence->appointment_code
+        )->first();
 
-            $cancelDate = Carbon::parse(
-                $recurrence->created_at
-            )->addDays(
-                $recurrence->auto_cancel_after_days
-            );
-
-            if (
-                now()->greaterThanOrEqualTo($cancelDate) &&
-                !in_array(
-                    $appointment->status,
-                    ['PENDING', 'CANCELLED']
-                )
-            ) {
-                $appointment->update([
-                    'status' => 'CANCELLED'
-                ]);
-            }
+        if (!$appointment) {
+            continue;
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Auto cancel completed'
-        ]);
+        $rescheduleDate = Carbon::parse(
+            $recurrence->created_at
+        )->addDays(
+            $recurrence->reschedule_after_days
+        );
+
+        if (
+            now()->greaterThanOrEqualTo($rescheduleDate) &&
+            $appointment->status === 'PENDING'
+        ) {
+
+            $startTime = Carbon::parse(
+                $appointment->start_date
+            )->format('H:i:s');
+
+            $endTime = Carbon::parse(
+                $appointment->end_date
+            )->format('H:i:s');
+
+            $newStartDate = Carbon::parse(
+                $rescheduleDate->toDateString() . ' ' . $startTime
+            );
+
+            $newEndDate = Carbon::parse(
+                $rescheduleDate->toDateString() . ' ' . $endTime
+            );
+
+            $appointment->update([
+                'start_date' => $newStartDate,
+                'end_date' => $newEndDate,
+                'status' => 'RESCHEDULED',
+            ]);
+        }
     }
+
+    $this->info('Auto reschedule completed.');
 }
+ */

@@ -58,7 +58,7 @@
 
                   <li>
                     <router-link
-                        :to="`/businesses/${business.code}`"
+                        :to="`/admin/businesses/${business.code}`"
                         class="dropdown-item">
 
                       <i class="bi bi-eye me-2"></i>

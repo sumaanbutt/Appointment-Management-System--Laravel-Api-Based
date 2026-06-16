@@ -14,6 +14,8 @@ export function useAppointmentRecurrence() {
         try {
             const res = await recurrenceService.getAll(params)
 
+            console.log('API RESPONSE:', res.data)
+
             recurrences.value = (res.data.data?.data || []).map((mapRecurrence:any) => ({
                 ...mapRecurrence,
                 business_name: mapRecurrence.business?.name
@@ -29,12 +31,12 @@ export function useAppointmentRecurrence() {
         return recurrenceService.create(data)
     }
 
-    async function updateRecurrence(id:any, data:any) {
-        return recurrenceService.update(id, data)
+    async function updateRecurrence(code:any, data:any) {
+        return recurrenceService.update(code, data)
     }
 
-    async function deleteRecurrence(id:any) {
-        return recurrenceService.remove(id)
+    async function deleteRecurrence(code:any) {
+        return recurrenceService.remove(code)
     }
 
     return {

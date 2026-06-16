@@ -29,7 +29,8 @@
           <tr v-for="user in staff" :key="user.code">
             <td class="ps-3">{{ user.name }}</td>
             <td>{{ user.email }}</td>
-            <td>{{ user.user_type }}</td>
+            <td><span class="badge bg-white text-dark border px-2 py-1.5 fw-medium small text-lowercase">{{ user?.user_type || '-' }}</span></td>
+
             <!--              <td><code>{{ user.user_code }}</code></td>-->
             <td><span :class="['badge', user.status=== 'ACTIVE' ? 'bg-success' : 'bg-secondary']">{{ user.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</span></td>
             <td class="pe-3">
@@ -231,3 +232,53 @@ async function deactivateStaff() {
 
 onMounted(fetchStaff)
 </script>
+
+<style scoped>
+
+.ams-page{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  border-radius:12px;
+}
+
+.ams-table th,
+.ams-table td{
+  vertical-align:middle;
+  font-size:14px;
+}
+
+code{
+  background:#f1f5f9;
+  padding:3px 8px;
+  border-radius:6px;
+  color:#334155;
+}
+
+.btn-ams{
+  background:#6366f1;
+  color:#fff;
+  border:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
+
+.form-control,
+.form-select{
+  border-radius:8px;
+  font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+
+</style>

@@ -9,7 +9,7 @@
       <div class="header-card">
         <div>
           <h2>{{ business.name }}</h2>
-          <p class="meta">Code: {{ business.business_code }}</p>
+          <p class="meta">Code: {{ business?.code }}</p>
         </div>
         <span :class="['badge', business.status]">{{ business.status }}</span>
       </div>
@@ -30,7 +30,7 @@
       <div v-if="activeTab === 'Services'" class="card">
         <div class="card-header">
           <h3>Services</h3>
-          <router-link to="/services/create" class="primary-btn">+ Add Service</router-link>
+          <router-link to="/admin/services/create" class="primary-btn">+ Add Service</router-link>
         </div>
         <div v-if="tabLoading" class="loading">Loading...</div>
         <table v-else class="table">
@@ -39,10 +39,11 @@
           </thead>
           <tbody>
           <tr v-for="svc in services" :key="svc.service_code">
-            <td>{{ svc.name }}</td>
+            <td>{{ svc?.service_name }}</td>
             <td>{{ svc.description }}</td>
-            <td>{{ svc.price ?? '—' }}</td>
-            <td><span :class="['badge', svc.status]">{{ svc.status }}</span></td>
+            <td>{{ svc.charges ?? '—' }}</td>
+<!--            <td><span :class="['badge', svc.status]">{{ svc.status }}</span></td>-->
+            <td><span :class="['badge', svc.status ? 'ACTIVE' : 'INACTIVE']">{{ svc.status ? 'Active' : 'Inactive' }}</span></td>
           </tr>
           <tr v-if="services.length === 0"><td colspan="4" class="empty">No services</td></tr>
           </tbody>
@@ -53,7 +54,7 @@
       <div v-if="activeTab === 'Staff'" class="card">
         <div class="card-header">
           <h3>Staff Members</h3>
-          <router-link to="/users/create?staffOnly=true" class="primary-btn">+ Add Staff</router-link>
+          <router-link to="/admin/users/create?staffOnly=true" class="primary-btn">+ Add Staff</router-link>
         </div>
         <div v-if="tabLoading" class="loading">Loading...</div>
         <table v-else class="table">
@@ -65,7 +66,7 @@
             <td>{{ user.name }}</td>
             <td>{{ user.email }}</td>
             <td>{{ user.user_type }}</td>
-            <td><span :class="['badge', user.is_active ? 'active' : 'inactive']">{{ user.is_active ? 'Active' : 'Inactive' }}</span></td>
+            <td><span :class="['badge', user.status ? 'ACTIVE' : 'INACTIVE']">{{ user.status ? 'Active' : 'Inactive' }}</span></td>
           </tr>
           <tr v-if="staff.length === 0"><td colspan="4" class="empty">No staff members</td></tr>
           </tbody>
@@ -76,13 +77,13 @@
       <div v-if="activeTab === 'Locations'" class="card">
         <div class="card-header">
           <h3>Locations</h3>
-          <router-link to="/locations/create" class="primary-btn">+ Add Location</router-link>
+          <router-link to="/admin/locations/create" class="primary-btn">+ Add Location</router-link>
         </div>
         <div v-if="tabLoading" class="loading">Loading...</div>
         <table v-else class="table">
           <thead>
           <tr>
-            <th>Business Code</th>
+            <th>Business Name</th>
             <th>Location Code</th>
             <th>Location Type</th>
             <th>Status</th>
@@ -92,10 +93,11 @@
           </thead>
           <tbody>
           <tr v-for="loc in locations" :key="loc.location_code">
-            <td>{{ loc.business_code }}</td>
-            <td>{{ loc.location_code }}</td>
+            <td>{{ loc.business.name }}</td>
+            <td><code>{{ loc?.code }}</code></td>
             <td>{{ loc.location_type }}</td>
-            <td>{{ loc.status }}</td>
+<!--            <td>{{ loc.status }}</td>-->
+            <td><span :class="['badge', loc.status ? 'ACTIVE' : 'INACTIVE']">{{ loc.status ? 'Active' : 'Inactive' }}</span></td>
             <td>{{ loc.address + " " + loc.street + " " + loc.city + " " + loc.country }}</td>
             
           </tr>
@@ -116,7 +118,7 @@
           </thead>
           <tbody>
           <tr v-for="appt in appointments" :key="appt.appointment_code">
-            <td><code>{{ appt.appointment_code }}</code></td>
+            <td><code>{{ appt.code }}</code></td>
             <td>{{ appt.appointment_start_date }}</td>
             <td><span :class="['badge', appt.status]">{{ appt.status }}</span></td>
           </tr>
@@ -256,12 +258,14 @@ async function loadTab(tab) {
   font-weight: 500;
   text-transform: capitalize;
 }
-.badge.active     { background: #dcfce7; color: #16a34a; }
-.badge.inactive   { background: #fee2e2; color: #dc2626; }
-.badge.pending    { background: #fef3c7; color: #d97706; }
-.badge.approved   { background: #dcfce7; color: #16a34a; }
-.badge.rejected   { background: #fee2e2; color: #dc2626; }
-.badge.rescheduled { background: #dbeafe; color: #2563eb; }
+.badge.ACTIVE      { background: #dcfce7; color: #16a34a; }
+.badge.INACTIVE    { background: #fee2e2; color: #dc2626; }
+.badge.PENDING     { background: #fef3c7; color: #d97706; }
+.badge.APPROVED    { background: #dcfce7; color: #16a34a; }
+.badge.REJECTED    { background: #fee2e2; color: #dc2626; }
+.badge.RESCHEDULED { background: #dbeafe; color: #2563eb; }
+.badge.CANCELLED   { background:#f1f5f9; color:#475569; }
+.badge.IN_PROGRESS { background:#cffafe; color:#155e75; }
 
 .loading, .empty { text-align: center; color: #94a3b8; padding: 20px; font-size: 14px; }
 code { font-size: 12px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }

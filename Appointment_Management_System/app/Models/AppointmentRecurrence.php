@@ -16,6 +16,7 @@ class AppointmentRecurrence extends Model
         'recurrence_value',
         'auto_cancel_after_days',
         'reschedule_after_days',
+        'status'
     ];
 
     protected static $codePrefix = 'APR';
@@ -23,6 +24,15 @@ class AppointmentRecurrence extends Model
     public function getRouteKeyName()
     {
         return 'code';
+    }
+
+    public function business()
+    {
+        return $this->belongsTo(
+            Business::class,
+            'business_code',
+            'code'
+        );
     }
 
     // Example relations for AppointmentRecurrence

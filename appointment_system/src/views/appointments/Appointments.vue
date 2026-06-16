@@ -45,8 +45,8 @@
           </thead>
           <tbody>
           <tr v-for="appt in filteredAppointments" :key="appt.code">
-            <td>{{ appt.business?.name || '?' }}</td>
-            <td>{{ appt.service?.service_name || '?' }}</td>
+            <td>{{ appt.business?.name || '-' }}</td>
+            <td>{{ appt.service?.service_name || '-' }}</td>
             <td>{{ [appt.location.apartment, appt.location.street, appt.location.address, appt.location.city ].filter(Boolean).join(', ') || '?' }}</td>
             <td>{{ appt.notes || '-' }}</td>
             <td>{{ appt.created_by?.name || '-' }}</td>
@@ -136,17 +136,17 @@
           <div class="modal-body" v-if="selected">
             <dl class="row mb-3">
               <dt class="col-5 text-muted">Code</dt>
-              <dd class="col-7"><code>{{ selected.appointment_code }}</code></dd>
+              <dd class="col-7"><code>{{ selected.code }}</code></dd>
               <dt class="col-5 text-muted">Client</dt>
-              <dd class="col-7">{{ selected.client_name || selected.client_code }}</dd>
+              <dd class="col-7">{{ selected.client.user?.name || selected.client_code }}</dd>
               <dt class="col-5 text-muted">Service</dt>
-              <dd class="col-7">{{ selected.service_name || selected.service_code }}</dd>
+              <dd class="col-7">{{ selected.service?.service_name || selected.service_code }}</dd>
               <dt class="col-5 text-muted">Date</dt>
-              <dd class="col-7">{{ selected.appointment_start_date }}</dd>
+              <dd class="col-7">{{ formatDate(selected.appointment_start_date || '-') }}</dd>
               <dt class="col-5 text-muted">Start</dt>
-              <dd class="col-7">{{ selected.start_time }}</dd>
+              <dd class="col-7">{{ formatTime(selected.start_time || '-') }}</dd>
               <dt class="col-5 text-muted">End</dt>
-              <dd class="col-7">{{ selected.end_time }}</dd>
+              <dd class="col-7">{{ formatTime(selected.end_time || '-') }}</dd>
               <dt class="col-5 text-muted">Status</dt>
               <dd class="col-7"><span :class="['ams-badge', selected.status]">{{ selected.status }}</span></dd>
               <template v-if="selected.notes">

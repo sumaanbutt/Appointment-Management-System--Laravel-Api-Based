@@ -36,13 +36,13 @@ class AutoCancelAppointments extends Command
                 $recurrence->created_at
             )->addDays(
                 $recurrence->auto_cancel_after_days
-            );
+            );#->startOfDay();
 
             if (
-                now()->greaterThanOrEqualTo($cancelDate) &&
-                !in_array(
+                now()->greaterThanOrEqualTo($cancelDate) &&             #->startOfDay() {after now()};
+                in_array(
                     $appointment->status,
-                    ['COMPLETED', 'CANCELLED']
+                    ['PENDING']
                 )
             )
 //                dd([

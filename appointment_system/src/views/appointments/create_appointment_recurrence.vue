@@ -14,7 +14,7 @@
           <label>Business *</label>
           <select v-model="form.business_code" :class="{ 'field-input-error': errors.business_code }">
             <option value="">Select business</option>
-            <option v-for="biz in businesses" :key="biz.business_code" :value="biz.business_code">
+            <option v-for="biz in businesses" :key="biz.code" :value="biz.code">
               {{ biz.name }}
             </option>
           </select>
@@ -26,8 +26,8 @@
           <label>Appointment *</label>
           <select v-model="form.appointment_code" :class="{ 'field-input-error': errors.appointment_code }">
             <option value="">Select appointment</option>
-            <option v-for="a in appointments" :key="a.appointment_code" :value="a.appointment_code">
-              {{ a.appointment_code }}
+            <option v-for="a in appointments" :key="a.code" :value="a.code">
+              {{ a.code }}
             </option>
           </select>
           <p v-if="errors.appointment_code" class="field-error">{{ errors.appointment_code }}</p>
@@ -41,7 +41,10 @@
               <option value="">Select</option>
               <option value="DAILY">Daily</option>
               <option value="WEEKLY">Weekly</option>
+              <option value="FORTNIGHTLY">FortNightly</option>
               <option value="MONTHLY">Monthly</option>
+              <option value="QUARTERLY">Quarterly</option>
+              <option value="FIXED">Fixed</option>
             </select>
             <p v-if="errors.recurrence_uom" class="field-error">{{ errors.recurrence_uom }}</p>
           </div>
@@ -58,8 +61,8 @@
         <div class="field">
           <label>Status</label>
           <select v-model="form.status">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
           </select>
         </div>
 
@@ -99,7 +102,7 @@ import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const isAdmin = computed(() => authStore.user?.user_type === 'admin')
+const isAdmin = computed(() => authStore.user?.user_type === 'SUPER_ADMIN')
 
 const form = reactive({
   business_code: '',
@@ -121,6 +124,8 @@ onMounted(async () => {
 
   const requests = []
 
+  console.log('IS ADMIN:', isAdmin.value)
+
   if (isAdmin.value) {
     requests.push(api.get('/businesses'))
   }
@@ -133,13 +138,15 @@ onMounted(async () => {
 
   if (isAdmin.value) {
     if (results[index].status === 'fulfilled') {
-      businesses.value = results[index].value.data.data || []
+      businesses.value = results[index].value.data.data?.data || []
     }
     index++
   }
 
   if (results[index]?.status === 'fulfilled') {
-    appointments.value = results[index].value.data.data || []
+    appointments.value = results[index].value.data.data?.data || []
+    console.log('BUSINESSES:', businesses.value)
+    console.log('APPOINTMENTS:', appointments.value)
   }
 })
 
@@ -183,11 +190,14 @@ async function submit() {
     if (!payload.auto_cancel_after_days) delete payload.auto_cancel_after_days
     if (!payload.reschedule_after_days) delete payload.reschedule_after_days
 
-    await api.post('/appointments', payload)
+    console.log('PAYLOAD:', payload)
+    await api.post('/appointment-recurrences', payload)
 
     await router.push('/appointment-recurrence')
 
   } catch (err) {
+    console.log('FULL ERROR:', err)
+    console.log('ERROR RESPONSE:', err.response?.data)
     error.value = err.response?.data?.message || 'Failed to create recurrence'
   } finally {
     loading.value = false

@@ -15,10 +15,14 @@ class UpdateAppointmentRecurrenceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'recurrence_uom' => ['sometimes '],
+            'recurrence_uom' => [
+                'sometimes',
+                'in:DAILY,WEEKLY,FORTNIGHTLY,MONTHLY,QUARTERLY,FIXED'
+            ],
             'recurrence_value' => ['sometimes'],
             'auto_cancel_after_days' => ['sometimes'],
             'reschedule_after_days' => ['sometimes'],
+            'status' => 'sometimes|in:ACTIVE,INACTIVE',
         ];
     }
 }

@@ -115,10 +115,6 @@ async function login() {
               </label>
 
             </div>
-
-<!--            <a href="#" class="forgot-link">-->
-<!--              Forgot Password?-->
-<!--            </a>-->
             <div>
               <RouterLink
                   to="/reset-password"
@@ -155,53 +151,6 @@ async function login() {
       </div>
 
       </div>
-
-      <!-- RIGHT -->
-
-<!--      <div class="login-right">-->
-
-<!--        <div class="overlay">-->
-
-<!--          <div class="right-content">-->
-
-<!--            <h1>AMS Portal</h1>-->
-
-<!--            <p>-->
-<!--              Manage appointments, clients,-->
-<!--              schedules, invoices and staff-->
-<!--              from one platform.-->
-<!--            </p>-->
-
-<!--            <div class="hero-features">-->
-
-<!--              <div>-->
-<!--                <i class="bi bi-check-circle-fill"></i>-->
-<!--                Appointment Scheduling-->
-<!--              </div>-->
-
-<!--              <div>-->
-<!--                <i class="bi bi-check-circle-fill"></i>-->
-<!--                Staff Management-->
-<!--              </div>-->
-
-<!--              <div>-->
-<!--                <i class="bi bi-check-circle-fill"></i>-->
-<!--                Invoice Tracking-->
-<!--              </div>-->
-
-<!--              <div>-->
-<!--                <i class="bi bi-check-circle-fill"></i>-->
-<!--                Business Operations-->
-<!--              </div>-->
-
-<!--            </div>-->
-
-<!--          </div>-->
-
-<!--        </div>-->
-
-<!--      </div>-->
-
     </div>
 
   </template>

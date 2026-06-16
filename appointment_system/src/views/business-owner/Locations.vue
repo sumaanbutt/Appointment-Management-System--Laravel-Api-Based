@@ -16,9 +16,9 @@
             <tr v-for="loc in locations" :key="loc.code">
               <td class="ps-3">{{ loc.business?.name }}</td>
               <td><code>{{ loc.code }}</code></td>
-              <td>{{ loc.location_type || '—' }}</td>
+              <td><span class="badge bg-white text-dark border px-2 py-1.5 fw-medium small text-lowercase">{{ loc.location_type || '—' }}</span></td>
               <td>{{ loc.address + ' ' + loc.street + ' ' + loc.city }}</td>
-              <td><span :class="['ams-badge', loc.status]">{{ loc.status }}</span></td>
+              <td><span :class="['badge', loc.status=== 'ACTIVE' ? 'bg-success' : 'bg-secondary']">{{ loc.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</span></td>
               <td class="pe-3">
 
                 <div class="dropdown">
@@ -208,5 +208,55 @@ async function deleteLocation() {
 
 onMounted(fetchLocations)
 </script>
+
+<style scoped>
+
+.ams-page{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  border-radius:12px;
+}
+
+.ams-table th,
+.ams-table td{
+  vertical-align:middle;
+  font-size:14px;
+}
+
+code{
+  background:#f1f5f9;
+  padding:3px 8px;
+  border-radius:6px;
+  color:#334155;
+}
+
+.btn-ams{
+  background:#6366f1;
+  color:#fff;
+  border:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
+
+.form-control,
+.form-select{
+  border-radius:8px;
+  font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+
+</style>
 
 
