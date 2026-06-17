@@ -145,6 +145,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const clients = ref([])
 const loading = ref(true)
@@ -179,7 +180,9 @@ async function fetchClients() {
   error.value = ''
 
   try {
-    const res = await api.get('/clients')
+    const res = await apiHandler("client","getAllClients",{
+      include: "business"
+    })
 
     clients.value =
         res.data?.data?.data
@@ -228,12 +231,18 @@ async function updateClient() {
 
   try {
 
-    await api.put(
-        `/users/${selected.value.user_code}`,
+    await apiHandler(
+        "user",
+        "updateUser",
         {
-          name: editForm.name,
-          email: editForm.email,
-          phone: editForm.phone
+          pathParams: {
+            code: selected.value.user_code
+          },
+          body: {
+            name: editForm.name,
+            email: editForm.email,
+            phone: editForm.phone
+          }
         }
     )
 
@@ -245,7 +254,7 @@ async function updateClient() {
 
     console.log(err.response)
 
-    formError =
+    formError.value =
         err.response?.data?.message
         ||
         'Update failed'
@@ -263,21 +272,29 @@ async function deleteClient() {
 
   try {
 
-    await api.delete(
-        `/clients/${selected.value.code}`
-    )
-
+    await apiHandler(
+        "client",
+        "deleteClient",
+        {
+          pathParams: {
+            code: selected.value.code
+          }
+        })
     showDeleteModal.value = false
 
     await fetchClients()
 
   } catch (err) {
 
+    console.log('DELETE ERROR:', err)
+    console.log('DELETE RESPONSE:', err.response)
+    console.log('DELETE DATA:', err.response?.data)
+    console.log('DELETE STATUS:', err.response?.status)
+
     error.value =
         err.response?.data?.message
         ||
         'Delete failed'
-
   } finally {
 
     saving.value = false

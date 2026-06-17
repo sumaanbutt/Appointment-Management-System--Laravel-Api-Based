@@ -220,6 +220,7 @@
 import {ref, computed, onMounted, reactive} from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const authStore = useAuthStore()
 const isAdmin = computed(
@@ -264,8 +265,8 @@ async function fetchCharges() {
     }
 
     const [chargeRes, businessRes] = await Promise.all([
-      api.get('/charges', { params }),
-      api.get('/businesses'),
+      apiHandler("charge", "getAllCharges",{ params }),
+      apiHandler("business", "getAllBusinesses"),
     ])
 
     const businesses = businessRes.data.data?.data || []
@@ -324,7 +325,13 @@ function openDeactivate(charge) {
 async function deleteCharge() {
   saving.value = true
   try {
-    await api.delete(`/charges/${selected.value.code}`)
+    await apiHandler("charge", "deleteCharge",
+        {
+          pathParams: {
+          code: selected.value.code
+          }
+        })
+
     showDeleteModal.value = false
     await fetchCharges()
   } catch (err) {
@@ -370,7 +377,15 @@ async function createCharge() {
           ? createForm.value.business_code
           : authStore.user?.business_code }
     if (!payload.description) delete payload.description
-    await api.post('/charges', payload)
+
+    await apiHandler(
+        "charge",
+        "createBusinessCharge",
+        {
+          body: payload
+        })
+
+
     showCreateModal.value = false
     createForm.value = { business_code: isAdmin.value ? '' : (authStore.user?.business_code || ''), name: '', charge_uom: '', charge_value: '', description: '' }
     createErrors.value = {}
@@ -401,7 +416,15 @@ async function updateCharge() {
     console.log('AUTO APPLY TYPE:', typeof editForm.auto_apply)
     console.log('PAYLOAD:', JSON.stringify(editForm))
 
-    await api.put(`/charges/${selected.value.code}`, editForm)
+    await apiHandler("charge", "updateCharge",
+        {
+          pathParams: {
+            code: selected.value.code,
+          },
+          body: {
+            ...editForm
+          }
+        })
     showEditModal.value = false
     await fetchCharges()
   } catch (err) {
@@ -425,7 +448,17 @@ async function updateCharge() {
 async function deactivateCharge() {
   saving.value = true
   try {
-    await api.put(`/charges/${selected.value.code}`, { status: 'INACTIVE' })
+    // await api.put(`/charges/${selected.value.code}`, { status: 'INACTIVE' })
+    await apiHandler("charge","deactivateCharge",
+        {
+          pathParams: {
+            code: selected.value.code,
+          },
+          body: {
+            status: 'INACTIVE'
+          }
+        }
+    )
     showDeactivateModal.value = false
     await fetchCharges()
   } catch (err) {
@@ -450,10 +483,8 @@ onMounted(async () => {
     return
   }
 
-  const [_, bizRes] = await Promise.allSettled([
-    fetchCharges(),
-    api.get('/businesses')
-  ])
+  const [_, bizRes] = await Promise.allSettled([fetchCharges(), apiHandler("business", "getAllBusinesses")])
+
 
   if (bizRes.status === 'fulfilled') {
     businesses.value =

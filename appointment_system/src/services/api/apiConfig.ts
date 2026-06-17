@@ -259,4 +259,133 @@ export const API_CONFIG = {
         },
     },
 
+    client: {
+        createClient: {
+            endpoint: '/clients',
+            method: 'POST',
+
+            requestMapping: {
+                title: 'client_title'
+            },
+
+            responseMapping: {
+                client_title: 'title'
+            },
+
+            onSuccess(response:any) {
+                console.log('Client created', response)
+            },
+
+            onError(error:any) {
+                console.error('Failed', error)
+            }
+        },
+
+        getAllClients: {
+            endpoint: '/clients',
+            method: 'GET'
+        },
+        updateClient: {
+            endpoint: '/clients/:code',
+            method: 'PUT',
+
+            onSuccess(response:any) {
+                console.log('Client Updated', response)
+            },
+
+            onError(error:any) {
+                console.error('Failed', error)
+            }
+        },
+        deactivateClient: {
+            endpoint: '/clients/:code',
+            method: 'PATCH'
+        },
+
+        deleteClient: {
+            endpoint: '/clients/:code',
+            method: 'DELETE'
+        },
+    },
+
+    charge: {
+        createBusinessCharge: {
+            endpoint: '/charges',
+            method: 'POST',
+        },
+
+        getAllCharges: {
+            endpoint: '/charges',
+            method: 'GET'
+        },
+
+        getOneCharge: {
+            endpoint: '/charges/:code',
+            method: 'GET',
+        },
+        updateCharge: {
+            endpoint: '/charges/:code',
+            method: 'PUT',
+        },
+        deactivateCharge: {
+            endpoint: '/charges/:code',
+            method: 'PATCH',
+        },
+        deleteCharge: {
+            endpoint: '/charges/:code',
+            method: 'DELETE',
+        }
+
+    },
+
+    appointment: {
+        getAllAppointments: {
+            endpoint: '/appointments',
+            method: 'GET'
+        },
+
+        getAppointmentHistory: {
+            endpoint: '/appointments/get-appointment-history/:code',
+            method: 'GET'
+        },
+
+        updateAppointmentStatus: {
+            endpoint: '/appointments/update-appointment-status/:code',
+            method: 'PATCH'
+        },
+
+        rescheduleAppointment: {
+            endpoint: '/appointments/reschedule-appointment/:code',
+            method: 'POST',
+        },
+
+        checkStaffAvailability: {
+            endpoint: '/appointments/check-availability/:code',
+            method: 'GET',
+        },
+
+        approveAppointment: {
+            endpoint: '/appointments/approve-appointment/:code',
+            method: 'POST',
+        },
+
+        createAppointmentRecurrence: {
+            endpoint: '/appointment-recurrence',
+            method: 'POST',
+        },
+
+        getAllAppointmentRecurrences: {
+            endpoint: '/appointment-recurrence',
+            method: 'GET'
+        },
+        updateAppointmentRecurrence: {
+            endpoint: '/appointments/update-appointment-recurrence/:code',
+            method: 'PUT',
+        },
+        deleteAppointmentRecurrence: {
+            endpoint: '/appointments/delete-appointment-recurrence/:code',
+            method: 'DELETE'
+        }
+    },
+
 }

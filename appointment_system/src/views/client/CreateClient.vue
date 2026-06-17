@@ -72,6 +72,7 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -119,7 +120,7 @@ onMounted(async () => {
     return
   }
   try {
-    const res = await api.get('/businesses')
+    const res = await apiHandler('business', 'getAllBusinesses')
     businesses.value = res.data?.data?.data ?? res.data?.data ?? []
   } catch (_) {}
 })
@@ -136,7 +137,10 @@ async function submit() {
     const payload = { ...form }
     if (!payload.phone?.trim()) delete payload.phone
 
-    await api.post('/clients', payload)
+    const res = await apiHandler('client', 'createClient',
+        {
+          body: payload
+        })
     router.push(backLink.value)
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create client'
