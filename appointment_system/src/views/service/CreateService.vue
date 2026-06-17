@@ -90,6 +90,7 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -157,7 +158,8 @@ onMounted(async () => {
     return
   }
   try {
-    const res = await api.get('/businesses')
+    const res = await apiHandler('business', 'getAllBusinesses')
+
     businesses.value =
         res.data?.data?.data ??
         res.data?.data ??
@@ -200,7 +202,11 @@ async function submit() {
     if (!payload.duration_uom) {
       delete payload.duration_uom
     }
-    await api.post('/services', payload)
+    const res = await apiHandler('service', 'createService',
+        {
+          body: payload
+        })
+
     router.push(backLink.value)
   } catch (err) {
 

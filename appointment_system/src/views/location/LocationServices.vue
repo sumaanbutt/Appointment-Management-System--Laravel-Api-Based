@@ -216,6 +216,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.user_type === 'SUPER_ADMIN')
@@ -281,7 +282,10 @@ async function fetchMappings() {
     const params = {}
     if (bizFilter.value) params.business_code = bizFilter.value
     if (locFilter.value) params.location_code = locFilter.value
-    const res = await api.get('/location-services', { params })
+    const res = await apiHandler('location_service', 'getAllLocationServices', {
+      params: {}
+    })
+
     mappings.value =
         res.data?.data?.data
         ??
@@ -325,7 +329,10 @@ async function createMapping() {
   saving.value = true
   formError.value = ''
   try {
-    await api.post('/location-services', createForm)
+    await apiHandler('location_service', 'createLocationService',
+        {
+          body: createForm
+        })
     showCreateModal.value = false
     await fetchMappings()
   } catch (err) {
@@ -339,7 +346,17 @@ async function updateMapping() {
   saving.value = true
   formError.value = ''
   try {
-    await api.put(`/location-services/${selected.value.code}`, editForm)
+    await apiHandler(
+        'location_service',
+        'updateLocationService',
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            ...editForm
+          }
+        })
     showEditModal.value = false
     await fetchMappings()
   } catch (err) {
@@ -352,7 +369,14 @@ async function updateMapping() {
 async function deleteMapping() {
   saving.value = true
   try {
-    await api.delete(`/location-services/${selected.value.code}`)
+    await apiHandler(
+        'location_service',
+        'deleteLocationService',
+        {
+          pathParams: {
+            code: selected.value.code
+          }
+        })
     showDeleteModal.value = false
     await fetchMappings()
   } catch (err) {
@@ -388,20 +412,19 @@ onMounted(async () => {
         fetchMappings(),
 
         isAdmin.value
-            ? api.get('/businesses')
+            ? await apiHandler('business', 'getAllBusinesses')
             : Promise.resolve({
               data:{data:[]}
             }),
 
-        api.get(
-            '/business-locations',
-            { params: locParams }
-        ),
+        await apiHandler('location', 'getAllLocations', {
+        params: locParams
+        }),
 
-        api.get(
-            '/services',
-            { params: svcParams }
-        )
+        await apiHandler('service', 'getAllServices', {
+          params: svcParams
+        })
+
       ])
 
   if(

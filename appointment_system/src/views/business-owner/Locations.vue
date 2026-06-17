@@ -120,6 +120,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const authStore = useAuthStore()
 const locations = ref([])
@@ -141,7 +142,9 @@ async function fetchLocations() {
   error.value = ''
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/business-locations', { params: biz ? { business_code: biz } : {} })
+    const res = await apiHandler('location', 'getAllLocations', {
+      params: biz ? { business_code: biz } : {}
+    })
     locations.value = res.data.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load locations'
@@ -161,29 +164,22 @@ function openEdit(loc) {
 
 function openDelete(loc) { selected.value = loc; showDeleteModal.value = true }
 
-// async function createLocation() {
-//   saving.value = true
-//   formError.value = ''
-//   try {
-//     const biz = authStore.user?.business_code
-//     const payload = { ...createForm, business_code: biz }
-//     if (!payload.address) delete payload.address
-//     await api.post('/locations/create-location', payload)
-//     showCreateModal.value = false
-//     Object.assign(createForm, { name: '', address: '', location_type: '' })
-//     await fetchLocations()
-//   } catch (err) {
-//     formError.value = err.response?.data?.message || 'Create failed'
-//   } finally {
-//     saving.value = false
-//   }
-// }
-
 async function updateLocation() {
   saving.value = true
   formError.value = ''
   try {
-    await api.put(`/business-locations/${selected.value.code}`, editForm)
+    await apiHandler(
+        'location',
+        'updateLocation',
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            ...editForm
+          }
+        })
+
     showEditModal.value = false
     await fetchLocations()
   } catch (err) {
@@ -196,7 +192,15 @@ async function updateLocation() {
 async function deleteLocation() {
   saving.value = true
   try {
-    await api.delete(`/business-locations/${selected.value.code}`)
+    await apiHandler(
+        'location',
+        'deleteLocation',
+        {
+          pathParams: {
+            code: selected.value.code
+          }
+        })
+
     showDeleteModal.value = false
     await fetchLocations()
   } catch (err) {

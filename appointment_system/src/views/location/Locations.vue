@@ -188,6 +188,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const locations = ref([])
 const businesses = ref([])
@@ -207,7 +208,10 @@ async function fetchLocations() {
   error.value = ''
   try {
     const params = bizFilter.value ? { business_code: bizFilter.value } : {}
-    const res = await api.get('/business-locations', { params })
+    const res = await apiHandler('location', 'getAllLocations', {
+      params: {}
+    })
+
     locations.value = res.data.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load locations'
@@ -242,10 +246,17 @@ async function updateLocation() {
 
   try {
 
-    await api.put(
-        `/business-locations/${selected.value.code}`,
-        editForm
-    )
+    await apiHandler(
+        'location',
+        'updateLocation',
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            ...editForm
+          }
+        })
 
     showEditModal.value = false
     await fetchLocations()
@@ -273,11 +284,14 @@ async function deleteLocation() {
 
     console.log('SELECTED:', selected.value)
 
-    const res = await api.delete(
-        `/business-locations/${selected.value.code}`
-    )
-
-    console.log('SUCCESS:', res)
+    await apiHandler(
+        'location',
+        'deleteLocation',
+        {
+          pathParams: {
+            code: selected.value.code
+          }
+        })
 
     showDeleteModal.value = false
 
@@ -315,3 +329,52 @@ onMounted(async () => {
 </script>
 
 
+<style scoped>
+
+.ams-page{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  border-radius:12px;
+}
+
+.ams-table th,
+.ams-table td{
+  vertical-align:middle;
+  font-size:14px;
+}
+
+code{
+  background:#f1f5f9;
+  padding:3px 8px;
+  border-radius:6px;
+  color:#334155;
+}
+
+.btn-ams{
+  background:#6366f1;
+  color:#fff;
+  border:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
+
+.form-control,
+.form-select{
+  border-radius:8px;
+  font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+
+</style>

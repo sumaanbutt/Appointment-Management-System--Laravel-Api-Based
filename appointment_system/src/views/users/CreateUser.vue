@@ -91,6 +91,7 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth.store'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const router = useRouter()
 const route = useRoute()
@@ -143,7 +144,7 @@ function validateField(field) {
 
 onMounted(async () => {
   try {
-    const res = await api.get('/businesses')
+    const res = await apiHandler('business', 'getAllBusinesses')
     businesses.value = res.data.data.data || []
   } catch (_) {}
 })
@@ -166,7 +167,12 @@ async function submit() {
       payload.business_code = authStore.user.business_code
     }
     if (!payload.business_code) delete payload.business_code
-    await api.post('/users', payload)
+
+    const res = await apiHandler('user', 'createUser',
+        {
+          body: payload
+        })
+
     router.push('/users')
   } catch (err) {
     error.value =

@@ -112,6 +112,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const authStore = useAuthStore()
 const invoices = ref([])
@@ -135,7 +136,10 @@ async function fetchInvoices() {
     const params = {}
     if (biz) params.business_code = biz
     if (statusFilter.value) params.status = statusFilter.value
-    const res = await api.get('/invoices', { params })
+
+    const res = await apiHandler('invoice', 'getAllInvoices', {
+      params: {}
+    })
 
     invoices.value =
         res.data?.invoices?.data
@@ -159,7 +163,18 @@ async function updateStatus() {
   saving.value = true
   formError.value = ''
   try {
-    await api.patch(`/invoices/${selected.value.code}`, { status: newStatus.value })
+    await apiHandler(
+        'invoice',
+        'deactivateInvoice',
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            status: newStatus.value
+          }
+        })
+
     showViewModal.value = false
     await fetchInvoices()
   } catch (err) {
@@ -173,3 +188,52 @@ onMounted(fetchInvoices)
 </script>
 
 
+<style scoped>
+
+.ams-page{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  border-radius:12px;
+}
+
+.ams-table th,
+.ams-table td{
+  vertical-align:middle;
+  font-size:14px;
+}
+
+code{
+  background:#f1f5f9;
+  padding:3px 8px;
+  border-radius:6px;
+  color:#334155;
+}
+
+.btn-ams{
+  background:#6366f1;
+  color:#fff;
+  border:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
+
+.form-control,
+.form-select{
+  border-radius:8px;
+  font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+
+</style>

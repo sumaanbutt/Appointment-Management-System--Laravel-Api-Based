@@ -74,6 +74,7 @@
   import { reactive, ref, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   import api from '@/services/api'
+  import {apiHandler} from "@/services/api/apiHandler.ts";
 
   const router = useRouter();
   const form = reactive({ name: '', organization_code: '', email: '', timezone: '', status: 'ACTIVE', phone: '' })
@@ -106,7 +107,7 @@
   onMounted(async () => {
     try {
 
-      const res = await api.get('/organizations')
+      const res = await apiHandler('organization', 'getAllOrganizations')
 
       console.log('ORGS:', res.data)
 
@@ -131,7 +132,10 @@
     loading.value = true
     error.value = ''
     try {
-      await api.post('/businesses', form)
+      const res = await apiHandler('business', 'createBusiness',
+          {
+          body: form
+          })
       router.push('/businesses')
     } catch (err) {
       error.value = err.response?.data?.message || 'Failed to create business'

@@ -38,7 +38,8 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/services/api'
+// import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 
 const router = useRouter()
@@ -72,10 +73,25 @@ async function submit() {
   loading.value = true
   error.value = ''
   try {
-    await api.post('/organizations', form)
+    const res = await apiHandler('organization', 'createOrganization',
+        {
+        body: form
+  })
     router.push('/organizations')
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to create organization'
+
+    console.log('ERROR OBJECT:', err)
+    console.log('RESPONSE:', err.response)
+    console.log('DATA:', err.response?.data)
+    console.log('MESSAGE:', err.message)
+    console.log(
+        err.response?.data?.errors?.name
+    )
+
+    error.value =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to create organization'
   } finally {
     loading.value = false
   }

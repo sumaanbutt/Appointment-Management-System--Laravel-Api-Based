@@ -192,6 +192,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const businesses = ref([])
 const currentPage = ref(1)
@@ -211,11 +212,13 @@ async function fetchBusinesses() {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/businesses',{
+
+    const res = await apiHandler('business', 'getAllBusinesses'    , {
       params: {
         page: currentPage.value
       }
     })
+
     businesses.value = res.data.data.data || []
     currentPage.value = res.data.data.current_page
     lastPage.value = res.data.data.last_page
@@ -251,9 +254,17 @@ async function updateBusiness() {
   formError.value = ''
 
   try {
-    await api.put(
-        `/businesses/${selected.value.code}`,
-        editForm
+    await apiHandler(
+        'business',
+        'updateBusiness',
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            ...editForm
+          }
+        }
     )
 
     showEditModal.value = false
@@ -287,9 +298,17 @@ async function deactivateBusiness() {
   saving.value = true
 
   try {
-    await api.patch(
-        `/businesses/${selected.value.code}`,
-        { status: 'INACTIVE' }
+    await apiHandler(
+        'business',
+        'deactivateBusiness',
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            status: 'INACTIVE'
+          }
+        }
     )
 
     showDeleteModal.value = false
@@ -320,3 +339,52 @@ onMounted(fetchBusinesses)
 </script>
 
 
+<style scoped>
+
+.ams-page{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  border-radius:12px;
+}
+
+.ams-table th,
+.ams-table td{
+  vertical-align:middle;
+  font-size:14px;
+}
+
+code{
+  background:#f1f5f9;
+  padding:3px 8px;
+  border-radius:6px;
+  color:#334155;
+}
+
+.btn-ams{
+  background:#6366f1;
+  color:#fff;
+  border:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
+
+.form-control,
+.form-select{
+  border-radius:8px;
+  font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+
+</style>

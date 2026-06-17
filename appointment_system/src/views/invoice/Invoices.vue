@@ -131,6 +131,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const invoices = ref([])
 const businesses = ref([])
@@ -151,7 +152,11 @@ async function fetchInvoices() {
     const params = {}
     if (bizFilter.value) params.business_code = bizFilter.value
     if (statusFilter.value) params.status = statusFilter.value
-    const res = await api.get('/invoices', { params })
+    // const res = await api.get('/invoices', { params })
+
+    const res = await apiHandler('invoice', 'getAllInvoices', {
+      params: {}
+    })
 
     console.log('INVOICE RESPONSE:', res.data)
 
@@ -185,7 +190,18 @@ function openDetails(inv) {
 async function updateStatus(inv, status) {
   saving.value = true
   try {
-    await api.patch(`/invoices/${inv.code}`, { status })
+    await apiHandler(
+        'invoice',
+        'deactivateInvoice',
+        {
+          pathParams: {
+            code: inv.code
+          },
+          body: {
+            status
+          }
+        })
+
     showDetails.value = false
     await fetchInvoices()
   } catch (err) {

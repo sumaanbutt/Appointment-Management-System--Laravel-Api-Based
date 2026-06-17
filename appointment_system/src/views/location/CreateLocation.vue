@@ -110,6 +110,7 @@ import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -216,8 +217,7 @@ onMounted(async () => {
 
     if (isAdmin.value) {
 
-      const res = await api.get('/businesses')
-
+      const res = await apiHandler('business', 'getAllBusinesses')
       businesses.value =
           res.data.data?.data ||
           res.data.data ||
@@ -225,23 +225,20 @@ onMounted(async () => {
 
     }
 
-    const clientsRes = await api.get('/users', {
+    const res = await apiHandler('user', 'getAllUsers', {
       params: {
         user_type: 'CLIENT'
       }
     })
 
     clients.value =
-        clientsRes.data.data?.data ||
-        clientsRes.data.data ||
+        res.data.data?.data ||
+        res.data.data ||
         []
 
   } catch (e) {
-
     console.error(e)
-
   }
-
 })
 
 async function submit() {
@@ -289,11 +286,10 @@ async function submit() {
         payload
     )
 
-    const res =
-        await api.post(
-            '/business-locations',
-            payload
-        )
+    const res = await apiHandler('location', 'createLocation',
+        {
+          body: payload
+        })
 
     console.log(
         'SUCCESS:',

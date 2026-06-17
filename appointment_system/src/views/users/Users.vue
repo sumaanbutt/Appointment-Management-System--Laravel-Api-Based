@@ -33,8 +33,8 @@
               <td>{{user.business?.name || '—' }}</td>
               <td>{{ user.email }}</td>
               <td>{{user.phone}}</td>
-              <td>{{ user.user_type }}</td>
-<!--              <td><code>{{ user.code }}</code></td>-->
+              <td><span class="badge bg-white text-dark border px-2 py-1.5 fw-medium small text-lowercase">{{ user.user_type || '—' }}</span></td>
+              <!--              <td><code>{{ user.code }}</code></td>-->
               <td><span :class="['badge', user.status=== 'ACTIVE' ? 'bg-success' : 'bg-secondary']">{{ user.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</span></td>
               <td class="pe-3">
 
@@ -205,6 +205,7 @@ import api from '@/services/api'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const users = ref([])
 const currentPage = ref(1)
@@ -230,7 +231,7 @@ async function fetchUsers() {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/users', {
+    const res = await apiHandler('user', 'getAllUsers', {
       params: {
         page: currentPage.value
       }
@@ -289,7 +290,18 @@ async function updateUser() {
       payload.password = editForm.password
     }
 
-    await api.put(`/users/${selected.value.code}`, payload)
+    await apiHandler(
+        'user',
+        'updateUser',
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            ...payload
+          }
+        })
+
     showEditModal.value = false
     await fetchUsers()
   } catch (err) {
@@ -302,9 +314,18 @@ async function updateUser() {
 async function deactivateUser() {
   saving.value = true
   try {
-    await api.patch(`/users/${selected.value.code}`,{
-      status:'INACTIVE'
-    })
+    await apiHandler(
+        'user',
+        'deactivateUser',
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            status: 'INACTIVE'
+          }
+        })
+
     showDeleteModal.value = false
     await fetchUsers()
   } catch (err) {
@@ -331,3 +352,52 @@ onMounted(fetchUsers)
 </script>
 
 
+<style scoped>
+
+.ams-page{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  border-radius:12px;
+}
+
+.ams-table th,
+.ams-table td{
+  vertical-align:middle;
+  font-size:14px;
+}
+
+code{
+  background:#f1f5f9;
+  padding:3px 8px;
+  border-radius:6px;
+  color:#334155;
+}
+
+.btn-ams{
+  background:#6366f1;
+  color:#fff;
+  border:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
+
+.form-control,
+.form-select{
+  border-radius:8px;
+  font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+
+</style>

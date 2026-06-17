@@ -176,6 +176,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const authStore = useAuthStore()
 const services = ref([])
@@ -212,7 +213,11 @@ async function fetchServices() {
   error.value = ''
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/services', { params: biz ? { business_code: biz } : {} })
+
+    const res = await apiHandler('service', 'getAllServices', {
+      params: biz ? { business_code: biz } : {}
+    })
+
     services.value = res.data.data.data || []
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load services'
@@ -245,7 +250,12 @@ async function createService() {
     const payload = { ...createForm, business_code: biz }
     if (!payload.price) delete payload.price
     if (!payload.description) delete payload.description
-    await api.post('/services', payload)
+
+    const res = await apiHandler('service', 'createService',
+        {
+          body: payload
+        })
+
     showCreateModal.value = false
     Object.assign(createForm, { name: '', duration_minutes: '', price: '', description: '' })
     await fetchServices()
@@ -260,14 +270,19 @@ async function updateService() {
   saving.value = true
   formError.value = ''
   try {
-    await api.put(
-        `/services/${selected.value.code}`,
+    await apiHandler(
+        'service',
+        'updateService',
         {
-          ...editForm,
-          business_code:
-          authStore.user?.business_code
-        }
-    )
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            ...editForm,
+            business_code: authStore.user?.business_code
+          }
+        })
+
     showEditModal.value = false
     await fetchServices()
   } catch (err) {
@@ -280,7 +295,15 @@ async function updateService() {
 async function deleteService() {
   saving.value = true
   try {
-    await api.delete(`/services/${selected.value.code}`)
+    await apiHandler(
+        'service',
+        'deleteUser',
+        {
+          pathParams: {
+            code: selected.value.code
+          }
+        })
+
     showDeleteModal.value = false
     await fetchServices()
   } catch (err) {

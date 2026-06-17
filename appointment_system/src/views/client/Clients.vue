@@ -289,3 +289,52 @@ onMounted(fetchClients)
 </script>
 
 
+<style scoped>
+
+.ams-page{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  border-radius:12px;
+}
+
+.ams-table th,
+.ams-table td{
+  vertical-align:middle;
+  font-size:14px;
+}
+
+code{
+  background:#f1f5f9;
+  padding:3px 8px;
+  border-radius:6px;
+  color:#334155;
+}
+
+.btn-ams{
+  background:#6366f1;
+  color:#fff;
+  border:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
+
+.form-control,
+.form-select{
+  border-radius:8px;
+  font-size:14px;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+}
+
+</style>
