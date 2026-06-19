@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Appointment\CreateAppointmentRequest;
 use App\Http\Requests\Appointment\UpdateAppointmentRequest;
@@ -21,13 +22,20 @@ use Illuminate\Http\Request;
 class AppointmentController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-
-            $query = Appointment::with([
+            $query = Appointment::query()
+                ->with([
                 'business','location','client.user', 'service','createdBy', 'approvedBy',
             ]);
+
+            if (auth()->user()->user_type === 'CLIENT') {
+                $query->where(
+                    'client_code',
+                    auth()->user()->client->code
+                );
+            }
 
             if(request()->business_code){
 
@@ -37,7 +45,6 @@ class AppointmentController extends Controller
                 );
             }
 
-            // ADD THIS
             if(request()->filled('status')){
 
                 $query->where(
@@ -46,10 +53,21 @@ class AppointmentController extends Controller
                 );
             }
 
-            $appointments =
-                $query
-                    ->latest()
-                    ->paginate(10);
+            if ($request->service_code) {
+                $query->where(
+                    'service_code',
+                    $request->service_code
+                );
+            }
+
+            if ($request->location_code) {
+                $query->where(
+                    'location_code',
+                    $request->location_code
+                );
+            }
+
+            $appointments = ApiDataHelper::process( $query, $request );
 
             return response()->json([
                 'success'=>true,
@@ -60,7 +78,6 @@ class AppointmentController extends Controller
         }
 
         catch(\Exception $e){
-
             return response()->json([
                 'success'=>false,
                 'message'=>'Failed to fetch Appointments',
@@ -928,6 +945,47 @@ class AppointmentController extends Controller
         return response()->json([
             'success'=>true,
             'data'=>$appointment
+        ]);
+    }
+
+    public function rescheduleRespond(
+        Request $request,
+        Appointment $appointment
+    )
+    {
+        $request->validate([
+            'action' => 'required|in:accepted,rejected'
+        ]);
+
+        if ($appointment->status !== 'RESCHEDULED') {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Appointment is not awaiting reschedule response'
+            ], 422);
+        }
+
+        if ($request->action === 'accepted') {
+
+            $appointment->update([
+                'status' => 'PENDING'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reschedule accepted',
+                'data' => $appointment
+            ]);
+        }
+
+        $appointment->update([
+            'status' => 'CANCELLED'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reschedule rejected and appointment cancelled',
+            'data' => $appointment
         ]);
     }
 

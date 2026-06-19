@@ -222,6 +222,8 @@ const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.user_type === 'SUPER_ADMIN')
 const myBizCode = computed(() => authStore.user?.business_code || '')
 
+const backLink = computed(() => isAdmin.value ? '/admin/location-services' : '/owner/location-services')
+
 const mappings = ref([])
 const businesses = ref([])
 const locations = ref([])
@@ -333,6 +335,7 @@ async function createMapping() {
         {
           body: createForm
         })
+    router.push(backLink.value)
     showCreateModal.value = false
     await fetchMappings()
   } catch (err) {

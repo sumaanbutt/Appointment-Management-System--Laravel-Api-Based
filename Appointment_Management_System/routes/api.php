@@ -93,6 +93,11 @@ Route::middleware([
         [AppointmentController::class,'reschedule']
     );
 
+    Route::patch(
+        '/appointments/{appointment}/reschedule/respond',
+        [AppointmentController::class, 'rescheduleRespond']
+    );
+
     Route::get(
         'user-shift-schedules/check-staff-availability',
         [UserShiftScheduleController::class, 'checkStaffAvailability']

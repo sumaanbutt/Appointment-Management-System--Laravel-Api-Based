@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Business\CreateBusinessRequest;
 use App\Http\Requests\Business\UpdateBusinessRequest;
@@ -14,12 +15,37 @@ use Illuminate\Support\Facades\Validator;
 
 class BusinessController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try{
-            $businesses = Business::with('organization', 'owner', 'locations')->latest()->paginate(10);
+            $query = Business::query()
+            ->with(
+                'organization', 'owner', 'locations');
 
-        return response()->json([
+            if ($request->organization_code) {
+                $query->where(
+                    'organization_code',
+                    $request->organization_code
+                );
+            }
+
+            if ($request->owner_code) {
+                $query->where(
+                    'owner_code',
+                    $request->owner_code
+                );
+            }
+
+            if ($request->location_code) {
+                $query->where(
+                    'location_code',
+                    $request->location_code
+                );
+            }
+
+            $businesses = ApiDataHelper::process( $query, $request );
+
+            return response()->json([
             'success' => true,
             'message' => 'Businesses fetched successfully',
             'data' => $businesses,

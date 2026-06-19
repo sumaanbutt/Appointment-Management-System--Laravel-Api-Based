@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Service\CreateServiceRequest;
 use App\Http\Requests\Service\UpdateServiceRequest;
@@ -10,23 +11,26 @@ use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try{
-            $query = Service::query();
+            $query = Service::query()
+            ->with('business');
+
             if(request()->business_code){
                 $query->where(
                     'business_code',
                     request()->business_code
                 );
             }
-            $services = $query
-                ->latest()
-                ->paginate(10);
+
+            $services = ApiDataHelper::process( $query, $request );
+
             return response()->json([
                 'success'=>true,
                 'data'=>$services
-            ]);
+            ],200);
+
         } catch (\Exception $e){
             return response()->json([
                 'success' => false,

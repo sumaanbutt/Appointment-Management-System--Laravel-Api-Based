@@ -78,7 +78,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 // Updated layout evaluation checks to catch common role cases string formats
-const isAdmin = computed(() => authStore.role?.toLowerCase() === 'admin')
+const isAdmin = computed(() => authStore.role?.toLowerCase() === 'SUPER_ADMIN')
 const backLink = computed(() => {
   const role = authStore.role?.toLowerCase()
   if (role === 'OPERATION_STAFF' || role === 'ops') return '/ops/clients'
@@ -141,7 +141,7 @@ async function submit() {
         {
           body: payload
         })
-    router.push(backLink.value)
+    router.push(backLink.vue)
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create client'
   } finally {

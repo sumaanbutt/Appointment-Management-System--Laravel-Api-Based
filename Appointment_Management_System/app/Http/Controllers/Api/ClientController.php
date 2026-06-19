@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\CreateClientRequest;
 use App\Http\Requests\Client\UpdateClientRequest;
@@ -13,10 +14,20 @@ use Illuminate\Support\Facades\Hash;
 
 class ClientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
     try{
-        $clients = Client::with('user')->latest()->paginate(10);
+        $query = Client::query()
+            ->with('user');
+
+        if ($request->location_code) {
+            $query->where(
+                'location_code',
+                $request->location_code
+            );
+        }
+
+        $clients = ApiDataHelper::process( $query, $request );
 
         return response()->json([
             'success' => true,

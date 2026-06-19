@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invoice\CreateInvoiceRequest;
 use App\Http\Requests\Invoice\UpdateInvoiceRequest;
@@ -11,7 +12,7 @@ use Illuminate\Validation\Rules\In;
 
 class InvoiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try{
                 $query = Invoice::query();
@@ -30,13 +31,12 @@ class InvoiceController extends Controller
                     );
                 }
 
-                $invoices = $query
-                    ->latest()
-                    ->paginate(10);
-                return response()->json([
+            $invoices = ApiDataHelper::process( $query, $request );
+
+            return response()->json([
                     'status' => true,
                     'message' => 'Invoice List',
-                    'invoices' => $invoices,
+                    'data' => $invoices,
                 ],200);
 
         } catch (\Exception $e){

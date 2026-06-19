@@ -36,13 +36,18 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import {computed, reactive, ref} from 'vue'
 import { useRouter } from 'vue-router'
 // import api from '@/services/api'
 import {apiHandler} from "@/services/api/apiHandler.ts";
 
 
 const router = useRouter()
+
+const isAdmin = computed(
+    () => authStore.user?.user_type === 'SUPER_ADMIN'
+)
+const backLink = computed(() => isAdmin.value ? '/admin/organizations' : '/owner/organizations')
 
 const loading = ref(false)
 const error = ref('')
@@ -77,7 +82,7 @@ async function submit() {
         {
         body: form
   })
-    router.push('/organizations')
+    router.push(backLink.value)
   } catch (err) {
 
     console.log('ERROR OBJECT:', err)

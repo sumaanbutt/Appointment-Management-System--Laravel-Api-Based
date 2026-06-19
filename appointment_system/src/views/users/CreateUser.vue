@@ -96,9 +96,14 @@ import {apiHandler} from "@/services/api/apiHandler.ts";
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const isAdmin = computed(
+    () => authStore.user?.user_type === 'SUPER_ADMIN'
+)
 
 const staffOnly = computed(() => route.query.staffOnly === 'true')
 const isBusinessOwner = computed(() => authStore.role === 'BUSINESS_OWNER')
+const backLink = computed(() => isAdmin.value ? '/admin/users' : '/owner/users')
+
 
 const form = reactive({
   name:'',
@@ -144,8 +149,14 @@ function validateField(field) {
 
 onMounted(async () => {
   try {
-    const res = await apiHandler('business', 'getAllBusinesses')
-    businesses.value = res.data.data.data || []
+    const res = await apiHandler('business', 'getAllBusinesses',
+        {
+          params: {
+            all_records: true
+          }
+        }
+    )
+    businesses.value = res.data.data || []
   } catch (_) {}
 })
 
@@ -173,7 +184,7 @@ async function submit() {
           body: payload
         })
 
-    router.push('/users')
+    router.push(backLink.value)
   } catch (err) {
     error.value =
         err.response?.data?.message

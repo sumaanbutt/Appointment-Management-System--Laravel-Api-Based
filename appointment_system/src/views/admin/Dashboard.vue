@@ -89,17 +89,17 @@
         <thead>
         <tr>
           <th>Code</th>
-          <th>Client</th>
-          <th>Service</th>
+          <th>Client Name</th>
+          <th>Service Name</th>
           <th>Date</th>
           <th>Status</th>
         </tr>
         </thead>
         <tbody>
         <tr v-for="appt in recentAppointments" :key="appt.code">
-          <td>{{ appt.code }}</td>
+          <td><code>{{ appt.code }}</code></td>
           <td>{{ appt.client?.user?.name || appt.client?.name || '—' }}</td>
-          <td><code>{{ appt.service?.service_name }}</code></td>
+          <td>{{ appt.service?.service_name }}</td>
           <td>{{ appt.appointment_start_date || '—' }}</td>
           <td>
             <span :class="['badge',appt.status?.toLowerCase()]">{{ appt.status }}</span>
@@ -118,6 +118,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/services/api.ts'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 
 const loading = ref(true)
@@ -157,26 +158,94 @@ function getCount(res){
         ??
         0
     )
-
   return 0
 }
 
+// function getCount(res) {
+//
+//   const response = res?.data
+//
+//   if (
+//       response?.data &&
+//       typeof response.data === 'object' &&
+//       response.data.total !== undefined
+//   ) {
+//     return Number(response.data.total)
+//   }
+//
+//   const data =
+//       response?.data?.data
+//       ??
+//       response?.data
+//       ??
+//       []
+//
+//   if (Array.isArray(data)) {
+//     return data.length
+//   }
+//
+//   return Number(
+//       data?.count
+//       ??
+//       0
+//   )
+// }
+
+
 onMounted(async () => {
-
   try {
-
     const [orgs, bizs, clients, appts, users, svcs, invs, locs] =
         await Promise.allSettled([
 
-          api.get('/organizations'),
-          api.get('/businesses'),
-          api.get('/clients'),
-          api.get('/appointments'),
-          api.get('/users'),
-          api.get('/services'),
-          api.get('/invoices'),
-          api.get('/business-locations'),
+          // api.get('/organizations'),
+          // api.get('/businesses'),
+          // api.get('/clients'),
+          // api.get('/appointments'),
+          // api.get('/users'),
+          // api.get('/services'),
+          // api.get('/invoices'),
+          // api.get('/business-locations'),
 
+          apiHandler("organization", "getAllOrganizations",{
+            params: {
+              data_category: "stats"
+            }
+          }),
+          apiHandler("business", "getAllBusinesses",{
+            params: {
+              data_category: "stats"
+            }
+          }),
+          apiHandler("client", "getAllClients",{
+            params: {
+              data_category: "stats"
+            }
+          }),
+          apiHandler("appointment", "getAllAppointments",{
+            params: {
+              data_category: "stats"
+            }
+          }),
+          apiHandler("user", "getAllUsers",{
+            params: {
+              data_category: "stats"
+            }
+          }),
+          apiHandler("service", "getAllServices",{
+            params: {
+              data_category: "stats"
+            }
+          }),
+          apiHandler("invoice", "getAllInvoices",{
+            params: {
+              data_category: "stats"
+            }
+          }),
+          apiHandler("location", "getAllLocations",{
+            params: {
+              data_category: "stats"
+            }
+          }),
         ])
 
     console.log('APPOINTMENTS RESPONSE:', appts)
@@ -204,11 +273,11 @@ onMounted(async () => {
         svcs.status === 'fulfilled' ? getCount(svcs.value) : 0
 
     stats.value.invoices =
-        invs.status === 'fulfilled'
-            ? (invs.value.data.invoices?.data?.length ||
-                invs.value.data.invoices?.length ||
-                0)
-            : 0
+        invs.status === 'fulfilled' ? getCount(svcs.value) : 0
+            // ? (invs.value.data.invoices?.data?.length ||
+            //     invs.value.data.invoices?.length ||
+            //     0)
+            // : 0
 
     stats.value.locations =
         locs.status === 'fulfilled' ? getCount(locs.value) : 0
@@ -270,14 +339,14 @@ onMounted(async () => {
   font-size: 22px;
 }
 
-.stat-icon.org   { background: #ede9fe; }
-.stat-icon.biz   { background: #dbeafe; }
+.stat-icon.org    { background: #ede9fe; }
+.stat-icon.biz    { background: #dbeafe; }
 .stat-icon.client { background: #dcfce7; }
-.stat-icon.app   { background: #fef9c3; }
-.stat-icon.usr   { background: #ffe4e6; }
-.stat-icon.svc   { background: #e0f2fe; }
-.stat-icon.inv   { background: #f0fdf4; }
-.stat-icon.loc   { background: #fdf4ff; }
+.stat-icon.app    { background: #fef9c3; }
+.stat-icon.usr    { background: #ffe4e6; }
+.stat-icon.svc    { background: #e0f2fe; }
+.stat-icon.inv    { background: #f0fdf4; }
+.stat-icon.loc    { background: #fdf4ff; }
 
 .stat-label {
   margin: 0;
@@ -363,5 +432,34 @@ onMounted(async () => {
   color: #94a3b8;
   padding: 20px;
   font-size: 14px;
+}
+
+:global(body.dark-mode) .stat-card {
+  background: #1e293b;
+}
+
+:global(body.dark-mode) .card {
+  background: #1e293b;
+}
+
+:global(body.dark-mode) .stat-value,
+:global(body.dark-mode) .card-header h3,
+:global(body.dark-mode) h1 {
+  color: white;
+}
+
+:global(body.dark-mode) .stat-label,
+:global(body.dark-mode) p,
+:global(body.dark-mode) .table th {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .table td {
+  color: #e5e7eb;
+}
+
+:global(body.dark-mode) .table th,
+:global(body.dark-mode) .table td {
+  border-bottom: 1px solid #334155;
 }
 </style>

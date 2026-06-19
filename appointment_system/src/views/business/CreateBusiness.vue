@@ -71,7 +71,7 @@
   </template>
 
   <script setup>
-  import { reactive, ref, onMounted } from 'vue'
+  import {reactive, ref, onMounted, computed} from 'vue'
   import { useRouter } from 'vue-router'
   import api from '@/services/api'
   import {apiHandler} from "@/services/api/apiHandler.ts";
@@ -90,6 +90,10 @@
   const loading = ref(false)
   const error = ref('')
   const errors = reactive({})
+  const isAdmin = computed(
+      () => authStore.user?.user_type === 'SUPER_ADMIN'
+  )
+  const backLink = computed(() => isAdmin.value ? '/admin/businesses' : '/owner/businesses')
 
   function validateBusinessForm(form) {
     const errors = {}
@@ -136,7 +140,7 @@
           {
           body: form
           })
-      router.push('/businesses')
+      router.push(backLink.value)
     } catch (err) {
       error.value = err.response?.data?.message || 'Failed to create business'
     } finally {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Location\CreateBusinessLocationRequest;
 use App\Http\Requests\Location\UpdateBusinessLocationRequest;
@@ -11,23 +12,27 @@ use Illuminate\Support\Facades\Validator;
 
 class BusinessLocationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try{
-            $query = BusinessLocation::with('business');
+            $query = BusinessLocation::query()
+                ->with('business');
+
             if(request()->business_code){
-                $query->where('business_code', request()->business_code);
+                $query->where(
+                    'business_code',
+                    request()->business_code);
             }
 
-            $locations = $query
-                    ->latest()
-                    ->paginate(10);
+            $locations = ApiDataHelper::process( $query, $request );
+
 
             return response()->json([
                 'success'=>true,
                 'message'=> 'Locations fetched successfully',
                 'data'=> $locations,
             ],200);
+
         } catch(\Exception $e){
             return response()->json([
                 'success'=>false,

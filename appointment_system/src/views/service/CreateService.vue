@@ -97,7 +97,7 @@ const authStore = useAuthStore()
 const isAdmin = computed(
     () => authStore.user?.user_type === 'SUPER_ADMIN'
 )
-const backLink = computed(() => isAdmin.value ? '/services' : '/business/services')
+const backLink = computed(() => isAdmin.value ? '/admin/services' : '/owner/services')
 
 const currencies = ['PKR', 'USD', 'EUR']
 const durationUnits = ['WEEK', 'DAY', 'HOUR', 'MINUTE']

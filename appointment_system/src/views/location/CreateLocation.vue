@@ -119,7 +119,7 @@ const isAdmin = computed(
 )
 console.log('isAdmin', isAdmin.value)
 console.log(authStore.user)
-const backLink = computed(() => isAdmin.value ? '/business-locations' : '/business/locations')
+const backLink = computed(() => isAdmin.value ? '/admin/locations' : '/owner/locations')
 
 const form = reactive({
   business_code:'',
@@ -301,9 +301,8 @@ async function submit() {
         backLink.value
     )
 
-    router.push(
-        backLink.value
-    )
+    router.push(backLink.value)
+
 
   }
 

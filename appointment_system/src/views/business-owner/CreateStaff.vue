@@ -1,154 +1,3 @@
-<!--  <template>-->
-<!--    <div class="card border-0 shadow-sm rounded-3 max-width-md mx-auto p-4">-->
-<!--      <div class="mb-4">-->
-<!--        <h3 class="text-dark fw-bold mb-1">Onboard New Staff Member</h3>-->
-<!--        <p class="text-muted small">Fill out profile data to add a new operational or service staff member.</p>-->
-<!--      </div>-->
-
-<!--      <form @submit.prevent="handleCreateStaffSubmit">-->
-<!--        <div class="row g-3">-->
-
-<!--          <div class="col-md-6">-->
-<!--            <label class="form-label fw-semibold small text-secondary">Full Name *</label>-->
-<!--            <input type="text" v-model="form.name" class="form-control" placeholder="John Doe" required />-->
-<!--          </div>-->
-
-<!--          <div class="col-md-6">-->
-<!--            <label class="form-label fw-semibold small text-secondary">Email Address</label>-->
-<!--            <input type="email" v-model="form.email" class="form-control" placeholder="john.doe@company.com" />-->
-<!--          </div>-->
-
-<!--          <div class="col-md-6">-->
-<!--            <label class="form-label fw-semibold small text-secondary">Phone Number</label>-->
-<!--            <input type="text" v-model="form.phone" class="form-control" placeholder="+1 (555) 000-0000" />-->
-<!--          </div>-->
-
-<!--          <div class="col-md-6">-->
-<!--            <label class="form-label fw-semibold small text-secondary">System User Type / Role *</label>-->
-<!--            <select v-model="form.user_type" class="form-select" required>-->
-<!--              <option value="">Select organizational role...</option>-->
-<!--              <option value="OPERATION_STAFF">OPERATION STAFF</option>-->
-<!--              <option value="SERVICE_STAFF">SERVICE STAFF</option>-->
-<!--            </select>-->
-<!--          </div>-->
-
-<!--          <div class="col-12" v-if="['OPERATION_STAFF', 'SERVICE_STAFF'].includes(form.user_type)">-->
-<!--            <div class="p-3 bg-light rounded-3 border">-->
-<!--              <label class="form-label fw-bold text-primary small d-block mb-2">-->
-<!--                <i class="bi bi-briefcase me-1"></i> Employment Type Assignment *-->
-<!--              </label>-->
-<!--              <select v-model="form.employee_type" class="form-select bg-white" required>-->
-<!--                <option value="">Choose profile structure...</option>-->
-<!--                <option value="PERMANENT">PERMANENT (Full-Time Fixed Core Staff)</option>-->
-<!--                <option value="VISITING">VISITING (Part-Time / Seasonal Contractor)</option>-->
-<!--                <option value="REMOTE">REMOTE (Off-Site Digital Execution Unit)</option>-->
-<!--              </select>-->
-<!--            </div>-->
-<!--          </div>-->
-
-<!--          <div class="col-md-6">-->
-<!--            <label class="form-label fw-semibold small text-secondary">Security Password *</label>-->
-<!--            <input type="password" v-model="form.password" class="form-control" placeholder="••••••••" required />-->
-<!--          </div>-->
-
-<!--          <div class="col-md-6">-->
-<!--            <label class="form-label fw-semibold small text-secondary">Confirm Password *</label>-->
-<!--            <input type="password" v-model="form.password_confirmation" class="form-control" placeholder="••••••••" required />-->
-<!--          </div>-->
-
-<!--        </div>-->
-
-<!--        <div class="d-flex align-items-center justify-content-end gap-2 mt-4 pt-3 border-top">-->
-<!--          <button type="button" class="btn btn-light px-4" @click="$emit('cancel')">Cancel</button>-->
-<!--          <button type="submit" class="btn btn-primary px-4 fw-semibold" :disabled="loading">-->
-<!--            {{ loading ? 'Saving Profile...' : 'Register Profile' }}-->
-<!--          </button>-->
-<!--        </div>-->
-<!--      </form>-->
-<!--    </div>-->
-<!--  </template>-->
-
-<!--  <script setup>-->
-<!--  import { ref } from 'vue'-->
-<!--  import { useAuthStore } from '@/stores/auth.store'-->
-<!--  import api from '@/services/api'-->
-
-<!--  const emit = defineEmits(['saved', 'cancel'])-->
-<!--  const authStore = useAuthStore()-->
-<!--  const loading = ref(false)-->
-
-<!--  const form = ref({-->
-<!--    name: '',-->
-<!--    email: '',-->
-<!--    phone: '',-->
-<!--    user_type: '',-->
-<!--    employee_type: '',-->
-<!--    password: '',-->
-<!--    password_confirmation: '',-->
-<!--    business_code: authStore.user?.business_code || null,-->
-<!--    status: 'ACTIVE'-->
-<!--  })-->
-
-<!--  async function handleCreateStaffSubmit() {-->
-<!--    if (form.value.password !== form.value.password_confirmation) {-->
-<!--      alert('Passwords do not match.')-->
-<!--      return-->
-<!--    }-->
-
-<!--    loading.value = true-->
-
-<!--    // Format the request explicitly to make sure everything maps to your Laravel User model constraints-->
-<!--    const payload = {-->
-<!--      name: form.value.name,-->
-<!--      email: form.value.email || null, // Ensure empty strings pass as proper SQL null types-->
-<!--      phone: form.value.phone || null,-->
-<!--      user_type: form.value.user_type,-->
-<!--      password: form.value.password,-->
-<!--      password_confirmation: form.value.password_confirmation, // Needed for Laravel's 'confirmed' password rule hook-->
-<!--      organization_code: authStore.user?.organization_code,-->
-<!--      business_code: form.value.business_code || authStore.user?.business_code,-->
-<!--      status: form.value.status || 'ACTIVE'-->
-<!--    }-->
-
-<!--    // Only assign employment structure tracking values if roles apply contextually-->
-<!--    if (['OPERATION_STAFF', 'SERVICE_STAFF'].includes(form.value.user_type) && form.value.employee_type) {-->
-<!--      payload.employee_type = form.value.employee_type-->
-<!--    }-->
-
-<!--    try {-->
-<!--      await api.post('/users', payload)-->
-
-<!--      // Reset local state tracking configuration elements after successful completion-->
-<!--      form.value = {-->
-<!--        name: '',-->
-<!--        email: '',-->
-<!--        phone: '',-->
-<!--        user_type: '',-->
-<!--        employee_type: '',-->
-<!--        password: '',-->
-<!--        password_confirmation: '',-->
-<!--        business_code: authStore.user?.business_code || null,-->
-<!--        status: 'ACTIVE'-->
-<!--      }-->
-
-<!--      emit('saved')-->
-<!--    } catch (err) {-->
-<!--      console.log(err.response?.data)-->
-
-<!--      alert(-->
-<!--          JSON.stringify(-->
-<!--              err.response?.data,-->
-<!--              null,-->
-<!--              2-->
-<!--          )-->
-<!--      )-->
-<!--    } finally {-->
-<!--      loading.value = false-->
-<!--    }-->
-<!--  }-->
-<!--  </script>-->
-
-
 
 <template>
   <div class="page">
@@ -199,13 +48,17 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import {computed, reactive, ref} from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const isAdmin = computed(
+    () => authStore.user?.user_type === 'SUPER_ADMIN'
+)
+const backLink = computed(() => isAdmin.value ? '/admin/staff' : '/owner/staff')
 
 const form = reactive({ name: '', email: '', phone: '', password: '', password_confirmation:'', user_type: '', employee_type: '', status: '' })
 const loading = ref(false)
@@ -216,7 +69,7 @@ async function submit() {
   error.value = ''
   try {
     await api.post('/users', { ...form, business_code: authStore.user?.business_code })
-    router.push('/business/staff')
+    router.push(backLink.value)
   } catch (err) {
 
     console.log(

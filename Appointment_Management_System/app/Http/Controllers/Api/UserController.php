@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\CreateUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
@@ -11,12 +12,13 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try{
-            $query = User::query()->with('business');
+            $query = User::query()
+                ->with('business');
 
-            if(request()->business_code){
+            if($request->business_code){
                 $query->where(
                     'business_code',
                     request()->business_code
@@ -29,9 +31,10 @@ class UserController extends Controller
                     request()->user_type
                 );
             }
-            $users = $query
-                ->latest()
-                ->paginate(10);
+
+            $users = ApiDataHelper::process( $query, $request );
+
+
             return response()->json([
                 'success'=>true,
                 'message'=> 'Users fetched successfully',

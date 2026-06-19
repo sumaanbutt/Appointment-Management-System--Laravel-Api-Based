@@ -99,10 +99,13 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth.store'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const router = useRouter()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.user_type === 'SUPER_ADMIN')
+
+const backLink = computed(() => isAdmin.value ? '/admin/appointments' : '/owner/appointments')
 
 const form = reactive({
   business_code: '',
@@ -123,6 +126,7 @@ const locations = ref([])
 const loading = ref(false)
 const error = ref('')
 const errors = reactive({})
+
 
 // Local Form Validation Implementation
 function validateAppointmentForm(data) {
@@ -146,8 +150,14 @@ async function fetchServicesAndLocations(bizCode) {
   if (!bizCode) { services.value = []; locations.value = []; return }
 
   const [svcRes, locRes] = await Promise.allSettled([
-    api.get('/services', { params: { business_code: bizCode } }),
-    api.get('/business-locations', { params: { business_code: bizCode } }),
+    // api.get('/services', { params: { business_code: bizCode } }),
+    await apiHandler('service', 'getAllServices', {
+    params: {business_code: bizCode}
+    }),
+    await apiHandler('location', 'getAllLocations'    , {
+    params: { business_code: bizCode }
+  })
+    // api.get('/business-locations', { params: { business_code: bizCode } }),
   ])
 
   if (svcRes.status === 'fulfilled') {
@@ -176,8 +186,10 @@ async function fetchServicesAndLocations(bizCode) {
 
 onMounted(async () => {
   const [bizRes, clientRes] = await Promise.allSettled([
-    api.get('/businesses'),
-    api.get('/clients'),
+    // api.get('/businesses'),
+    // api.get('/clients'),
+    await apiHandler('business', 'getAllBusinesses'),
+    await apiHandler('client', 'getAllClients')
   ])
 
   if (bizRes.status === 'fulfilled') {
@@ -223,8 +235,11 @@ async function submit() {
     if (!payload.notes) delete payload.notes
     if (!payload.client_code) delete payload.client_code
 
-    await api.post('/appointments', payload)
-    router.push('/admin/appointments')
+    // await api.post('/appointments', payload)
+    await apiHandler('appointment', 'createAppointment', {
+      body: payload
+    })
+    router.push(backLink.value)
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create appointment'
   } finally {

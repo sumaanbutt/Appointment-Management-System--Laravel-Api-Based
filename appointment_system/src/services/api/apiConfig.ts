@@ -339,33 +339,39 @@ export const API_CONFIG = {
     },
 
     appointment: {
+        createAppointment: {
+            endpoint: '/appointments',
+            method: 'POST',
+        },
+
         getAllAppointments: {
             endpoint: '/appointments',
             method: 'GET'
         },
 
         getAppointmentHistory: {
-            endpoint: '/appointments/get-appointment-history/:code',
+            endpoint: '/appointments/:code/histories',
             method: 'GET'
         },
+        // const res = await api.get(`/appointments/${appt.code}/histories `)
 
         updateAppointmentStatus: {
-            endpoint: '/appointments/update-appointment-status/:code',
+            endpoint: '/appointments/:code/status',
             method: 'PATCH'
         },
 
         rescheduleAppointment: {
-            endpoint: '/appointments/reschedule-appointment/:code',
+            endpoint: '/appointments/:code/reschedule',
             method: 'POST',
         },
 
         checkStaffAvailability: {
-            endpoint: '/appointments/check-availability/:code',
+            endpoint: '/appointments/:code/availability',
             method: 'GET',
         },
 
         approveAppointment: {
-            endpoint: '/appointments/approve-appointment/:code',
+            endpoint: '/appointments/:code/approve',
             method: 'POST',
         },
 
@@ -379,13 +385,33 @@ export const API_CONFIG = {
             method: 'GET'
         },
         updateAppointmentRecurrence: {
-            endpoint: '/appointments/update-appointment-recurrence/:code',
+            endpoint: '/appointments/:code',
             method: 'PUT',
         },
         deleteAppointmentRecurrence: {
-            endpoint: '/appointments/delete-appointment-recurrence/:code',
+            endpoint: '/appointments/:code',
             method: 'DELETE'
         }
     },
+
+    staffSchedule: {
+        createSchedule: {
+            endpoint: '/user-shift-schedules',
+            method: 'POST',
+        },
+        getAllSchedules: {
+            endpoint: '/user-shift-schedules',
+            method: 'GET'
+        },
+        updateSchedule: {
+            endpoint: '/user-shift-schedules/:code',
+            method: 'PUT',
+        },
+        deleteSchedule: {
+            endpoint: '/user-shift-schedules/:code',
+            method: 'DELETE',
+        }
+    },
+
 
 }

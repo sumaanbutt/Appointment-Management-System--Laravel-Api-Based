@@ -539,481 +539,557 @@
       </div>
     </div>
 
-  </div>
-</template>
+    </div>
+  </template>
 
 
-<script setup>
-import { computed, reactive, ref, onMounted } from 'vue'
-import api from '@/services/api'
-import formatDate from "@/services/formatDate.ts";
-import formatTime from "@/services/formatTime.ts";
+  <script setup>
+  import { computed, reactive, ref, onMounted } from 'vue'
+  import api from '@/services/api'
+  import formatDate from "@/services/formatDate.ts";
+  import formatTime from "@/services/formatTime.ts";
+  import {apiHandler} from "@/services/api/apiHandler.ts";
 
-const appointments = ref([])
-const loading = ref(true)
-const saving = ref(false)
-const error = ref('')
-const rescheduleError = ref('')
-const currentPage = ref(1)
-const lastPage = ref(1)
+  const appointments = ref([])
+  const currentPage = ref(1)
+  const lastPage = ref(1)
 
-const search = ref('')
-const statusFilter = ref('')
+  const loading = ref(true)
+  const saving = ref(false)
+  const error = ref('')
+  const rescheduleError = ref('')
 
-const showDetails = ref(false)
-const showReschedule = ref(false)
-const selected = ref(null)
-const historyLoading = ref(false)
-const appointmentHistory = ref([])
 
-const rescheduleForm = reactive({
-  appointment_start_date: '',
-  appointment_end_date: '',
-  start_time: '',
-  end_time: '',
-  reason: '',
-})
+  const search = ref('')
+  const statusFilter = ref('')
 
-async function fetchAppointments() {
-  loading.value = true
-  error.value = ''
-  try {
-    const res = await api.get('/appointments',{
-      params: { page: currentPage.value }
-    })
-    appointments.value = res.data.data.data || []
-    currentPage.value = res.data.data.current_page
-    lastPage.value = res.data.data.last_page
-  } catch(err){
-    error.value = err.response?.data?.message || 'Failed loading appointments'
-  } finally {
-    loading.value = false
-  }
-}
+  const showDetails = ref(false)
+  const showReschedule = ref(false)
+  const selected = ref(null)
+  const historyLoading = ref(false)
+  const appointmentHistory = ref([])
 
-async function changePage(page) {
-  if (page < 1 || page > lastPage.value) return
-  currentPage.value = page
-  await fetchAppointments()
-}
-
-const filteredAppointments = computed(() => {
-  return appointments.value.filter(a => {
-    const s = search.value.toLowerCase()
-    const matchSearch = !s || (a.code || '').toLowerCase().includes(s) || (a.client_code || '').toLowerCase().includes(s)
-    const matchStatus = !statusFilter.value || a.status === statusFilter.value
-    return matchSearch && matchStatus
+  const rescheduleForm = reactive({
+    appointment_start_date: '',
+    appointment_end_date: '',
+    start_time: '',
+    end_time: '',
+    reason: '',
   })
-})
 
-async function openDetails(appt) {
-  selected.value = appt
-  appointmentHistory.value = []
-  showDetails.value = true
-  historyLoading.value = true
-  try {
-    const res = await api.get(`/appointments/${appt.code}/histories `)
-    appointmentHistory.value = res.data.data.data || []
-  } catch (_) {
-  } finally {
-    historyLoading.value = false
+  async function fetchAppointments() {
+    loading.value = true
+    error.value = ''
+    try {
+      const res = await apiHandler(
+          "appointment",
+          "getAllAppointments",
+          {
+            params: {
+              page: currentPage.value,
+              include: "business,creator,approver,services,services.service,location"
+            }
+          }
+      )
+      appointments.value = res.data.data.data || []
+      currentPage.value = res.data.data.current_page
+      lastPage.value = res.data.data.last_page
+    } catch(err){
+      error.value = err.response?.data?.message || 'Failed loading appointments'
+    } finally {
+      loading.value = false
+    }
   }
-}
 
-function openReschedule(appt) {
-  selected.value = appt
-  rescheduleForm.appointment_start_date = appt.appointment_start_date || ''
-  rescheduleForm.appointment_end_date = appt.appointment_end_date || ''
-  rescheduleForm.start_time = appt.start_time || ''
-  rescheduleForm.end_time = appt.end_time || ''
-  rescheduleForm.reason = ''
-  rescheduleError.value = ''
-  showReschedule.value = true
-}
-
-async function changeStatus(appt, status) {
-  try {
-    await api.patch(`/appointments/${appt.code}/status`, { status })
-    appt.status = status
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Status update failed'
-  }
-}
-
-async function submitReschedule() {
-  saving.value = true
-  rescheduleError.value = ''
-  try {
-    await api.post(`/appointments/${selected.value.code}/reschedule`, rescheduleForm)
-    showReschedule.value = false
+  async function changePage(page) {
+    if (page < 1 || page > lastPage.value) return
+    currentPage.value = page
     await fetchAppointments()
-  } catch (err) {
-    rescheduleError.value = err.response?.data?.message || 'Reschedule failed'
-  } finally {
-    saving.value = false
   }
-}
 
-// ==================== Approval Flow Pipeline ====================
-
-const showApproval = ref(false)
-const availabilityLoading = ref(false)
-const availabilityError = ref('')
-const availableStaff = ref([])
-const engagedStaff = ref([])
-const approvalSaving = ref(false)
-const approvalError = ref('')
-const showRescheduleInApproval = ref(false)
-const approvalSelectedStaff = ref('')
-const slotAlreadyBooked = ref(false)
-const conflictingAppointments = ref([])
-const alternativeTimeSameLocation = ref([])
-const alternativeLocationSameTime = ref([])
-const serviceLocationsAlternatives = ref([])
-const recommendedAlternativeKey = ref('')
-const autoCharges = ref([])
-const optionalCharges = ref([])
-const selectedChargeCodes = ref([])
-const selectedAlternativeType = ref('')
-const selectedAlternative = ref(null)
-
-const approvalRescheduleForm = reactive({
-  appointment_start_date: '',
-  appointment_end_date: '',
-  start_time: '',
-  end_time: '',
-  location_code: '',
-  notes: '',
-})
-
-function toDateInput(v) {
-  return String(v || '').split('T')[0] || ''
-}
-
-function toTimeInput(v) {
-  return String(v || '').slice(0, 5) || ''
-}
-
-function slotTimeValue(v) {
-  const normalized = toTimeInput(v)
-  const [h, m] = normalized.split(':').map(Number)
-  if (Number.isNaN(h) || Number.isNaN(m)) return Number.MAX_SAFE_INTEGER
-  return h * 60 + m
-}
-
-function slotKey(locationCode, startTime, endTime, userCode) {
-  return [locationCode || '', toTimeInput(startTime), toTimeInput(endTime), userCode || ''].join('|')
-}
-
-function isRecommendedAlternative(locationCode, startTime, endTime, userCode) {
-  return recommendedAlternativeKey.value !== '' && recommendedAlternativeKey.value === slotKey(locationCode, startTime, endTime, userCode)
-}
-
-function sortAlternativeSlots(slots, locationCode) {
-  return [...(slots || [])].sort((a, b) => {
-    const aPriority = isRecommendedAlternative(locationCode, a.start_time, a.end_time, a.user_code) ? 0 : 1
-    const bPriority = isRecommendedAlternative(locationCode, b.start_time, b.end_time, b.user_code) ? 0 : 1
-    if (aPriority !== bPriority) return aPriority - bPriority
-    return slotTimeValue(a.start_time) - slotTimeValue(b.start_time)
+  const filteredAppointments = computed(() => {
+    return appointments.value.filter(a => {
+      const s = search.value.toLowerCase()
+      const matchSearch = !s || (a.code || '').toLowerCase().includes(s) || (a.client_code || '').toLowerCase().includes(s)
+      const matchStatus = !statusFilter.value || a.status === statusFilter.value
+      return matchSearch && matchStatus
+    })
   })
-}
 
-function applyRecommendationOrdering() {
-  alternativeTimeSameLocation.value = sortAlternativeSlots(alternativeTimeSameLocation.value, selected.value?.location_code)
-  alternativeLocationSameTime.value = (alternativeLocationSameTime.value || []).map((loc) => ({
-    ...loc,
-    staff: sortAlternativeSlots(loc.staff, loc.location_code),
-  }))
-  serviceLocationsAlternatives.value = (serviceLocationsAlternatives.value || []).map((loc) => ({
-    ...loc,
-    available_staff_same_slot: sortAlternativeSlots(loc.available_staff_same_slot, loc.location_code),
-    alternative_staff_time_slots: sortAlternativeSlots(loc.alternative_staff_time_slots, loc.location_code),
-  }))
-}
+  async function openDetails(appt) {
+    selected.value = appt
+    appointmentHistory.value = []
+    showDetails.value = true
+    historyLoading.value = true
+    try {
+      const res = await apiHandler(
+          "appointment",
+          "getAppointmentHistory",
+          {
+            pathParams: {
+              code: appt.code
+            },
+            params: {
+              include: "changedByUser"
+            }
+          })
+      appointmentHistory.value = res.data.data.data || []
+    } catch (_) {
+    } finally {
+      historyLoading.value = false
+    }
+  }
 
-function pickRecommendedAlternative() {
-  const candidates = []
-  for (const s of alternativeTimeSameLocation.value || []) {
-    candidates.push({
-      key: slotKey(selected.value?.location_code, s.start_time, s.end_time, s.user_code),
-      time: slotTimeValue(s.start_time),
-      priority: 1,
+  function openReschedule(appt) {
+    selected.value = appt
+    rescheduleForm.appointment_start_date = appt.appointment_start_date || ''
+    rescheduleForm.appointment_end_date = appt.appointment_end_date || ''
+    rescheduleForm.start_time = appt.start_time || ''
+    rescheduleForm.end_time = appt.end_time || ''
+    rescheduleForm.reason = ''
+    rescheduleError.value = ''
+    showReschedule.value = true
+  }
+
+  async function changeStatus(appt, status) {
+    try {
+      await apiHandler(
+          "appointment",
+          "updateAppointmentStatus",
+          {
+            pathParams: {
+              code: appt.code
+            },
+            body: {
+              status
+            }
+          })
+
+      await api.patch(`/appointments/${appt.code}/status`, { status })
+
+      appt.status = status
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Status update failed'
+    }
+  }
+
+  async function submitReschedule() {
+    saving.value = true
+    rescheduleError.value = ''
+    try {
+      await apiHandler("appointment", "rescheduleAppointment",{
+        pathParams: {
+          code: selected.value.code
+        },
+        body: {
+          ...rescheduleForm
+        }
+      })
+      showReschedule.value = false
+      await fetchAppointments()
+    } catch (err) {
+      rescheduleError.value = err.response?.data?.message || 'Reschedule failed'
+    } finally {
+      saving.value = false
+    }
+  }
+
+  // ==================== Approval Flow Pipeline ====================
+
+  const showApproval = ref(false)
+  const availabilityLoading = ref(false)
+  const availabilityError = ref('')
+  const availableStaff = ref([])
+  const engagedStaff = ref([])
+  const approvalSaving = ref(false)
+  const approvalError = ref('')
+  const showRescheduleInApproval = ref(false)
+  const approvalSelectedStaff = ref('')
+  const slotAlreadyBooked = ref(false)
+  const conflictingAppointments = ref([])
+  const alternativeTimeSameLocation = ref([])
+  const alternativeLocationSameTime = ref([])
+  const serviceLocationsAlternatives = ref([])
+  const recommendedAlternativeKey = ref('')
+  const autoCharges = ref([])
+  const optionalCharges = ref([])
+  const selectedChargeCodes = ref([])
+  const selectedAlternativeType = ref('')
+  const selectedAlternative = ref(null)
+
+  const approvalRescheduleForm = reactive({
+    appointment_start_date: '',
+    appointment_end_date: '',
+    start_time: '',
+    end_time: '',
+    location_code: '',
+    notes: '',
+  })
+
+  function toDateInput(v) {
+    return String(v || '').split('T')[0] || ''
+  }
+
+  function toTimeInput(v) {
+    return String(v || '').slice(0, 5) || ''
+  }
+
+  function slotTimeValue(v) {
+    const normalized = toTimeInput(v)
+    const [h, m] = normalized.split(':').map(Number)
+    if (Number.isNaN(h) || Number.isNaN(m)) return Number.MAX_SAFE_INTEGER
+    return h * 60 + m
+  }
+
+  function slotKey(locationCode, startTime, endTime, userCode) {
+    return [locationCode || '', toTimeInput(startTime), toTimeInput(endTime), userCode || ''].join('|')
+  }
+
+  function isRecommendedAlternative(locationCode, startTime, endTime, userCode) {
+    return recommendedAlternativeKey.value !== '' && recommendedAlternativeKey.value === slotKey(locationCode, startTime, endTime, userCode)
+  }
+
+  function sortAlternativeSlots(slots, locationCode) {
+    return [...(slots || [])].sort((a, b) => {
+      const aPriority = isRecommendedAlternative(locationCode, a.start_time, a.end_time, a.user_code) ? 0 : 1
+      const bPriority = isRecommendedAlternative(locationCode, b.start_time, b.end_time, b.user_code) ? 0 : 1
+      if (aPriority !== bPriority) return aPriority - bPriority
+      return slotTimeValue(a.start_time) - slotTimeValue(b.start_time)
     })
   }
-  for (const loc of alternativeLocationSameTime.value || []) {
-    for (const s of loc.staff || []) {
-      candidates.push({
-        key: slotKey(loc.location_code, s.start_time, s.end_time, s.user_code),
-        time: slotTimeValue(s.start_time),
-        priority: 2,
-      })
-    }
-  }
-  for (const loc of serviceLocationsAlternatives.value || []) {
-    for (const s of loc.available_staff_same_slot || []) {
-      candidates.push({
-        key: slotKey(loc.location_code, s.start_time, s.end_time, s.user_code),
-        time: slotTimeValue(s.start_time),
-        priority: 3,
-      })
-    }
-    for (const s of loc.alternative_staff_time_slots || []) {
-      candidates.push({
-        key: slotKey(loc.location_code, s.start_time, s.end_time, s.user_code),
-        time: slotTimeValue(s.start_time),
-        priority: 4,
-      })
-    }
-  }
-  candidates.sort((a, b) => a.time - b.time || a.priority - b.priority)
-  recommendedAlternativeKey.value = candidates[0]?.key || ''
-  applyRecommendationOrdering()
-}
 
-async function openApprovalDialog(appt) {
-  selected.value = appt
-  showApproval.value = true
-  await loadApprovalAvailability(appt)
-}
-
-async function loadApprovalAvailability(appt) {
-  selected.value = appt
-  showApproval.value = true
-  availabilityError.value = ''
-  availableStaff.value = []
-  engagedStaff.value = []
-  autoCharges.value = []
-  optionalCharges.value = []
-  selectedAlternativeType.value = ''
-  selectedAlternative.value = null
-  selectedChargeCodes.value = []
-  slotAlreadyBooked.value = false
-  approvalSelectedStaff.value = ''
-  conflictingAppointments.value = []
-  alternativeTimeSameLocation.value = []
-  alternativeLocationSameTime.value = []
-  serviceLocationsAlternatives.value = []
-  recommendedAlternativeKey.value = ''
-  approvalError.value = ''
-  showRescheduleInApproval.value = false
-  approvalRescheduleForm.appointment_start_date = toDateInput(appt.appointment_start_date) || ''
-  approvalRescheduleForm.appointment_end_date = toDateInput(appt.appointment_end_date) || ''
-  approvalRescheduleForm.start_time = toTimeInput(appt.start_time) || ''
-  approvalRescheduleForm.end_time = toTimeInput(appt.end_time) || ''
-  approvalRescheduleForm.location_code = appt.location_code || ''
-  approvalRescheduleForm.notes = ''
-
-  availabilityLoading.value = true
-  try {
-    const res = await api.get(`/appointments/${appt.code}/availability`)
-    console.log("RAW CHARGES OBJECT FROM API:", res.data.data?.charges)
-    console.log("AUTO ARRAY:", res.data.data?.charges?.auto_apply)
-    console.log("OPTIONAL ARRAY:", res.data.data?.charges?.optional)
-    availableStaff.value = res.data.data?.available_staff || []
-    engagedStaff.value = res.data.data?.engaged_staff || []
-    autoCharges.value = res.data.data?.charges?.auto_apply || []
-    selectedChargeCodes.value = autoCharges.value.map(c => c.code)
-    optionalCharges.value = res.data.data?.charges?.optional || []
-
-    console.log('OPTIONAL CHARGES', optionalCharges.value)
-
-    const alternatives = res.data.data?.alternatives || {}
-    alternativeTimeSameLocation.value = alternatives.different_time_same_location || []
-    alternativeLocationSameTime.value = Object.entries(alternatives.different_location_same_time || {}).map(([location_code, staff]) => ({
-      location_code,
-      staff
+  function applyRecommendationOrdering() {
+    alternativeTimeSameLocation.value = sortAlternativeSlots(alternativeTimeSameLocation.value, selected.value?.location_code)
+    alternativeLocationSameTime.value = (alternativeLocationSameTime.value || []).map((loc) => ({
+      ...loc,
+      staff: sortAlternativeSlots(loc.staff, loc.location_code),
     }))
-
-    serviceLocationsAlternatives.value = alternatives.selected_service_other_locations || []
-    pickRecommendedAlternative()
-    slotAlreadyBooked.value = res.data.data?.slot_already_booked || false
-    conflictingAppointments.value = res.data.data?.conflicting_appointments || []
-  } catch (err) {
-    availabilityError.value = err.response?.data?.message || 'Could not check availability'
-  } finally {
-    availabilityLoading.value = false
+    serviceLocationsAlternatives.value = (serviceLocationsAlternatives.value || []).map((loc) => ({
+      ...loc,
+      available_staff_same_slot: sortAlternativeSlots(loc.available_staff_same_slot, loc.location_code),
+      alternative_staff_time_slots: sortAlternativeSlots(loc.alternative_staff_time_slots, loc.location_code),
+    }))
   }
-}
 
-function closeApprovalDialog() {
-  showApproval.value = false
-  showRescheduleInApproval.value = false
-  selectedAlternativeType.value = ''
-  selectedAlternative.value = null
-  approvalError.value = ''
-}
-
-// Router to switch between standard validation payload vs bypass constraint force reassign paths
-async function handleMainApprovalAction() {
-  if (!approvalSelectedStaff.value) return
-  const isEngaged = engagedStaff.value.some(s => s.user_code === approvalSelectedStaff.value);
-
-  if (isEngaged) {
-    await forceAssignStaff(approvalSelectedStaff.value);
-  } else {
-    await submitApproveWithStaff();
+  function pickRecommendedAlternative() {
+    const candidates = []
+    for (const s of alternativeTimeSameLocation.value || []) {
+      candidates.push({
+        key: slotKey(selected.value?.location_code, s.start_time, s.end_time, s.user_code),
+        time: slotTimeValue(s.start_time),
+        priority: 1,
+      })
+    }
+    for (const loc of alternativeLocationSameTime.value || []) {
+      for (const s of loc.staff || []) {
+        candidates.push({
+          key: slotKey(loc.location_code, s.start_time, s.end_time, s.user_code),
+          time: slotTimeValue(s.start_time),
+          priority: 2,
+        })
+      }
+    }
+    for (const loc of serviceLocationsAlternatives.value || []) {
+      for (const s of loc.available_staff_same_slot || []) {
+        candidates.push({
+          key: slotKey(loc.location_code, s.start_time, s.end_time, s.user_code),
+          time: slotTimeValue(s.start_time),
+          priority: 3,
+        })
+      }
+      for (const s of loc.alternative_staff_time_slots || []) {
+        candidates.push({
+          key: slotKey(loc.location_code, s.start_time, s.end_time, s.user_code),
+          time: slotTimeValue(s.start_time),
+          priority: 4,
+        })
+      }
+    }
+    candidates.sort((a, b) => a.time - b.time || a.priority - b.priority)
+    recommendedAlternativeKey.value = candidates[0]?.key || ''
+    applyRecommendationOrdering()
   }
-}
 
-async function submitApproveWithStaff() {
-  if (!approvalSelectedStaff.value) return
-  approvalSaving.value = true
-  approvalError.value = ''
-  try {
+  async function openApprovalDialog(appt) {
+    selected.value = appt
+    showApproval.value = true
+    await loadApprovalAvailability(appt)
+  }
 
-    console.log(
-        'Selected Charges:',
-        selectedChargeCodes.value
-    )
+  async function loadApprovalAvailability(appt) {
+    selected.value = appt
+    showApproval.value = true
+    availabilityError.value = ''
+    availableStaff.value = []
+    engagedStaff.value = []
+    autoCharges.value = []
+    optionalCharges.value = []
+    selectedAlternativeType.value = ''
+    selectedAlternative.value = null
+    selectedChargeCodes.value = []
+    slotAlreadyBooked.value = false
+    approvalSelectedStaff.value = ''
+    conflictingAppointments.value = []
+    alternativeTimeSameLocation.value = []
+    alternativeLocationSameTime.value = []
+    serviceLocationsAlternatives.value = []
+    recommendedAlternativeKey.value = ''
+    approvalError.value = ''
+    showRescheduleInApproval.value = false
+    approvalRescheduleForm.appointment_start_date = toDateInput(appt.appointment_start_date) || ''
+    approvalRescheduleForm.appointment_end_date = toDateInput(appt.appointment_end_date) || ''
+    approvalRescheduleForm.start_time = toTimeInput(appt.start_time) || ''
+    approvalRescheduleForm.end_time = toTimeInput(appt.end_time) || ''
+    approvalRescheduleForm.location_code = appt.location_code || ''
+    approvalRescheduleForm.notes = ''
 
-    await api.post(`/appointments/${selected.value.code}/approve`, {
-      staff_code: approvalSelectedStaff.value,
+    availabilityLoading.value = true
+    try {
+      const res = await apiHandler("appointment", "checkStaffAvailability", {
+        pathParams: {
+          code: appt.code
+        }
+      })
+      console.log("RAW CHARGES OBJECT FROM API:", res.data.data?.charges)
+      console.log("AUTO ARRAY:", res.data.data?.charges?.auto_apply)
+      console.log("OPTIONAL ARRAY:", res.data.data?.charges?.optional)
+      availableStaff.value = res.data.data?.available_staff || []
+      engagedStaff.value = res.data.data?.engaged_staff || []
+      autoCharges.value = res.data.data?.charges?.auto_apply || []
+      selectedChargeCodes.value = autoCharges.value.map(c => c.code)
+      optionalCharges.value = res.data.data?.charges?.optional || []
+
+      console.log('OPTIONAL CHARGES', optionalCharges.value)
+
+      const alternatives = res.data.data?.alternatives || {}
+      alternativeTimeSameLocation.value = alternatives.different_time_same_location || []
+      alternativeLocationSameTime.value = Object.entries(alternatives.different_location_same_time || {}).map(([location_code, staff]) => ({
+        location_code,
+        staff
+      }))
+
+      serviceLocationsAlternatives.value = alternatives.selected_service_other_locations || []
+      pickRecommendedAlternative()
+      slotAlreadyBooked.value = res.data.data?.slot_already_booked || false
+      conflictingAppointments.value = res.data.data?.conflicting_appointments || []
+    } catch (err) {
+      availabilityError.value = err.response?.data?.message || 'Could not check availability'
+    } finally {
+      availabilityLoading.value = false
+    }
+  }
+
+  function closeApprovalDialog() {
+    showApproval.value = false
+    showRescheduleInApproval.value = false
+    selectedAlternativeType.value = ''
+    selectedAlternative.value = null
+    approvalError.value = ''
+  }
+
+  // Router to switch between standard validation payload vs bypass constraint force reassign paths
+  async function handleMainApprovalAction() {
+    if (!approvalSelectedStaff.value) return
+    const isEngaged = engagedStaff.value.some(s => s.user_code === approvalSelectedStaff.value);
+
+    if (isEngaged) {
+      await forceAssignStaff(approvalSelectedStaff.value);
+    } else {
+      await submitApproveWithStaff();
+    }
+  }
+
+  async function submitApproveWithStaff() {
+    if (!approvalSelectedStaff.value) return
+    approvalSaving.value = true
+    approvalError.value = ''
+    try {
+
+      console.log(
+          'Selected Charges:',
+          selectedChargeCodes.value
+      )
+
+      await apiHandler(
+          "appointment",
+          "approveAppointment",
+          {
+            pathParams: {
+              code: selected.value.code
+            },
+            body: {
+              staff_code: approvalSelectedStaff.value,
+              selected_charge_codes: selectedChargeCodes.value
+            }
+          }
+      )
+
+      showApproval.value = false
+      await fetchAppointments()
+    } catch (err) {
+      approvalError.value = err.response?.data?.message || 'Approval failed'
+      if (selected.value) await loadApprovalAvailability(selected.value)
+    } finally {
+      approvalSaving.value = false
+    }
+  }
+
+  async function forceAssignStaff(staffCode) {
+    approvalSaving.value = true
+    approvalError.value = ''
+    const payload = {
+      staff_code: staffCode,
+      force_reassign: true,
       selected_charge_codes: selectedChargeCodes.value
-    })
-    showApproval.value = false
-    await fetchAppointments()
-  } catch (err) {
-    approvalError.value = err.response?.data?.message || 'Approval failed'
-    if (selected.value) await loadApprovalAvailability(selected.value)
-  } finally {
-    approvalSaving.value = false
+    }
+    try {
+      await apiHandler(
+          "appointment",
+          "approveAppointment",
+          {
+            pathParams: {
+              code: selected.value.code
+            },
+            body: {
+              staff_code: staffCode,
+              force_reassign: true,
+              selected_charge_codes: selectedChargeCodes.value
+            }
+          })
+      showApproval.value = false
+      await fetchAppointments()
+    } catch (err) {
+      approvalError.value = err.response?.data?.message || 'Force assignment failed'
+    } finally {
+      approvalSaving.value = false
+    }
   }
-}
 
-async function forceAssignStaff(staffCode) {
-  approvalSaving.value = true
-  approvalError.value = ''
-  const payload = {
-    staff_code: staffCode,
-    force_reassign: true,
-    selected_charge_codes: selectedChargeCodes.value
+  async function submitApprovalReschedule() {
+    if (!approvalRescheduleForm.appointment_start_date || !approvalRescheduleForm.start_time || !approvalRescheduleForm.end_time) {
+      approvalError.value = 'Please fill in the new date and times'
+      return
+    }
+    approvalSaving.value = true
+    approvalError.value = ''
+    try {
+      await apiHandler(
+          "appointment",
+          "rescheduleAppointment",
+          {
+            pathParams: {
+              code: selected.value.code
+            },
+            body: {
+              ...rescheduleForm
+            }
+          })
+      showApproval.value = false
+      await fetchAppointments()
+    } catch (err) {
+      approvalError.value = err.response?.data?.message || 'Reschedule request failed'
+    } finally {
+      approvalSaving.value = false
+    }
   }
-  try {
-    await api.post(`/appointments/${selected.value.code}/approve`, payload)
-    showApproval.value = false
-    await fetchAppointments()
-  } catch (err) {
-    approvalError.value = err.response?.data?.message || 'Force assignment failed'
-  } finally {
-    approvalSaving.value = false
+
+  function prefillApprovalReschedule({ locationCode, startTime, endTime }) {
+    approvalRescheduleForm.appointment_start_date = toDateInput(selected.value?.appointment_start_date)
+    approvalRescheduleForm.appointment_end_date = toDateInput(selected.value?.appointment_end_date || selected.value?.appointment_start_date)
+    approvalRescheduleForm.start_time = toTimeInput(startTime)
+    approvalRescheduleForm.end_time = toTimeInput(endTime)
+    approvalRescheduleForm.location_code = locationCode || selected.value?.location_code || ''
+    showRescheduleInApproval.value = true
+    approvalError.value = ''
   }
-}
 
-async function submitApprovalReschedule() {
-  if (!approvalRescheduleForm.appointment_start_date || !approvalRescheduleForm.start_time || !approvalRescheduleForm.end_time) {
-    approvalError.value = 'Please fill in the new date and times'
-    return
+  onMounted(fetchAppointments)
+  </script>
+
+  <style scoped>
+  .ams-page{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
   }
-  approvalSaving.value = true
-  approvalError.value = ''
-  try {
-    await api.post(`/appointments/${selected.value.code}/reschedule`, approvalRescheduleForm)
-    showApproval.value = false
-    await fetchAppointments()
-  } catch (err) {
-    approvalError.value = err.response?.data?.message || 'Reschedule request failed'
-  } finally {
-    approvalSaving.value = false
+  .card{
+    border-radius:12px;
   }
-}
+  .ams-table th,
+  .ams-table td{
+    vertical-align:middle;
+    font-size:14px;
+  }
+  code{
+    background:#f1f5f9;
+    padding:3px 8px;
+    border-radius:6px;
+    color:#334155;
+  }
+  .btn-ams{
+    background:#6366f1;
+    color:#fff;
+    border:none;
+  }
+  .btn-ams:hover{
+    background:#4f46e5;
+    color:#fff;
+  }
+  .form-control,
+  .form-select{
+    border-radius:8px;
+    font-size:14px;
+  }
+  .form-control:focus,
+  .form-select:focus{
+    border-color:#6366f1;
+    box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
+  }
+  .ams-badge{
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:600;
+    text-transform:capitalize;
+  }
+  .ams-badge.PENDING{ background:#fef3c7; color:#92400e; }
+  .ams-badge.APPROVED{ background:#dcfce7; color:#166534; }
+  .ams-badge.REJECTED{ background:#fee2e2; color:#991b1b; }
+  .ams-badge.COMPLETED{ background:#dbeafe; color:#1e40af; }
+  .ams-badge.RESCHEDULED{ background:#ede9fe; color:#6d28d9; }
+  .ams-badge.CANCELLED{ background:#f1f5f9; color:#475569; }
+  .ams-badge.IN_PROGRESS{ background:#cffafe; color:#155e75; }
 
-function prefillApprovalReschedule({ locationCode, startTime, endTime }) {
-  approvalRescheduleForm.appointment_start_date = toDateInput(selected.value?.appointment_start_date)
-  approvalRescheduleForm.appointment_end_date = toDateInput(selected.value?.appointment_end_date || selected.value?.appointment_start_date)
-  approvalRescheduleForm.start_time = toTimeInput(startTime)
-  approvalRescheduleForm.end_time = toTimeInput(endTime)
-  approvalRescheduleForm.location_code = locationCode || selected.value?.location_code || ''
-  showRescheduleInApproval.value = true
-  approvalError.value = ''
-}
+  .modal-content{
+    border:none;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 15px 45px rgba(0,0,0,.18);
+  }
+  .modal-header{ background:#f8fafc; }
+  .modal-title{ font-weight:700; }
+  .modal-footer{ background:#fafafa; }
 
-onMounted(fetchAppointments)
-</script>
+  .list-group-item{
+    border-radius:10px !important;
+    border:1px solid #e2e8f0;
+  }
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  .btn-success{ background:#22c55e; border-color:#22c55e; }
+  .btn-success:hover{ background:#16a34a; border-color:#16a34a; }
+  .btn-danger{ background:#ef4444; border-color:#ef4444; }
+  .btn-danger:hover{ background:#dc2626; border-color:#dc2626; }
+  .btn-outline-primary{ color:#6366f1; border-color:#6366f1; }
+  .btn-outline-primary:hover{ background:#6366f1; color:white; }
+  dl dt{ font-size:13px; }
+  dl dd{ font-size:14px; }
 
-<style scoped>
-.ams-page{
-  display:flex;
-  flex-direction:column;
-  gap:20px;
-}
-.card{
-  border-radius:12px;
-}
-.ams-table th,
-.ams-table td{
-  vertical-align:middle;
-  font-size:14px;
-}
-code{
-  background:#f1f5f9;
-  padding:3px 8px;
-  border-radius:6px;
-  color:#334155;
-}
-.btn-ams{
-  background:#6366f1;
-  color:#fff;
-  border:none;
-}
-.btn-ams:hover{
-  background:#4f46e5;
-  color:#fff;
-}
-.form-control,
-.form-select{
-  border-radius:8px;
-  font-size:14px;
-}
-.form-control:focus,
-.form-select:focus{
-  border-color:#6366f1;
-  box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
-}
-.ams-badge{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:600;
-  text-transform:capitalize;
-}
-.ams-badge.PENDING{ background:#fef3c7; color:#92400e; }
-.ams-badge.APPROVED{ background:#dcfce7; color:#166534; }
-.ams-badge.REJECTED{ background:#fee2e2; color:#991b1b; }
-.ams-badge.COMPLETED{ background:#dbeafe; color:#1e40af; }
-.ams-badge.RESCHEDULED{ background:#ede9fe; color:#6d28d9; }
-.ams-badge.CANCELLED{ background:#f1f5f9; color:#475569; }
-.ams-badge.IN_PROGRESS{ background:#cffafe; color:#155e75; }
-
-.modal-content{
-  border:none;
-  border-radius:16px;
-  overflow:hidden;
-  box-shadow:0 15px 45px rgba(0,0,0,.18);
-}
-.modal-header{ background:#f8fafc; }
-.modal-title{ font-weight:700; }
-.modal-footer{ background:#fafafa; }
-
-.list-group-item{
-  border-radius:10px !important;
-  border:1px solid #e2e8f0;
-}
-.cursor-pointer {
-  cursor: pointer;
-}
-.btn-success{ background:#22c55e; border-color:#22c55e; }
-.btn-success:hover{ background:#16a34a; border-color:#16a34a; }
-.btn-danger{ background:#ef4444; border-color:#ef4444; }
-.btn-danger:hover{ background:#dc2626; border-color:#dc2626; }
-.btn-outline-primary{ color:#6366f1; border-color:#6366f1; }
-.btn-outline-primary:hover{ background:#6366f1; color:white; }
-dl dt{ font-size:13px; }
-dl dd{ font-size:14px; }
-
-@media(max-width:768px){
-  .ams-table{ min-width:1000px; }
-  .d-flex.gap-2.flex-wrap{ flex-direction:column; }
-  .form-control, .form-select{ max-width:100% !important; }
-}
-</style>
+  @media(max-width:768px){
+    .ams-table{ min-width:1000px; }
+    .d-flex.gap-2.flex-wrap{ flex-direction:column; }
+    .form-control, .form-select{ max-width:100% !important; }
+  }
+  </style>

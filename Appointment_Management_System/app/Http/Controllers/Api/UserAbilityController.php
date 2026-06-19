@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserAbility\CreateUserAbilityRequest;
 use App\Http\Requests\UserAbility\UpdateUserAbilityRequest;
@@ -10,10 +11,12 @@ use Illuminate\Http\Request;
 
 class UserAbilityController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try{
-            $abilities = UserAbility::latest()->paginate(10);
+            $query = UserAbility::query();
+
+            $abilities = ApiDataHelper::process( $query, $request );
 
             return response()->json([
                 'success' => true,

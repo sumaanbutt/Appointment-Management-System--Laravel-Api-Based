@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\AppointmentRecurrence;
@@ -11,17 +12,18 @@ use App\Http\Requests\AppointmentRecurrence\CreateAppointmentRecurrenceRequest;
 use App\Http\Requests\AppointmentRecurrence\UpdateAppointmentRecurrenceRequest;
 class AppointmentRecurrenceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try {
 
-            $data = AppointmentRecurrence::with('business')
-                ->latest()
-                ->paginate(10);
+            $query = AppointmentRecurrence::query()
+                ->with('business');
+
+            $recurrence = ApiDataHelper::process( $query, $request );
 
             return response()->json([
                 'success' => true,
-                'data' => $data,
+                'data' => $recurrence,
             ], 200);
 
         } catch (\Exception $e) {

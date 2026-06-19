@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Location\UpdateBusinessLocationRequest;
 use App\Http\Requests\Organization\CreateOrganizationRequest;
 use App\Http\Requests\Organization\UpdateOrganizationRequest;
 use App\Models\Organization;
@@ -12,10 +12,25 @@ use Illuminate\Support\Facades\Validator;
 
 class OrganizationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $organizations = Organization::with('businesses')->latest()->paginate(10);
-        return response()->json($organizations, 200);
+        $query = Organization::query()
+            ->with('businesses');
+
+        if ($request->businesses_code) {
+            $query->where(
+                'businesses_code',
+                $request->buisnesses_code
+            );
+        }
+
+        $organizations = ApiDataHelper::process( $query, $request );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Organizations fetched successfully',
+            'data' => $organizations
+        ], 200);
     }
 
     public function store(CreateOrganizationRequest $request)

@@ -2,39 +2,73 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserShiftSchedule\CreateScheduleRequest;
 use App\Http\Requests\UserShiftSchedule\UpdateScheduleRequest;
 use App\Models\UserShiftSchedule;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class UserShiftScheduleController extends Controller
 {
-    /**
-     * Display a listing of user schedules.
-     */
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
-        try {
-            $users_shift = UserShiftSchedule::with('user', 'business', 'location')->latest()->paginate(10);
+//        try {
+//            $query = UserShiftSchedule::with(
+//                'user',
+//                'business',
+//                'location',
+//            );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'User Schedule Shifts fetched successfully',
-                'data' => $users_shift,
-            ], 200);
+    try {
+        $query = UserShiftSchedule::query()
+            ->with([
+                'business',
+                'user',
+                'location'
+            ]);
+
+        if ($request->business_code) {
+            $query->where(
+                'business_code',
+                $request->business_code
+            );
+        }
+
+        if ($request->user_code) {
+            $query->where(
+                'user_code',
+                $request->user_code
+            );
+        }
+
+        if ($request->location_code) {
+            $query->where(
+                'location_code',
+                $request->location_code
+            );
+        }
+
+        $usersShift = ApiDataHelper::process( $query, $request );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User Schedule Shifts fetched successfully',
+            'data' => $usersShift,
+        ], 200);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch User Shifts',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch User Shifts',
+            'error' => $e->getMessage(),
+        ], 500);
+
     }
+}
 
     public function store(CreateScheduleRequest $request)
     {
@@ -47,6 +81,36 @@ class UserShiftScheduleController extends Controller
 
             foreach ($payload as $row) {
                 $dayInput = $row['working_days'] ?? $row['working_day'] ?? 'MONDAY';
+
+                $exists = UserShiftSchedule::where(
+                    'business_code',
+                    $row['business_code']
+                )
+                    ->where(
+                        'user_code',
+                        $row['user_code']
+                    )
+                    ->where(
+                        'location_code',
+                        $row['location_code'] ?? null
+                    )
+                    ->where(
+                        'working_day',
+                        strtolower($dayInput)
+                    )
+                    ->where(
+                        'shift_start_time',
+                        $row['shift_start_time']
+                    )
+                    ->where(
+                        'shift_end_time',
+                        $row['shift_end_time']
+                    )
+                    ->exists();
+
+                if ($exists) {
+                    continue;
+                }
 
                 $recordsToInsert[] = [
                     'code'             => 'SCH' . strtoupper(Str::random(6)),

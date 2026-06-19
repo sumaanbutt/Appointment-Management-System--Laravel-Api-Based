@@ -2,26 +2,28 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LocationServices\CreateLocationServiceRequest;
 use App\Http\Requests\LocationServices\UpdateLocationServiceRequest;
 use App\Models\LocationServices;
+use Illuminate\Http\Request;
 
 class LocationServiceController extends Controller
 {
-    /**
-     * Display all location services
-     */
-    public function index()
+    public function index(Request $request)
     {
         try{
-        $locationServices = LocationServices::with([
+        $query = LocationServices::query()
+            ->with([
             'business',
             'location',
             'service',
-        ])->latest()->paginate(10);
+            ]);
 
-        return response()->json([
+            $locationServices = ApiDataHelper::process( $query, $request );
+
+            return response()->json([
             'success' => true,
             'message' => 'Location services fetched successfully',
             'data' => $locationServices,

@@ -168,7 +168,8 @@ async function fetchStaff() {
     const params = {}
     if (biz) params.business_code = biz
     if (typeFilter.value) params.user_type = typeFilter.value
-    const res = await api.get('/users', { params })
+    // const res = await api.get('/users', { params })
+
     const users = res.data.data.data || []
 
     staff.value = users.filter(u => {

@@ -60,7 +60,7 @@
                     <li v-if="appt.status === 'RESCHEDULED'">
                       <button
                           class="dropdown-item text-success"
-                          @click="respondReschedule(appt,'ACCEPTED')">
+                          @click="respondReschedule(appt,'accepted')">
 
                         <i class="bi bi-check-circle me-2"></i>
                         Accept
@@ -71,7 +71,7 @@
                     <li v-if="appt.status === 'RESCHEDULED'">
                       <button
                           class="dropdown-item text-danger"
-                          @click="respondReschedule(appt,'REJECTED')">
+                          @click="respondReschedule(appt,'rejected')">
 
                         <i class="bi bi-x-circle me-2"></i>
                         Reject
@@ -101,6 +101,20 @@
         </table>
       </div>
     </div>
+
+    <nav class="mt-3">
+      <ul class="pagination justify-content-end">
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <button class="page-link" @click="changePage(currentPage - 1)">Previous</button>
+        </li>
+        <li v-for="page in lastPage" :key="page" class="page-item" :class="{ active: currentPage === page }">
+          <button class="page-link" @click="changePage(page)">{{ page }}</button>
+        </li>
+        <li class="page-item" :class="{ disabled: currentPage === lastPage }">
+          <button class="page-link" @click="changePage(currentPage + 1)">Next</button>
+        </li>
+      </ul>
+    </nav>
 
     <!-- VIEW MODAL -->
     <div v-if="showViewModal && selected" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);z-index:1050">
@@ -160,6 +174,8 @@ import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 
 const appointments = ref([])
+const currentPage = ref(1)
+const lastPage = ref(1)
 const loading = ref(true)
 const error = ref('')
 const statusFilter = ref('')
@@ -183,14 +199,18 @@ async function fetchList() {
     const res =
         await api.get(
             '/appointments',
-            { params }
+            { params:{
+                page: currentPage.value,
+              }
+            }
         )
 
     appointments.value =
         res.data?.data?.data
         ??
         []
-
+    currentPage.value = res.data.data.current_page
+    lastPage.value = res.data.data.last_page
 
   }
 
@@ -206,6 +226,12 @@ async function fetchList() {
 
     loading.value = false
   }
+}
+
+async function changePage(page) {
+  if (page < 1 || page > lastPage.value) return
+  currentPage.value = page
+  await fetchList()
 }
 
 async function cancelAppt(appt) {
@@ -289,6 +315,22 @@ code{
   border-color:#6366f1;
   box-shadow:0 0 0 0.15rem rgba(99,102,241,.15);
 }
+
+.ams-badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  text-transform:capitalize;
+}
+.ams-badge.pending { background:#fef3c7; color:#92400e; }
+.ams-badge.approved { background:#dcfce7; color:#166534; }
+.ams-badge.rejected { background:#fee2e2; color:#991b1b; }
+.ams-badge.completed { background:#dbeafe; color:#1e40af; }
+.ams-badge.rescheduled { background:#ede9fe; color:#6d28d9; }
+.ams-badge.cancelled { background:#f1f5f9; color:#475569; }
+.ams-badge.in_progress { background:#cffafe; color:#155e75; }
 
 </style>
 

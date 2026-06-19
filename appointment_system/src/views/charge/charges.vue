@@ -226,6 +226,8 @@ const authStore = useAuthStore()
 const isAdmin = computed(
     () => authStore.user?.user_type === 'SUPER_ADMIN'
 )
+const backLink = computed(() => isAdmin.value ? '/admin/charges' : '/owner/charges')
+
 const charges = ref([])
 const businesses = ref([])
 const loading = ref(true)
@@ -384,7 +386,7 @@ async function createCharge() {
         {
           body: payload
         })
-
+    router.push(backLink.value)
 
     showCreateModal.value = false
     createForm.value = { business_code: isAdmin.value ? '' : (authStore.user?.business_code || ''), name: '', charge_uom: '', charge_value: '', description: '' }

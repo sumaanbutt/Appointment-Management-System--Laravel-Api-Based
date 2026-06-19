@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Charge\CreateChargeRequest;
 use App\Http\Requests\Charge\UpdateChargeRequest;
@@ -11,10 +12,11 @@ use Illuminate\Http\Request;
 class ChargesController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
         try{
-            $query = Charge::with('business');
+            $query = Charge::query()
+                ->with('business');
 
             if(request()->business_code){
                 $query->where(
@@ -23,9 +25,7 @@ class ChargesController extends Controller
                 );
             }
 
-            $charge = $query
-                ->latest()
-                ->paginate(10);
+            $charge = ApiDataHelper::process( $query, $request );
 
             return response()->json([
                 'status' => true,

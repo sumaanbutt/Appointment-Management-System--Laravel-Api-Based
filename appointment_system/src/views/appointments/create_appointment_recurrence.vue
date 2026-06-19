@@ -193,7 +193,7 @@ async function submit() {
     console.log('PAYLOAD:', payload)
     await api.post('/appointment-recurrences', payload)
 
-    await router.push('/appointment-recurrence')
+    await router.push('/admin/appointment-recurrence')
 
   } catch (err) {
     console.log('FULL ERROR:', err)

@@ -161,7 +161,7 @@ async function fetchInvoices() {
     console.log('INVOICE RESPONSE:', res.data)
 
     invoices.value =
-        res.data?.invoices?.data
+        res.data?.data?.data
         ?? []
 
     console.log(

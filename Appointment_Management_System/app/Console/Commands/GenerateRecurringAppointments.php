@@ -49,16 +49,9 @@ class GenerateRecurringAppointments extends Command
                 ) {
 
                     Appointment::create([
-
-                        'business_code' =>
-                            $appointment->business_code,
-
-                        'client_code' =>
-                            $appointment->client_code,
-
-                        'location_code' =>
-                            $appointment->location_code,
-
+                        'business_code' => $appointment->business_code,
+                        'client_code' => $appointment->client_code,
+                        'location_code' => $appointment->location_code,
                         'appointment_start_date' =>
                             Carbon::parse(
                                 $recurrence->recurrence_date
@@ -145,23 +138,14 @@ class GenerateRecurringAppointments extends Command
                 Appointment::firstOrCreate(
 
                     [
-                        'business_code' =>
-                            $appointment->business_code,
-
-                        'appointment_start_date' =>
-                            $newStart,
-
-                        'appointment_end_date' =>
-                            $newEnd,
+                        'business_code' => $appointment->business_code,
+                        'appointment_start_date' => $newStart,
+                        'appointment_end_date' => $newEnd,
                     ],
 
                     [
-                        'client_code' =>
-                            $appointment->customer_code,
-
-                        'location_code' =>
-                            $appointment->location_code,
-
+                        'client_code' => $appointment->customer_code,
+                        'location_code' => $appointment->location_code,
                         'status' => 'PENDING',
                     ]
                 );
