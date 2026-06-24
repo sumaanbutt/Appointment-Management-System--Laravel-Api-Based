@@ -80,9 +80,8 @@
     <div class="card">
       <div class="card-header">
         <h3>Recent Appointments</h3>
-        <router-link to="/appointments" class="view-all">View All</router-link>
+        <router-link to="/admin/appointments" class="view-all">View All</router-link>
       </div>
-
       <div v-if="loading" class="loading">Loading...</div>
 
       <table v-else class="table">
@@ -161,149 +160,116 @@ function getCount(res){
   return 0
 }
 
-// function getCount(res) {
-//
-//   const response = res?.data
-//
-//   if (
-//       response?.data &&
-//       typeof response.data === 'object' &&
-//       response.data.total !== undefined
-//   ) {
-//     return Number(response.data.total)
-//   }
-//
-//   const data =
-//       response?.data?.data
-//       ??
-//       response?.data
-//       ??
-//       []
-//
-//   if (Array.isArray(data)) {
-//     return data.length
-//   }
-//
-//   return Number(
-//       data?.count
-//       ??
-//       0
-//   )
-// }
-
-
 onMounted(async () => {
-  try {
-    const [orgs, bizs, clients, appts, users, svcs, invs, locs] =
-        await Promise.allSettled([
+  const [
+    orgs, bizs, clients, apptsStats, recentAppointmentsRes, users, svcs, invs, locs
+  ] = await Promise.allSettled([
 
-          // api.get('/organizations'),
-          // api.get('/businesses'),
-          // api.get('/clients'),
-          // api.get('/appointments'),
-          // api.get('/users'),
-          // api.get('/services'),
-          // api.get('/invoices'),
-          // api.get('/business-locations'),
+    apiHandler("organization", "getAllOrganizations", {
+      params: {
+        data_category: "stats"
+      }
+    }),
 
-          apiHandler("organization", "getAllOrganizations",{
-            params: {
-              data_category: "stats"
-            }
-          }),
-          apiHandler("business", "getAllBusinesses",{
-            params: {
-              data_category: "stats"
-            }
-          }),
-          apiHandler("client", "getAllClients",{
-            params: {
-              data_category: "stats"
-            }
-          }),
-          apiHandler("appointment", "getAllAppointments",{
-            params: {
-              data_category: "stats"
-            }
-          }),
-          apiHandler("user", "getAllUsers",{
-            params: {
-              data_category: "stats"
-            }
-          }),
-          apiHandler("service", "getAllServices",{
-            params: {
-              data_category: "stats"
-            }
-          }),
-          apiHandler("invoice", "getAllInvoices",{
-            params: {
-              data_category: "stats"
-            }
-          }),
-          apiHandler("location", "getAllLocations",{
-            params: {
-              data_category: "stats"
-            }
-          }),
-        ])
+    apiHandler("business", "getAllBusinesses", {
+      params: {
+        data_category: "stats"
+      }
+    }),
 
-    console.log('APPOINTMENTS RESPONSE:', appts)
-    console.log(
-        'FIRST APPOINTMENT:',
-        appts.value?.data?.data?.data?.[0]
-    )
+    apiHandler("client", "getAllClients", {
+      params: {
+        data_category: "stats"
+      }
+    }),
 
-    stats.value.organizations =
-        orgs.status === 'fulfilled' ? getCount(orgs.value) : 0
+    apiHandler("appointment", "getAllAppointments", {
+      params: {
+        data_category: "stats"
+      }
+    }),
 
-    stats.value.businesses =
-        bizs.status === 'fulfilled' ? getCount(bizs.value) : 0
+    apiHandler("appointment", "getAllAppointments", {
+      params: {
+        limit: 5
+      }
+    }),
 
-    stats.value.clients =
-        clients.status === 'fulfilled' ? getCount(clients.value) : 0
+    apiHandler("user", "getAllUsers", {
+      params: {
+        data_category: "stats"
+      }
+    }),
 
-    stats.value.appointments =
-        appts.status === 'fulfilled' ? getCount(appts.value) : 0
+    apiHandler("service", "getAllServices", {
+      params: {
+        data_category: "stats"
+      }
+    }),
 
-    stats.value.users =
-        users.status === 'fulfilled' ? getCount(users.value) : 0
+    apiHandler("invoice", "getAllInvoices", {
+      params: {
+        data_category: "stats"
+      }
+    }),
 
-    stats.value.services =
-        svcs.status === 'fulfilled' ? getCount(svcs.value) : 0
+    apiHandler("location", "getAllLocations", {
+      params: {
+        data_category: "stats"
+      }
+    })
+  ])
 
-    stats.value.invoices =
-        invs.status === 'fulfilled' ? getCount(svcs.value) : 0
-            // ? (invs.value.data.invoices?.data?.length ||
-            //     invs.value.data.invoices?.length ||
-            //     0)
-            // : 0
+  stats.value.organizations =
+      orgs.status === "fulfilled"
+          ? orgs.value.data.data.total
+          : 0
 
-    stats.value.locations =
-        locs.status === 'fulfilled' ? getCount(locs.value) : 0
+  stats.value.businesses =
+      bizs.status === "fulfilled"
+          ? bizs.value.data.data.total
+          : 0
 
+  stats.value.clients =
+      clients.status === "fulfilled"
+          ? clients.value.data.data.total
+          : 0
 
-    if (appts.status === 'fulfilled') {
+  stats.value.appointments =
+      apptsStats.status === "fulfilled"
+          ? apptsStats.value.data.data.total
+          : 0
 
-      const appointmentsData =
-          appts.value?.data?.data?.data ??
-          appts.value?.data?.data ??
-          appts.value?.data?.appointments ??
-          []
+  stats.value.users =
+      users.status === "fulfilled"
+          ? users.value.data.data.total
+          : 0
 
-      recentAppointments.value =
-          Array.isArray(appointmentsData)
-              ? appointmentsData.slice(0,5)
-              : []
-    }
+  stats.value.services =
+      svcs.status === "fulfilled"
+          ? svcs.value.data.data.total
+          : 0
 
-  } finally {
+  stats.value.invoices =
+      invs.status === "fulfilled"
+          ? invs.value.data.data.total
+          : 0
 
-    loading.value = false
+  stats.value.locations =
+      locs.status === "fulfilled"
+          ? locs.value.data.data.total
+          : 0
 
+  if (recentAppointmentsRes.status === "fulfilled") {
+    recentAppointments.value =
+        recentAppointmentsRes.value.data?.data?.data ??
+        recentAppointmentsRes.value.data?.data ??
+        []
   }
 
+  loading.value = false
 })
+
 </script>
 
 <style scoped>

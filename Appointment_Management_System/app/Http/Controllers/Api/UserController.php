@@ -6,9 +6,11 @@ use App\Helpers\ApiDataHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\CreateUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
+use App\Models\Client;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -67,6 +69,18 @@ class UserController extends Controller
                 'status' => $request->status ?? 'ACTIVE',
             ]);
 
+            if ($user->user_type === 'CLIENT') {
+
+                Client::create([
+                    'code' => 'CLT' . rand(100000, 999999),
+                    'business_code' => $user->business_code,
+                    'user_code' => $user->code,
+                ]);
+
+            }
+
+
+
             return response()->json([
                 'success' => true,
                 'message' => 'User created successfully',
@@ -85,7 +99,6 @@ class UserController extends Controller
     public function show(User $user)
     {
         try{
-
             if(!$user){
                 return response()->json([
                     'success' => false,

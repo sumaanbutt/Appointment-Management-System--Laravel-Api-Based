@@ -15,20 +15,12 @@ class UserShiftScheduleController extends Controller
 {
     public function index(Request $request)
     {
-//        try {
-//            $query = UserShiftSchedule::with(
-//                'user',
-//                'business',
-//                'location',
-//            );
-
     try {
         $query = UserShiftSchedule::query()
             ->with([
                 'business',
                 'user',
-                'location'
-            ]);
+                'location']);
 
         if ($request->business_code) {
             $query->where(

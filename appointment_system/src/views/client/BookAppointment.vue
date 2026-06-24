@@ -36,14 +36,32 @@
           <!-- Charges preview -->
           <div v-if="selectedService" class="charges-box">
             <div class="charges-title">💳 Service Charges</div>
-            <div v-if="selectedService.charges && selectedService.charges.length" class="charges-list">
-              <div v-for="ch in selectedService.charges" :key="ch.charge_code" class="charge-row">
-                <span>{{ ch.charge_name }}</span>
-                <span class="charge-val">{{ ch.charge_value }} / {{ ch.charge_uom }}</span>
+
+            <div v-if="selectedService.charges">
+              <div class="charge-row">
+                <span>Service Charges</span>
+                <span class="charge-val">{{ selectedService.charges }}{{ selectedService.currency }}</span>
               </div>
             </div>
-            <div v-else class="no-charges">No charges defined for this service</div>
+
+            <div v-else class="no-charges">
+              No charges defined for this service
+            </div>
           </div>
+
+
+<!--          <div v-if="selectedService" class="charges-box">-->
+<!--            <div class="charges-title">💳 Service Charges</div>-->
+<!--            <div v-if="selectedService.charges && selectedService.charges.length" class="charges-list">-->
+<!--              <div v-for="ch in selectedService.charges" :key="ch.charge_code" class="charge-row">-->
+<!--                <span>{{ ch.charge_name }}</span>-->
+<!--                <span class="charge-val">{{ ch.charge_value }} / {{ ch.charge_uom }}</span>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div v-else class="no-charges">No charges defined for this service</div>-->
+<!--          </div>-->
+<!--          <pre>{{ selectedService }}</pre>-->
+
         </template>
 
         <div class="row">
@@ -294,6 +312,15 @@ async function onLocationChange(){
 
 function onServiceChange() {
   // charges are embedded in the service object from client-view
+  console.log(
+      'SELECTED SERVICE:',
+      selectedService.value
+  )
+
+  console.log(
+      'CHARGES:',
+      selectedService.value?.charges
+  )
 }
 
 async function submit(){

@@ -7,14 +7,12 @@
         <h2 class="mb-0">Clients</h2>
         <p class="text-muted small mb-0">Manage all clients</p>
       </div>
-      <router-link to="/admin/clients/create" class="btn btn-ams">+ New Client</router-link>
-    </div>
-
+<!--      <router-link to="/admin/clients/create" class="btn btn-ams">+ New Client</router-link>-->
     <!-- FILTER -->
     <div class="d-flex gap-2">
       <input v-model="search" class="form-control" style="max-width:300px" placeholder="Search by name or email..." />
     </div>
-
+    </div>
     <!-- TABLE CARD -->
     <div class="card shadow-sm border-0">
       <div class="card-body p-0">
@@ -170,8 +168,8 @@ const filteredClients = computed(() => {
   if (!s) return clients.value
 
   return clients.value.filter(c =>
-      (c.name || '').toLowerCase().includes(s) ||
-      (c.email || '').toLowerCase().includes(s)
+      (c.user.name || '').toLowerCase().includes(s) ||
+      (c.user.email || '').toLowerCase().includes(s)
   )
 })
 

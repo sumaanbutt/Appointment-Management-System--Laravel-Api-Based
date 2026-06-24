@@ -142,7 +142,7 @@ async function fetchInvoices() {
     })
 
     invoices.value =
-        res.data?.invoices?.data
+        res.data?.data.data
         ??
         []
   } catch (err) {

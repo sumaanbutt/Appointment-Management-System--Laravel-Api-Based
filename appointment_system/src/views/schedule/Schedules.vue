@@ -487,8 +487,16 @@ async function fetchStaff(business_code) {
   try {
     // const res = await api.get('/users', { params: { business_code } })
     const res = await apiHandler("user", "getAllUsers", { params: { business_code, all_records: true } })
-    const all = res.data.data || []
-    staffList.value = all.filter(u => ['OPERATION_STAFF', 'SERVICE_STAFF'].includes(u.user_type))
+    const all =
+        res.data?.data?.data ??
+        res.data?.data ??
+        []
+
+    staffList.value = all.filter(
+        u =>
+            u.user_type === 'OPERATION_STAFF' ||
+            u.user_type === 'SERVICE_STAFF'
+    )
 
     console.log(all)
 
@@ -502,8 +510,10 @@ async function fetchLocations(business_code) {
     // const res = await api.get('/business-locations', { params: { business_code } })
     const res = await apiHandler("location", "getAllLocations", { params: { business_code, all_records: true } })
 
-    locationsList.value = res.data.data || []
-  } catch (_) {}
+    locationsList.value =
+        res.data?.data?.data ??
+        res.data?.data ??
+        []  } catch (_) {}
 }
 
 async function onBusinessChange() {
@@ -555,7 +565,9 @@ async function fetchSchedules() {
           "user",
           "getAllUsers",
           {
-            params
+            params: {
+              data_category : "list"
+            }
           })
     ])
 
@@ -662,6 +674,7 @@ async function createSchedule() {
     console.log('CREATE SUCCESS:', res.data)
 
     console.log('ABOUT TO ROUTE')
+    console.log('backLink', backLink.value)
     router.push(backLink.value)
 
     showCreateModal.value = false
@@ -702,11 +715,14 @@ onMounted(async () => {
   const [_, bizRes] = await Promise.allSettled([fetchSchedules(), apiHandler("business", "getAllBusinesses",
       {
         params: {
-          all_records: true
+          data_category : "list"
         }
       })
   ])
-  if (bizRes.status === 'fulfilled') businesses.value = bizRes.value.data.data || []
+  if (bizRes.status === 'fulfilled') businesses.value =
+      bizRes.value.data?.data?.data ??
+      bizRes.value.data?.data ??
+      []
 })
 </script>
 

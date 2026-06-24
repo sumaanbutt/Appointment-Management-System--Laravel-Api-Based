@@ -64,8 +64,8 @@
           <label>Business</label>
           <select v-model="form.business_code" :class="{ 'field-input-error': errors.business_code }" @change="validateField('business_code')">
             <option value="">Select Business</option>
-            <option v-for="biz in businesses" :key="biz.code" :value="biz.code">
-              {{ biz.name }}
+            <option v-for="biz in businesses" :key="biz?.code" :value="biz?.code">
+              {{ biz?.name }}
             </option>
           </select>
           <p v-if="errors.business_code" class="field-error">{{ errors.business_code }}</p>
@@ -152,11 +152,16 @@ onMounted(async () => {
     const res = await apiHandler('business', 'getAllBusinesses',
         {
           params: {
-            all_records: true
+            data_category: "list",
+            select: "code,name"
           }
         }
     )
+
+    console.log("BUSINESS RESPONSE", res.data)
+    console.log("BUSINESSES", businesses.value)
     businesses.value = res.data.data || []
+    console.log('BUSINESSES', businesses.value)
   } catch (_) {}
 })
 

@@ -10,10 +10,10 @@ class ApiDataHelper
         $limit = $request->input('limit', 10);
         $orderBy = $request->input('orderBy', 'code');
         $orderType = $request->input('orderType', 'desc');
-        $select = $request->input('select');
+        $select = $request->input('select', '*');
 
-        $query->select(
-            array_map('trim', explode(',', $select))
+            $query->select(
+                array_map('trim', explode(',', $select))
             );
 
         $query->orderBy(

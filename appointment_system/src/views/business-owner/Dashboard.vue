@@ -65,7 +65,7 @@
     <div class="card">
       <div class="card-header">
         <h3>Pending Appointment Requests</h3>
-        <router-link to="/business/appointments" class="view-all">View All</router-link>
+        <router-link to="/owner/appointments" class="view-all">View All</router-link>
       </div>
       <div v-if="loading" class="loading">Loading...</div>
       <table v-else class="table">
@@ -98,6 +98,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const authStore = useAuthStore()
 const loading = ref(true)
@@ -115,7 +116,18 @@ const pendingAppointments = computed(()=>{const data = Array.isArray(appointment
 
 async function changeStatus(appt, status) {
   try {
-    await api.patch(`/appointments/${appt.code}/status`, { status })
+    await apiHandler(
+        "appointment",
+        "updateAppointmentStatus",
+        {
+          pathParams: {
+            code: appt.code
+          },
+          body: {
+            status
+          }
+        })
+
     appt.status = status
   } catch (err) {
     console.error('Status update failed', err)
@@ -124,48 +136,143 @@ async function changeStatus(appt, status) {
 
 onMounted(async () => {
   const biz = authStore.user?.business_code
-  const [appts, clients, svcs, staff, invs, locs] = await Promise.allSettled([
-    api.get('/appointments', { params: biz ? { business_code: biz } : {} }),
-    api.get('/clients', { params: biz ? { business_code: biz } : {} }),
-    api.get('/services', { params: biz ? { business_code: biz } : {} }),
-    api.get('/users', { params: biz ? { business_code: biz } : {} }),
-    api.get('/invoices', { params: biz ? { business_code: biz } : {} }),
-    api.get('/business-locations', { params: biz ? { business_code: biz } : {} }),
+  const [appointmentStats, pendingStats, approvedStats, pendingAppointmentsRes, clients, svcs, staff, invs, locs] = await Promise.allSettled([
+
+    apiHandler("appointment", "getAllAppointments", {
+      params: {
+        business_code: biz,
+        data_category: "stats"
+      }
+    }),
+
+    apiHandler("appointment", "getAllAppointments", {
+      params: {
+        business_code: biz,
+        status: "PENDING",
+        data_category: "stats"
+      }
+    }),
+
+    apiHandler("appointment", "getAllAppointments", {
+      params: {
+        business_code: biz,
+        status: "APPROVED",
+        data_category: "stats"
+      }
+    }),
+
+    apiHandler("appointment", "getAllAppointments", {
+      params: {
+        business_code: biz,
+        status: "PENDING",
+        limit: 8
+      }
+    }),
+
+    apiHandler("client", "getAllClients", {
+      params: {
+        business_code: biz,
+        data_category: "stats"
+      }
+    }),
+
+    apiHandler("service", "getAllServices", {
+      params: {
+        business_code: biz,
+        data_category: "stats"
+      }
+    }),
+
+    apiHandler("user", "getAllUsers", {
+      params: {
+        business_code: biz,
+        data_category: "list"
+      }
+    }),
+
+    apiHandler("invoice", "getAllInvoices", {
+      params: {
+        business_code: biz,
+        data_category: "stats"
+      }
+    }),
+
+    apiHandler("location", "getAllLocations", {
+      params: {
+        business_code: biz,
+        data_category: "stats"
+      }
+    })
   ])
 
-  if (appts.status === 'fulfilled') {
-    appointments.value = appts.value?.data?.data?.data || []
-    stats.value.appointments = appointments.value.length
-    stats.value.pending = appointments.value.filter(a => a.status === 'PENDING').length
-    stats.value.approved = appointments.value.filter(a => a.status === 'APPROVED').length
-  }
+
+  stats.value.appointments =
+      appointmentStats.status === 'fulfilled'
+          ? appointmentStats.value.data.data.total
+          : 0
+
+  stats.value.pending =
+      pendingStats.status === 'fulfilled'
+          ? pendingStats.value.data.data.total
+          : 0
+
+  stats.value.approved =
+      approvedStats.status === 'fulfilled'
+          ? approvedStats.value.data.data.total
+          : 0
 
   stats.value.clients =
       clients.status === 'fulfilled'
-          ? (
-              clients.value.data?.data?.data
-              ??
-              clients.value.data?.data
-              ??
-              []
-          ).length
+          ? clients.value.data.data.total
           : 0
-  stats.value.services = svcs.status === 'fulfilled' ? (svcs.value.data.data?.data?.length ?? 0) : 0
+
+  stats.value.services =
+      svcs.status === 'fulfilled'
+          ? svcs.value.data.data.total
+          : 0
+
   stats.value.staff =
       staff.status === 'fulfilled'
-          ? (staff.value.data.data.data || []).filter(
-              s => ['OPERATION_STAFF', 'SERVICE_STAFF'].includes(s.user_type)
+          ? (staff.value.data.data || []).filter(
+              s =>
+                  s.user_type === 'OPERATION_STAFF' ||
+                  s.user_type === 'SERVICE_STAFF'
           ).length
           : 0
+
   stats.value.invoices =
       invs.status === 'fulfilled'
-          ? (invs.value.data.invoices?.data?.length ||
-              invs.value.data.invoices?.length ||
-              0)
+          ? invs.value.data.data.total
           : 0
-  stats.value.locations = locs.status === 'fulfilled' ? (locs.value.data.data?.data?.length ?? 0) : 0
+
+  stats.value.locations =
+      locs.status === 'fulfilled'
+          ? locs.value.data.data.total
+          : 0
+
+  console.log(
+      'PENDING APPOINTMENTS RESPONSE:',
+      pendingAppointmentsRes
+  )
+
+  console.log(
+      'PENDING DATA:',
+      pendingAppointmentsRes.value?.data
+  )
+
+  if (pendingAppointmentsRes.status === 'fulfilled') {
+
+    appointments.value =
+        pendingAppointmentsRes.value.data?.data?.data
+        ??
+        pendingAppointmentsRes.value.data?.data
+        ??
+        []
+  }
+
   loading.value = false
 })
+
 </script>
 
 <style scoped>

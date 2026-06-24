@@ -330,9 +330,7 @@
                               {{ charge.name }}
 
                         <span class="text-muted">
-                        ({{ charge.charge_uom === 'PERCENTAGE'
-                            ? `${charge.charge_value}%`
-                            : charge.charge_value }})
+                        ({{ charge.charge_uom === 'PERCENTAGE' ? `${charge.charge_value}%` : charge.charge_value }})
                         </span>
 
                         <span class="badge text-bg-success ms-2">Auto</span>
@@ -411,11 +409,9 @@
               <div v-if="availableStaff.length === 0 && selectedAlternativeType === 'service_location' && serviceLocationsAlternatives.length" class="mb-3">
                 <div class="fw-semibold mb-2">Selected service available at other locations</div>
                 <div class="border rounded p-2 mb-2" v-for="loc in serviceLocationsAlternatives" :key="`svc-${loc.location_code}`">
-                  <div class="small fw-semibold">Location: {{ loc.location_code }}</div>
-                  <div class="small text-muted mb-2" v-if="loc.location?.city || loc.location?.address">
-                    {{ loc.location?.city || '?' }} &bull; {{ loc.location?.address || '?' }}
-                  </div>
-                  <div class="small text-muted mb-2">Services: {{ (loc.matched_service_codes || []).join(', ') || '?' }}</div>
+                  <div class="small fw-semibold">Location: {{ loc.location_code || '?' }}</div>
+                  <div class="small text-muted mb-2" v-if="loc.city || loc.address">{{ loc.city || '?' }} &bull; {{ loc.address || '?' }}</div>
+                  <div class="small text-muted mb-2">Services: {{ loc.service_name  || '--' }}</div>
 
                   <div v-if="loc.available_staff_same_slot?.length" class="mb-2">
                     <div class="small fw-semibold">Available at same slot</div>
@@ -665,7 +661,7 @@
             }
           })
 
-      await api.patch(`/appointments/${appt.code}/status`, { status })
+      // await api.patch(`/appointments/${appt.code}/status`, { status })
 
       appt.status = status
     } catch (err) {
@@ -1057,7 +1053,7 @@
   .ams-badge.APPROVED{ background:#dcfce7; color:#166534; }
   .ams-badge.REJECTED{ background:#fee2e2; color:#991b1b; }
   .ams-badge.COMPLETED{ background:#dbeafe; color:#1e40af; }
-  .ams-badge.RESCHEDULED{ background:#ede9fe; color:#6d28d9; }
+  .ams-badge.RESCHEDULED{ background:#ede9fe; color: #6d28d9; }
   .ams-badge.CANCELLED{ background:#f1f5f9; color:#475569; }
   .ams-badge.IN_PROGRESS{ background:#cffafe; color:#155e75; }
 
@@ -1082,7 +1078,7 @@
   .btn-success:hover{ background:#16a34a; border-color:#16a34a; }
   .btn-danger{ background:#ef4444; border-color:#ef4444; }
   .btn-danger:hover{ background:#dc2626; border-color:#dc2626; }
-  .btn-outline-primary{ color:#6366f1; border-color:#6366f1; }
+  .btn-outline-primary{ border-color:#6366f1; }
   .btn-outline-primary:hover{ background:#6366f1; color:white; }
   dl dt{ font-size:13px; }
   dl dd{ font-size:14px; }
@@ -1092,4 +1088,5 @@
     .d-flex.gap-2.flex-wrap{ flex-direction:column; }
     .form-control, .form-select{ max-width:100% !important; }
   }
+
   </style>

@@ -3,8 +3,12 @@
     <div class="header">
       <div><h2>Clients</h2><p class="sub">Clients for your business</p></div>
     </div>
-    <div class="search-bar">
-      <input v-model="searchQuery" placeholder="Search by name or email..." @input="filterClients" />
+    <div class="toolbar">
+      <div class="search-bar">
+        <input v-model="searchQuery" placeholder="Search by name or email..." />
+      </div>
+
+      <router-link to="/owner/clients/create" class="btn btn-ams"> + New Client </router-link>
     </div>
     <div class="card">
       <div v-if="loading" class="loading">Loading...</div>
@@ -139,4 +143,40 @@ onMounted(fetchClients)
 .badge.active { background: #dcfce7; color: #166534; }
 .badge.inactive { background: #fee2e2; color: #991b1b; }
 code { font-size: 12px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+.toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+}
+
+.search-bar{
+  flex:1;
+}
+
+.search-bar input{
+  width:100%;
+  max-width:320px;
+  padding:9px 14px;
+  border:1px solid #e2e8f0;
+  border-radius:6px;
+  font-size:14px;
+  outline:none;
+}
+
+.btn-ams{
+  width:auto;
+  white-space:nowrap;
+  padding:9px 16px;
+  background:#6366f1;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  text-decoration:none;
+}
+
+.btn-ams:hover{
+  background:#4f46e5;
+  color:#fff;
+}
 </style>

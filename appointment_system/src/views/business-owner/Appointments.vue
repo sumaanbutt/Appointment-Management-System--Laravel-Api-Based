@@ -541,6 +541,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import api from '@/services/api'
 import formatDate from "@/services/formatDate.ts";
 import formatTime from "@/services/formatTime.ts";
+import {apiHandler} from "@/services/api/apiHandler.ts";
 
 const authStore = useAuthStore()
 const appointments = ref([])
@@ -594,7 +595,7 @@ const rescheduleForm = reactive({
 
 const filteredAppointments = computed(() => {
   return appointments.value.filter(a => {
-    const matchSearch = !search.value || (a.appointment_code || '').toLowerCase().includes(search.value.toLowerCase())
+    const matchSearch = !search.value || (a.code || '').toLowerCase().includes(search.value.toLowerCase())
     const matchStatus = !statusFilter.value || a.status === statusFilter.value
     return matchSearch && matchStatus
   })
@@ -605,7 +606,17 @@ async function fetchAppointments() {
   error.value = ''
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/appointments', { params: biz ? { page: currentPage.value, business_code: biz } : {} })
+
+    const res = await apiHandler(
+        "appointment",
+        "getAllAppointments",
+        {
+          params: {
+            page: currentPage.value,
+            business_code: biz
+          }
+        })
+
     appointments.value = res.data.data.data || []
     currentPage.value = res.data.data.current_page
     lastPage.value = res.data.data.last_page
@@ -622,7 +633,16 @@ async function openDetails(appt) {
   showDetails.value = true
   historyLoading.value = true
   try {
-    const res = await api.get(`/appointments/${appt.code}/history`)
+
+    const res = await apiHandler(
+        "appointment",
+        "getAppointmentHistory",
+        {
+          pathParams: {
+            code: appt.code
+          }
+        })
+
     appointmentHistory.value = res.data.data.data || []
   } catch (_) {
   } finally {
@@ -643,7 +663,18 @@ function openReschedule(appt) {
 
 async function changeStatus(appt, status) {
   try {
-    await api.patch(`/appointments/${appt.code}/status`, { status })
+    await apiHandler(
+        "appointment",
+        "updateAppointmentStatus",
+        {
+          pathParams: {
+            code: appt.code
+          },
+          body: {
+            status
+          }
+        })
+
     appt.status = status
   } catch (err) {
     error.value = err.response?.data?.message || 'Status update failed'
@@ -654,7 +685,16 @@ async function submitReschedule() {
   saving.value = true
   rescheduleError.value = ''
   try {
-    await api.post(`/appointments/${selected.value.code}/reschedule`, rescheduleForm)
+    await apiHandler(
+        "appointment",
+        "rescheduleAppointment",
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: rescheduleForm
+        })
+
     showReschedule.value = false
     await fetchAppointments()
   } catch (err) {
@@ -687,7 +727,16 @@ async function openApprovalDialog(appt) {
   try {
     console.log('Appointment:', appt)
     console.log('Appointment Code:', appt.code)
-    const res = await api.get(`/appointments/${appt.code}/availability`)
+
+    const res = await apiHandler(
+        "appointment",
+        "getAppointmentAvailability",
+        {
+          pathParams: {
+            code: appt.code
+          }
+        })
+
     console.log('Availability Response', JSON.stringify(res.data, null, 2))
     availableStaff.value = res.data.data?.available_staff || []
     engagedStaff.value = res.data.data?.engaged_staff || []
@@ -709,7 +758,18 @@ async function submitApproveWithStaff() {
   approvalSaving.value = true
   approvalError.value = ''
   try {
-    await api.post(`/appointments/${selected.value.code}/approve`, { staff_code: approvalSelectedStaff.value })
+    await apiHandler(
+        "appointment",
+        "approveAppointment",
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: {
+            staff_code: approvalSelectedStaff.value
+          }
+        })
+
     showApproval.value = false
     await fetchAppointments()
   } catch (err) {
@@ -735,10 +795,15 @@ async function forceAssignStaff(staffCode) {
 
   try {
 
-    await api.post(
-        `/appointments/${selected.value.code}/approve`,
-        payload
-    )
+    await apiHandler(
+        "appointment",
+        "approveAppointment",
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: payload
+        })
 
     showApproval.value = false
 
@@ -766,7 +831,16 @@ async function submitApprovalReschedule() {
   approvalSaving.value = true
   approvalError.value = ''
   try {
-    await api.post(`/appointments/${selected.value.code}/reschedule`, approvalRescheduleForm)
+    await apiHandler(
+        "appointment",
+        "rescheduleAppointment",
+        {
+          pathParams: {
+            code: selected.value.code
+          },
+          body: approvalRescheduleForm
+        })
+
     showApproval.value = false
     await fetchAppointments()
   } catch (err) {
@@ -784,10 +858,20 @@ async function openAssign(appt) {
   staffLoading.value = true
   try {
     const biz = authStore.user?.business_code
-    const res = await api.get('/users', { params: { business_code: biz, user_type: 'SERVICE_STAFF' } })
-    staffList.value = res.data.data.data || []
-  } catch (_) {
-    staffList.value = []
+
+    const res = await apiHandler(
+        "user",
+        "getAllUsers",
+        {
+          params: {
+            business_code: biz,
+            user_type: "SERVICE_STAFF",
+            data_category: "list"
+          }
+        })
+
+    staffList.value = res.data?.data?.data ?? []  } catch (_) {
+    // staffList.value = []
   } finally {
     staffLoading.value = false
   }
@@ -803,11 +887,18 @@ async function assignStaff() {
   assigning.value = true
   assignError.value = ''
   try {
-    await api.post(`/appointments/${assignAppt.value.code}/participants`, {
-      user_code: selectedStaff.value,
-      user_type: 'SERVICE_STAFF',
-      user_role: 'SERVICE_STAFF',
-    })
+    await apiHandler(
+        "appointmentParticipant",
+        "createAppointmentParticipant",
+        {
+          body: {
+            appointment_code: assignAppt.value.code,
+            user_code: selectedStaff.value,
+            user_type: "SERVICE_STAFF",
+            user_role: "SERVICE_STAFF"
+          }
+        })
+
     closeAssign()
   } catch (err) {
     assignError.value = err.response?.data?.message || 'Assignment failed'

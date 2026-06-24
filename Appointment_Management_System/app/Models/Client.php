@@ -10,6 +10,7 @@ class Client extends Model
     use HasCode;
 
     protected $fillable = [
+        'code',
         'business_code',
         'user_code',
         'address',

@@ -23,6 +23,8 @@ class CreateUserRequest extends FormRequest
     {
         return [
             'organization_code' => 'nullable',
+            'business_code' => ['nullable', 'exists:businesses,code'],
+
             'name'          => ['required', 'string', 'max:255'],
             'email'         => ['nullable', 'email', 'unique:users,email'],
             'password'      => ['required', 'string', 'confirmed', 'min:8'],
@@ -33,7 +35,6 @@ class CreateUserRequest extends FormRequest
                 'in:PERMANENT,VISITING,REMOTE'
             ],
             'phone'         => ['nullable', 'string', 'max:255'],
-            'business_code' => ['nullable', 'exists:businesses,code'],
             'status'        => ['nullable', 'in:ACTIVE,INACTIVE'],
         ];
     }

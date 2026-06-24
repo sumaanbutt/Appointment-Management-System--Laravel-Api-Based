@@ -152,10 +152,16 @@ async function fetchServicesAndLocations(bizCode) {
   const [svcRes, locRes] = await Promise.allSettled([
     // api.get('/services', { params: { business_code: bizCode } }),
     await apiHandler('service', 'getAllServices', {
-    params: {business_code: bizCode}
+    params: {
+            business_code: bizCode,
+            data_category: "list"
+    }
     }),
     await apiHandler('location', 'getAllLocations'    , {
-    params: { business_code: bizCode }
+    params: {
+            business_code: bizCode,
+            data_category: "list"
+    }
   })
     // api.get('/business-locations', { params: { business_code: bizCode } }),
   ])
@@ -188,8 +194,18 @@ onMounted(async () => {
   const [bizRes, clientRes] = await Promise.allSettled([
     // api.get('/businesses'),
     // api.get('/clients'),
-    await apiHandler('business', 'getAllBusinesses'),
-    await apiHandler('client', 'getAllClients')
+    await apiHandler('business', 'getAllBusinesses',
+        {
+          params: {
+            data_category : "list"
+          }
+        }),
+    await apiHandler('client', 'getAllClients',
+        {
+          params: {
+            data_category : "list"
+          }
+        } )
   ])
 
   if (bizRes.status === 'fulfilled') {

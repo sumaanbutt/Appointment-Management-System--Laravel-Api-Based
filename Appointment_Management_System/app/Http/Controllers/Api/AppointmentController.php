@@ -591,6 +591,13 @@ class AppointmentController extends Controller
                     'location_services.location_code'
                 )
 
+                ->join(
+                    'services',
+                    'services.code',
+                    '=',
+                    'location_services.service_code'
+                )
+
                 ->where(
                     'location_services.business_code',
                     $appointment->business_code
@@ -614,6 +621,8 @@ class AppointmentController extends Controller
 
                 ->select(
                     'location_services.location_code',
+                    'location_services.service_code',
+                    'services.service_name',
                     'business_locations.address',
                     'business_locations.city'
                 )
